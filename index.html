@@ -294,48 +294,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- PRs -->
     <div class="screen" id="screen-prs">
-      <div class="sec-title"><h1>PRs</h1><p>Marcas personales</p></div>
-      <div class="bm-sec"><div class="bm-sec-ttl">Fuerza</div></div>
-      <div class="bm-card">
-        <div class="bm-row"><div class="bm-name">Deadlift</div><div class="bm-val">455 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Back Squat</div><div class="bm-val">395 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Front Squat</div><div class="bm-val">350 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Bench Press</div><div class="bm-val">275 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Strict Press</div><div class="bm-val">190 lbs</div></div>
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+        <div><h1>PRs</h1><p id="prs-subtitle">Marcas personales</p></div>
+        <button onclick="openAddPR()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Agregar</button>
       </div>
-      <div class="bm-sec"><div class="bm-sec-ttl">Oly lifting</div></div>
-      <div class="bm-card">
-        <div class="bm-row"><div class="bm-name">Clean & Jerk</div><div class="bm-val">315 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Power Clean</div><div class="bm-val">285 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Snatch</div><div class="bm-val">250 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Power Snatch</div><div class="bm-val">215 lbs</div></div>
-        <div class="bm-row"><div class="bm-name">Snatch Balance</div><div class="bm-val">265 lbs</div></div>
-      </div>
-      <div class="bm-sec"><div class="bm-sec-ttl">CrossFit benchmarks</div></div>
-      <div class="bm-card">
-        <div class="bm-row"><div class="bm-name">Fran</div><div class="bm-val">4:50</div></div>
-        <div class="bm-row"><div class="bm-name">Grace</div><div class="bm-val">3:58</div></div>
-        <div class="bm-row"><div class="bm-name">Isabel</div><div class="bm-val">4:33</div></div>
-        <div class="bm-row"><div class="bm-name">Diane</div><div class="bm-val">5:32</div></div>
-        <div class="bm-row"><div class="bm-name">Amanda</div><div class="bm-val">8:30</div></div>
-        <div class="bm-row"><div class="bm-name">Murph</div><div class="bm-val">68 min</div></div>
-      </div>
-      <div class="bm-sec"><div class="bm-sec-ttl">Aeróbico</div></div>
-      <div class="bm-card">
-        <div class="bm-row"><div class="bm-name">2km Row</div><div class="bm-val">7:21</div></div>
-        <div class="bm-row"><div class="bm-name">5km Row</div><div class="bm-val">20:00</div></div>
-        <div class="bm-row"><div class="bm-name">2km Ski Erg</div><div class="bm-val">7:33</div></div>
-        <div class="bm-row"><div class="bm-name">1 milla run</div><div class="bm-val">7:01</div></div>
-        <div class="bm-row"><div class="bm-name">Echo Bike 10min</div><div class="bm-val">186 cal</div></div>
-      </div>
-      <div class="bm-sec"><div class="bm-sec-ttl">Gymnastics</div></div>
-      <div class="bm-card">
-        <div class="bm-row"><div class="bm-name">Strict Pull-ups</div><div class="bm-val">13</div></div>
-        <div class="bm-row"><div class="bm-name">Ring MU unbroken</div><div class="bm-val">10</div></div>
-        <div class="bm-row"><div class="bm-name">Strict HSPU</div><div class="bm-val">16</div></div>
-        <div class="bm-row"><div class="bm-name">HS Walk</div><div class="bm-val">24m</div></div>
-        <div class="bm-row"><div class="bm-name">L-sit</div><div class="bm-val">21s</div></div>
-      </div>
+      <div id="prs-content"><div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando PRs...</div></div>
       <div style="height:20px"></div>
     </div>
 
@@ -369,6 +332,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <button class="nav-btn" id="nav-prs" onclick="switchScreen('prs')"><span class="nav-icon">◎</span>prs</button>
     <button class="nav-btn" id="nav-cal" onclick="switchScreen('cal')"><span class="nav-icon">◷</span>goals</button>
   </div>
+</div>
+
+<!-- PR EDITOR -->
+<div class="block-editor" id="pr-editor">
+  <div class="be-header">
+    <button class="ad-back" onclick="closePREditor()">← Volver</button>
+    <div class="be-title" id="pr-editor-title">Agregar PR</div>
+  </div>
+  <div class="be-scroll">
+    <input type="hidden" id="pr-edit-id">
+    <div class="be-field">
+      <label class="be-label">Categoría</label>
+      <select class="be-select" id="pr-category">
+        <option value="strength">Fuerza</option>
+        <option value="oly">Oly Lifting</option>
+        <option value="benchmark">CrossFit Benchmark</option>
+        <option value="cardio">Aeróbico</option>
+        <option value="gymnastics">Gymnastics</option>
+      </select>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Movimiento</label>
+      <input class="be-input" id="pr-name" type="text" placeholder="Ej: Back Squat, Fran, 2km Row...">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Marca / Valor</label>
+      <input class="be-input" id="pr-value" type="text" placeholder="Ej: 405, 4:32, 186 cal...">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Unidad (opcional)</label>
+      <input class="be-input" id="pr-unit" type="text" placeholder="lbs, kg, min, m...">
+    </div>
+    <button class="be-save" onclick="savePR()">Guardar PR</button>
+    <button class="be-delete" id="pr-delete-btn" onclick="deletePR()" style="display:none">Eliminar PR</button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- SCORE HISTORY OVERLAY -->
+<div class="block-editor" id="score-history-overlay">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeScoreHistory()">← Volver</button>
+    <div class="be-title" id="sh-title">Historial</div>
+  </div>
+  <div class="be-scroll" id="sh-content"></div>
 </div>
 
 <!-- COACH OVERLAY -->
@@ -656,6 +664,7 @@ function renderBlock(b){
           <button class="score-save" onclick="saveScore('${b.id}',event)">OK</button>
         </div>
         <div class="scores-list" id="sclist-${b.id}"></div>
+        <button onclick="openScoreHistory('${b.id}','${b.name}');event.stopPropagation()" style="margin-top:8px;width:100%;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-align:left;padding:0;letter-spacing:0.05em">Ver historial completo →</button>
       </div>
       ${editBtn}
     </div>
@@ -747,6 +756,7 @@ function switchScreen(name){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
+  if(name === 'prs') renderPRs();
 }
 
 // COACH
@@ -785,6 +795,7 @@ async function openAthDetail(id){
   document.getElementById('ad-note').value = note?.note||'';
   updateProgUI(a.program||'compete');
   await renderAthScores(id);
+  await renderAthPRs(id);
   document.getElementById('ath-detail').classList.add('open');
 }
 function updateProgUI(prog){
@@ -901,6 +912,200 @@ async function deleteBlock(){
   await loadBlocks(b?.program_slug||'compete');
   initHome();
   initWeek();
+}
+
+
+// ── PRs ──────────────────────────────────────────────
+const PR_CATEGORIES = {
+  strength: 'Fuerza',
+  oly: 'Oly Lifting',
+  benchmark: 'CrossFit Benchmark',
+  cardio: 'Aeróbico',
+  gymnastics: 'Gymnastics'
+};
+
+async function loadPRs(athleteId){
+  const id = athleteId || currentUser.id;
+  const {data} = await sb.from('prs').select('*').eq('athlete_id', id).order('category').order('name');
+  return data || [];
+}
+
+async function renderPRs(athleteId){
+  const prs = await loadPRs(athleteId || currentUser.id);
+  const isOwn = !athleteId || athleteId === currentUser.id;
+  const container = document.getElementById('prs-content');
+  if(!prs.length){
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin PRs registrados aún.<br><br><button onclick="openAddPR()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primer PR</button></div>`;
+    return;
+  }
+  const grouped = {};
+  prs.forEach(p=>{ if(!grouped[p.category]) grouped[p.category]=[]; grouped[p.category].push(p); });
+  let html = '';
+  Object.entries(grouped).forEach(([cat, items])=>{
+    html += `<div class="bm-sec"><div class="bm-sec-ttl">${PR_CATEGORIES[cat]||cat}</div></div><div class="bm-card">`;
+    items.forEach(p=>{
+      const val = p.unit ? `${p.value} ${p.unit}` : p.value;
+      const editBtn = isOwn ? `onclick="openEditPR('${p.id}','${p.category}',\`${p.name}\`,\`${p.value}\`,\`${p.unit||''}\`)"` : '';
+      html += `<div class="bm-row" style="${isOwn?'cursor:pointer':''}" ${editBtn}>
+        <div class="bm-name">${p.name}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="bm-val">${val}</div>
+          ${isOwn?'<span style="color:var(--text3);font-size:10px">✏</span>':''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function openAddPR(){
+  document.getElementById('pr-edit-id').value = '';
+  document.getElementById('pr-editor-title').textContent = 'Agregar PR';
+  document.getElementById('pr-name').value = '';
+  document.getElementById('pr-value').value = '';
+  document.getElementById('pr-unit').value = '';
+  document.getElementById('pr-category').value = 'strength';
+  document.getElementById('pr-delete-btn').style.display = 'none';
+  document.getElementById('pr-editor').classList.add('open');
+}
+
+function openEditPR(id, category, name, value, unit){
+  document.getElementById('pr-edit-id').value = id;
+  document.getElementById('pr-editor-title').textContent = 'Editar PR';
+  document.getElementById('pr-category').value = category;
+  document.getElementById('pr-name').value = name;
+  document.getElementById('pr-value').value = value;
+  document.getElementById('pr-unit').value = unit;
+  document.getElementById('pr-delete-btn').style.display = 'block';
+  document.getElementById('pr-editor').classList.add('open');
+}
+
+function closePREditor(){ document.getElementById('pr-editor').classList.remove('open'); }
+
+async function savePR(){
+  const id = document.getElementById('pr-edit-id').value;
+  const data = {
+    athlete_id: currentUser.id,
+    category: document.getElementById('pr-category').value,
+    name: document.getElementById('pr-name').value.trim(),
+    value: document.getElementById('pr-value').value.trim(),
+    unit: document.getElementById('pr-unit').value.trim(),
+  };
+  if(!data.name || !data.value) return;
+  if(id){
+    await sb.from('prs').update(data).eq('id', id);
+  } else {
+    await sb.from('prs').upsert(data, {onConflict:'athlete_id,name'});
+  }
+  closePREditor();
+  renderPRs();
+}
+
+async function deletePR(){
+  const id = document.getElementById('pr-edit-id').value;
+  if(!id || !confirm('¿Eliminar este PR?')) return;
+  await sb.from('prs').delete().eq('id', id);
+  closePREditor();
+  renderPRs();
+}
+
+// ── SCORE HISTORY ─────────────────────────────────────
+async function openScoreHistory(blockId, blockName){
+  document.getElementById('sh-title').textContent = blockName;
+  document.getElementById('sh-content').innerHTML = '<div style="padding:20px;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div>';
+  document.getElementById('score-history-overlay').classList.add('open');
+
+  const {data} = await sb.from('scores')
+    .select('*')
+    .eq('athlete_id', currentUser.id)
+    .eq('block_id', blockId)
+    .order('logged_at', {ascending: false})
+    .limit(20);
+
+  if(!data || !data.length){
+    document.getElementById('sh-content').innerHTML = '<div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin scores registrados aún.</div>';
+    return;
+  }
+
+  // Simple bar chart + list
+  const vals = data.map(s=>s.value);
+  const nums = vals.map(v=>parseFloat(v.replace(/[^0-9.]/g,''))).filter(n=>!isNaN(n));
+  const max = Math.max(...nums);
+  const chartHtml = nums.length > 1 ? `
+    <div style="padding:16px 20px 8px">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px">Progresión</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:60px">
+        ${nums.slice(0,10).reverse().map((n,i)=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div style="width:100%;background:var(--accent);border-radius:1px;height:${max>0?Math.max(4,(n/max)*52):4}px;opacity:${0.5+((i+1)/nums.length)*0.5}"></div>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  const listHtml = data.map(s=>`
+    <div class="score-hist-row">
+      <span class="shr-val">${s.value}</span>
+      <span class="shr-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})}</span>
+    </div>`).join('');
+
+  document.getElementById('sh-content').innerHTML = chartHtml +
+    '<div style="padding:8px 20px 4px"><div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em">Historial completo</div></div>' +
+    listHtml + '<div style="height:24px"></div>';
+}
+
+function closeScoreHistory(){ document.getElementById('score-history-overlay').classList.remove('open'); }
+
+// ── COACH SCORES VIEW ─────────────────────────────────
+async function renderAthScores(id){
+  const {data} = await sb.from('scores')
+    .select('*, blocks(name)')
+    .eq('athlete_id', id)
+    .order('logged_at', {ascending: false})
+    .limit(15);
+  const c = document.getElementById('ad-scores');
+  if(!data?.length){
+    c.innerHTML = '<div class="empty-note">Sin scores registrados aún.</div>';
+    return;
+  }
+  // Group by block
+  const grouped = {};
+  data.forEach(s=>{
+    const name = s.blocks?.name || '—';
+    if(!grouped[name]) grouped[name] = [];
+    grouped[name].push(s);
+  });
+  c.innerHTML = Object.entries(grouped).map(([block, scores])=>`
+    <div style="border-bottom:1px solid var(--border)">
+      <div style="padding:8px 20px 4px;font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">${block}</div>
+      ${scores.slice(0,3).map(s=>`
+        <div class="score-hist-row">
+          <span class="shr-val">${s.value}</span>
+          <span class="shr-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
+        </div>`).join('')}
+    </div>`).join('') + '<div style="height:8px"></div>';
+}
+
+// ── COACH PR VIEW ─────────────────────────────────────
+async function renderAthPRs(athleteId){
+  const prs = await loadPRs(athleteId);
+  const grouped = {};
+  prs.forEach(p=>{ if(!grouped[p.category]) grouped[p.category]=[]; grouped[p.category].push(p); });
+  let html = '';
+  if(!prs.length){ html = '<div class="empty-note">Sin PRs registrados aún.</div>'; }
+  else {
+    Object.entries(grouped).forEach(([cat, items])=>{
+      html += `<div class="ad-sec"><div class="ad-sec-ttl">${PR_CATEGORIES[cat]||cat}</div></div><div class="bm-card" style="margin:0 20px 8px">`;
+      items.forEach(p=>{ const val = p.unit?`${p.value} ${p.unit}`:p.value; html+=`<div class="bm-row"><div class="bm-name" style="font-size:12px">${p.name}</div><div class="bm-val" style="font-size:12px">${val}</div></div>`; });
+      html += '</div>';
+    });
+  }
+  const existing = document.getElementById('ath-prs-section');
+  if(existing) existing.remove();
+  const section = document.createElement('div');
+  section.id = 'ath-prs-section';
+  section.innerHTML = `<div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">PRs del atleta</div></div>${html}`;
+  document.getElementById('ad-scores').after(section);
 }
 
 init();
