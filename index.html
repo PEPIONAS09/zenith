@@ -551,15 +551,26 @@ async function init(){
     return;
   }
   currentUser = session.user;
-  const {data:profile} = await sb.supabase?.from?.('profiles')?.select('*')?.eq('id', currentUser.id)?.single() 
-    ?? await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+
+  // Load profile cleanly
+  const {data:profile, error:profileError} = await sb.from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if(profileError){
+    console.error('Profile load error:', profileError);
+  }
   currentProfile = profile;
 
-  sb.auth.onAuthStateChange((_,session)=>{
-    if(!session) location.reload();
+  console.log('Profile loaded:', currentProfile?.full_name, '| Role:', currentProfile?.role, '| Program:', currentProfile?.program);
+
+  sb.auth.onAuthStateChange((_,s)=>{
+    if(!s) location.reload();
   });
 
-  await loadBlocks(currentProfile?.program || 'compete');
+  const prog = currentProfile?.program || 'compete';
+  await loadBlocks(prog);
   setupUI();
   document.getElementById('loading').classList.add('hidden');
 }
@@ -582,7 +593,9 @@ function setupUI(){
 
   document.getElementById('user-avatar').textContent = initials;
   document.getElementById('hero-name').textContent = name.toUpperCase();
-  document.getElementById('hero-tag').textContent = isCoach ? 'Coach' : 'Atleta';
+  const prog = currentProfile?.program || 'compete';
+  const progLabel = prog === 'olympus' ? '◈ Olympus' : '⚡ Compete';
+  document.getElementById('hero-tag').textContent = isCoach ? 'Coach' : `Atleta · ${progLabel}`;
   document.getElementById('week-lbl').textContent = 'SEM '+getWeek(today);
 
   const dnames=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
