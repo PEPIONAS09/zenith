@@ -612,7 +612,8 @@ async function init(){
   });
 
   const prog = currentProfile?.program || 'compete';
-  await loadBlocks(prog);
+  currentWeekNumber = 1;
+  await loadBlocks(prog, 1);
   setupUI();
   document.getElementById('loading').classList.add('hidden');
 }
@@ -956,9 +957,11 @@ function closeBlockEditor(){ document.getElementById('block-editor').classList.r
 async function saveBlock(){
   const id = document.getElementById('be-block-id').value;
   const prog = document.getElementById('be-program').value;
+  const weekNum = parseInt(document.getElementById('be-week-num')?.value || currentWeekNumber || 1);
   const data = {
     program_slug: prog,
     day_of_week: parseInt(document.getElementById('be-day').value),
+    week_number: weekNum,
     name: document.getElementById('be-name').value,
     meta: document.getElementById('be-meta').value,
     color: selectedColor,
@@ -969,29 +972,31 @@ async function saveBlock(){
     scaling_sc: document.getElementById('be-sc').value,
     scaling_beg: document.getElementById('be-beg').value,
   };
-  if(id){ await sb.from('blocks').update(data).eq('id',id); }
-  else { await sb.from('blocks').insert(data); }
+  if(!data.name){ alert('El bloque necesita un nombre'); return; }
+  const {error} = id
+    ? await sb.from('blocks').update(data).eq('id', id)
+    : await sb.from('blocks').insert(data);
+  if(error){ alert('Error al guardar: ' + error.message); return; }
   closeBlockEditor();
-  await loadBlocks(prog);
+  currentWeekNumber = weekNum;
+  await loadBlocks(prog, weekNum);
   initHome();
   initWeek();
-  loadHomeStats();
-  renderHomeComps();
 }
 
 async function deleteBlock(){
   const id = document.getElementById('be-block-id').value;
   if(!id) return;
-  if(!confirm('¿Eliminar este bloque?')) return;
+  if(!confirm('Eliminar este bloque de esta semana?')) return;
   const allB = Object.values(allBlocks).flat();
   const b = allB.find(x=>x.id===id);
-  await sb.from('blocks').delete().eq('id',id);
+  const prog = b?.program_slug || currentProfile?.program || 'compete';
+  const weekNum = b?.week_number || currentWeekNumber || 1;
+  await sb.from('blocks').delete().eq('id', id);
   closeBlockEditor();
-  await loadBlocks(b?.program_slug||'compete');
+  await loadBlocks(prog, weekNum);
   initHome();
   initWeek();
-  loadHomeStats();
-  renderHomeComps();
 }
 
 
