@@ -253,7 +253,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="topbar">
     <div class="logo">ZENITH</div>
     <div class="topbar-r">
-      <div class="week-lbl" id="week-lbl"></div>
       <div class="avatar" id="user-avatar" onclick="onAvatarClick()">—</div>
     </div>
   </div>
@@ -434,8 +433,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="ath-detail" id="ath-week-view" style="z-index:202">
   <div class="ad-header">
     <button class="ad-back" onclick="closeAthWeek()">← Atleta</button>
-    <div class="ad-name" id="ath-week-name"></div>
+    <div class="ad-name" id="ath-week-name" style="font-size:16px"></div>
     <button class="co-close" onclick="closeCoach()">✕</button>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+    <button onclick="changeAthWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
+    <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+    <button onclick="changeAthWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
   </div>
   <div class="day-tabs" id="ath-day-tabs" style="flex-shrink:0;background:var(--bg)"></div>
   <div class="week-scroll"><div id="ath-week-content"></div></div>
@@ -622,7 +626,6 @@ function setupUI(){
   const prog = currentProfile?.program || 'compete';
   const progLabel = prog === 'olympus' ? '◈ Olympus' : '⚡ Compete';
   document.getElementById('hero-tag').textContent = isCoach ? 'Coach' : `Atleta · ${progLabel}`;
-  document.getElementById('week-lbl').textContent = 'SEM '+getWeek(today);
 
   const dnames=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   document.getElementById('home-meta').textContent = dnames[todayDow]+' · '+today.toLocaleDateString('es-MX',{day:'numeric',month:'long'});
@@ -1363,24 +1366,44 @@ async function renderAthPRs(athleteId){
 // ── ATHLETE WEEK VIEW (COACH) ─────────────────────────
 let athWeekBlocks = {};
 let currentAthWeekProfile = null;
+let athWeekOffset = 0; // weeks from current
+
+function getWeekDates(offset){
+  const now = new Date();
+  const dow = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1) + (offset * 7));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  return {label: `${fmt(monday)} — ${fmt(sunday)}`, weekNum: getWeek(monday)};
+}
 
 async function openAthWeek(){
   if(!currentAthId) return;
   const a = athletes.find(x=>x.id===currentAthId);
   if(!a) return;
   currentAthWeekProfile = a;
+  athWeekOffset = 0;
 
   const name = a.full_name?.split(' ')[0].toUpperCase() || 'ATLETA';
   document.getElementById('ath-week-name').textContent = name;
 
-  // Load blocks for athlete program
-  const prog = athleteProgs[a.id] || a.program || 'compete';
+  await loadAthWeekBlocks(a);
+  renderAthWeek(a);
+  document.getElementById('ath-week-view').classList.add('open');
+}
+
+async function loadAthWeekBlocks(a){
+  const prog = athleteProgs[a?.id] || a?.program || 'compete';
   const {data} = await sb.from('blocks').select('*').eq('program_slug', prog).order('day_of_week').order('order_index');
   athWeekBlocks = {};
   if(data) data.forEach(b=>{ if(!athWeekBlocks[b.day_of_week]) athWeekBlocks[b.day_of_week]=[]; athWeekBlocks[b.day_of_week].push(b); });
+}
 
-  renderAthWeek(a);
-  document.getElementById('ath-week-view').classList.add('open');
+async function changeAthWeek(dir){
+  athWeekOffset += dir;
+  renderAthWeek(currentAthWeekProfile);
 }
 
 function renderAthWeek(a){
@@ -1388,33 +1411,36 @@ function renderAthWeek(a){
   const content = document.getElementById('ath-week-content');
   tabBar.innerHTML = ''; content.innerHTML = '';
 
+  const {label} = getWeekDates(athWeekOffset);
+  const weekLbl = document.getElementById('ath-week-label');
+  if(weekLbl) weekLbl.textContent = athWeekOffset === 0 ? 'Semana actual · ' + label : label;
+
   const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const order = [1,2,3,4,5,6,0];
+  const activeDow = athWeekOffset === 0 ? todayDow : 1;
+  const prog = athleteProgs[a?.id] || a?.program || 'compete';
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
-    tab.className = 'day-tab' + (dow === todayDow ? ' active' : '');
-    tab.textContent = dayNames[dow] + (dow === todayDow ? ' ·' : '');
+    tab.className = 'day-tab' + (dow === activeDow ? ' active' : '');
+    tab.textContent = dayNames[dow] + (dow === activeDow ? ' ·' : '');
     tab.onclick = () => showAthDay(dow);
     tab.id = 'athtab-' + dow;
     tabBar.appendChild(tab);
 
     const div = document.createElement('div');
     div.id = 'athdayc-' + dow;
-    div.style.display = dow === todayDow ? 'block' : 'none';
+    div.style.display = dow === activeDow ? 'block' : 'none';
     const blocks = athWeekBlocks[dow] || [];
 
     if(!blocks.length){
       div.innerHTML = '<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>' +
-        `<div style="padding:0 16px">${renderAddBlockBtn(dow, currentAthWeekProfile?.program || 'compete')}</div>`;
+        `<div style="padding:0 16px">${renderAddBlockBtn(dow, prog)}</div>`;
     } else {
-      // Render blocks in coach-edit mode (always show edit button)
       const blocksHtml = blocks.map(b => renderBlockCoachView(b)).join('');
-      div.innerHTML = `<div class="blocks">${blocksHtml}${renderAddBlockBtn(dow, currentAthWeekProfile?.program || 'compete')}</div>`;
+      div.innerHTML = `<div class="blocks">${blocksHtml}${renderAddBlockBtn(dow, prog)}</div>`;
     }
     content.appendChild(div);
-
-    // Load scores for this athlete
     blocks.forEach(b => loadAthBlockScores(b.id, a.id));
   });
 }
