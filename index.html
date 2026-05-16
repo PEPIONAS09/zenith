@@ -1380,18 +1380,27 @@ function getWeekDates(offset){
 }
 
 async function openAthWeek(){
-  if(!currentAthId) return;
-  const a = athletes.find(x=>x.id===currentAthId);
-  if(!a) return;
-  currentAthWeekProfile = a;
-  athWeekOffset = 0;
+  try {
+    if(!currentAthId){ alert('No hay atleta seleccionado'); return; }
+    const a = athletes.find(x=>x.id===currentAthId);
+    if(!a){ alert('Atleta no encontrado'); return; }
+    currentAthWeekProfile = a;
+    athWeekOffset = 0;
 
-  const name = a.full_name?.split(' ')[0].toUpperCase() || 'ATLETA';
-  document.getElementById('ath-week-name').textContent = name;
+    const name = a.full_name?.split(' ')[0].toUpperCase() || 'ATLETA';
+    document.getElementById('ath-week-name').textContent = name;
 
-  await loadAthWeekBlocks(a);
-  renderAthWeek(a);
-  document.getElementById('ath-week-view').classList.add('open');
+    // Force show overlay
+    const overlay = document.getElementById('ath-week-view');
+    overlay.style.display = 'flex';
+    overlay.classList.add('open');
+
+    await loadAthWeekBlocks(a);
+    renderAthWeek(a);
+  } catch(err) {
+    console.error('openAthWeek error:', err);
+    alert('Error: ' + err.message);
+  }
 }
 
 async function loadAthWeekBlocks(a){
@@ -1498,7 +1507,9 @@ function showAthDay(dow){
 }
 
 function closeAthWeek(){
-  document.getElementById('ath-week-view').classList.remove('open');
+  const overlay = document.getElementById('ath-week-view');
+  overlay.classList.remove('open');
+  overlay.style.display = 'none';
 }
 
 init();
