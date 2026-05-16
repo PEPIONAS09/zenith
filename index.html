@@ -280,6 +280,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- WEEK -->
     <div class="screen screen-week" id="screen-week">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
+        <button onclick="changeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
+        <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+        <button onclick="changeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
+      </div>
       <div class="day-tabs" id="day-tabs"></div>
       <div class="week-scroll"><div id="week-content"></div></div>
     </div>
@@ -534,6 +539,7 @@ let currentUser = null;
 let currentProfile = null;
 let currentScale = {};
 let currentAthId = null;
+let weekOffset = 0;
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
@@ -748,6 +754,22 @@ function initHome(){
   }
 }
 
+function getMainWeekDates(offset){
+  const now = new Date();
+  const dow = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1) + (offset * 7));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+  return `${fmt(monday)} — ${fmt(sunday)}`;
+}
+
+function changeWeek(dir){
+  weekOffset += dir;
+  initWeek();
+}
+
 function initWeek(){
   const tabBar = document.getElementById('day-tabs');
   const content = document.getElementById('week-content');
@@ -756,15 +778,20 @@ function initWeek(){
   const order=[1,2,3,4,5,6,0];
   const isCoach = currentProfile?.role === 'coach';
   const prog = currentProfile?.program || 'compete';
+  const activeDow = weekOffset === 0 ? todayDow : 1;
+
+  const lbl = document.getElementById('main-week-label');
+  if(lbl) lbl.textContent = weekOffset === 0 ? 'Semana actual · ' + getMainWeekDates(0) : getMainWeekDates(weekOffset);
+
   order.forEach(dow=>{
     const tab = document.createElement('button');
-    tab.className='day-tab'+(dow===todayDow?' active':'');
-    tab.textContent=dayNames[dow]+(dow===todayDow?' ·':'');
+    tab.className='day-tab'+(dow===activeDow?' active':'');
+    tab.textContent=dayNames[dow]+(dow===activeDow?' ·':'');
     tab.onclick=()=>showDay(dow);
     tab.id='dtab-'+dow;
     tabBar.appendChild(tab);
     const div=document.createElement('div');
-    div.id='dayc-'+dow; div.style.display=dow===todayDow?'block':'none';
+    div.id='dayc-'+dow; div.style.display=dow===activeDow?'block':'none';
     const blocks=allBlocks[dow]||[];
     if(!blocks.length){
       div.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?`<div style="padding:0 16px">${renderAddBlockBtn(dow,prog)}</div>`:'');
