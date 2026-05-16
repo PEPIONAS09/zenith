@@ -475,6 +475,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </select>
     </div>
     <div class="be-field">
+      <label class="be-label">Semana #</label>
+      <input class="be-input" id="be-week-num" type="number" min="1" max="52" value="1" placeholder="1">
+    </div>
+    <div class="be-field">
       <label class="be-label">Día de la semana</label>
       <select class="be-select" id="be-day">
         <option value="1">Lunes</option>
@@ -540,6 +544,7 @@ let currentProfile = null;
 let currentScale = {};
 let currentAthId = null;
 let weekOffset = 0;
+let currentWeekNumber = 1;
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
@@ -612,8 +617,12 @@ async function init(){
   document.getElementById('loading').classList.add('hidden');
 }
 
-async function loadBlocks(programSlug){
-  const {data} = await sb.from('blocks').select('*').eq('program_slug', programSlug).order('day_of_week').order('order_index');
+async function loadBlocks(programSlug, weekNum){
+  const week = weekNum || currentWeekNumber || 1;
+  const {data} = await sb.from('blocks').select('*')
+    .eq('program_slug', programSlug)
+    .eq('week_number', week)
+    .order('day_of_week').order('order_index');
   allBlocks = {};
   if(data){
     data.forEach(b=>{
@@ -765,8 +774,12 @@ function getMainWeekDates(offset){
   return `${fmt(monday)} — ${fmt(sunday)}`;
 }
 
-function changeWeek(dir){
+async function changeWeek(dir){
   weekOffset += dir;
+  // Week number = current week + offset, minimum 1
+  currentWeekNumber = Math.max(1, 1 + weekOffset);
+  const prog = currentProfile?.program || 'compete';
+  await loadBlocks(prog, currentWeekNumber);
   initWeek();
 }
 
@@ -781,7 +794,8 @@ function initWeek(){
   const activeDow = weekOffset === 0 ? todayDow : 1;
 
   const lbl = document.getElementById('main-week-label');
-  if(lbl) lbl.textContent = weekOffset === 0 ? 'Semana actual · ' + getMainWeekDates(0) : getMainWeekDates(weekOffset);
+  const weekNum = Math.max(1, 1 + weekOffset);
+  if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
@@ -899,6 +913,7 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-name').value = b.name||'';
   document.getElementById('be-meta').value = b.meta||'';
   document.getElementById('be-program').value = b.program_slug||'compete';
+  document.getElementById('be-week-num').value = b.week_number||1;
   document.getElementById('be-day').value = b.day_of_week;
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
@@ -917,6 +932,7 @@ function openNewBlock(dow, prog){
   document.getElementById('be-name').value = '';
   document.getElementById('be-meta').value = '';
   document.getElementById('be-program').value = prog;
+  document.getElementById('be-week-num').value = currentWeekNumber || 1;
   document.getElementById('be-day').value = dow;
   document.getElementById('be-content').value = '';
   document.getElementById('be-coach-note').value = '';
@@ -1433,13 +1449,18 @@ async function openAthWeek(){
 
 async function loadAthWeekBlocks(a){
   const prog = athleteProgs[a?.id] || a?.program || 'compete';
-  const {data} = await sb.from('blocks').select('*').eq('program_slug', prog).order('day_of_week').order('order_index');
+  const week = Math.max(1, 1 + athWeekOffset);
+  const {data} = await sb.from('blocks').select('*')
+    .eq('program_slug', prog)
+    .eq('week_number', week)
+    .order('day_of_week').order('order_index');
   athWeekBlocks = {};
   if(data) data.forEach(b=>{ if(!athWeekBlocks[b.day_of_week]) athWeekBlocks[b.day_of_week]=[]; athWeekBlocks[b.day_of_week].push(b); });
 }
 
 async function changeAthWeek(dir){
   athWeekOffset += dir;
+  await loadAthWeekBlocks(currentAthWeekProfile);
   renderAthWeek(currentAthWeekProfile);
 }
 
@@ -1449,8 +1470,9 @@ function renderAthWeek(a){
   tabBar.innerHTML = ''; content.innerHTML = '';
 
   const {label} = getWeekDates(athWeekOffset);
+  const weekNum = Math.max(1, 1 + athWeekOffset);
   const weekLbl = document.getElementById('ath-week-label');
-  if(weekLbl) weekLbl.textContent = athWeekOffset === 0 ? 'Semana actual · ' + label : label;
+  if(weekLbl) weekLbl.textContent = 'Semana ' + weekNum + ' · ' + label;
 
   const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const order = [1,2,3,4,5,6,0];
