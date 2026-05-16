@@ -422,10 +422,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="ad-sec"><div class="ad-sec-ttl">Nota del coach</div></div>
     <textarea class="note-area" id="ad-note" rows="4" placeholder="Observaciones, ajustes, feedback técnico..."></textarea>
     <button class="note-save-btn" onclick="saveNote()">Guardar nota</button>
+    <button onclick="openAthWeek()" style="display:block;margin:8px 20px 0;background:var(--accent);color:#000;border:none;border-radius:2px;padding:10px 16px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;width:calc(100% - 40px)">▤ Ver programación semanal</button>
     <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Scores recientes</div></div>
     <div id="ad-scores"></div>
     <div style="height:24px"></div>
   </div>
+</div>
+
+
+<!-- ATHLETE WEEK VIEW (COACH) -->
+<div class="ath-detail" id="ath-week-view" style="z-index:202">
+  <div class="ad-header">
+    <button class="ad-back" onclick="closeAthWeek()">← Atleta</button>
+    <div class="ad-name" id="ath-week-name"></div>
+    <button class="co-close" onclick="closeCoach()">✕</button>
+  </div>
+  <div class="day-tabs" id="ath-day-tabs" style="flex-shrink:0;background:var(--bg)"></div>
+  <div class="week-scroll"><div id="ath-week-content"></div></div>
 </div>
 
 <!-- BLOCK EDITOR (COACH ONLY) -->
@@ -447,6 +460,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="be-field">
       <label class="be-label">Programa</label>
       <select class="be-select" id="be-program">
+        <option value="games">Games</option>
         <option value="compete">Compete</option>
         <option value="olympus">Olympus</option>
       </select>
@@ -1343,6 +1357,122 @@ async function renderAthPRs(athleteId){
   section.id = 'ath-prs-section';
   section.innerHTML = `<div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">PRs del atleta</div></div>${html}`;
   document.getElementById('ad-scores').after(section);
+}
+
+
+// ── ATHLETE WEEK VIEW (COACH) ─────────────────────────
+let athWeekBlocks = {};
+let currentAthWeekProfile = null;
+
+async function openAthWeek(){
+  if(!currentAthId) return;
+  const a = athletes.find(x=>x.id===currentAthId);
+  if(!a) return;
+  currentAthWeekProfile = a;
+
+  const name = a.full_name?.split(' ')[0].toUpperCase() || 'ATLETA';
+  document.getElementById('ath-week-name').textContent = name;
+
+  // Load blocks for athlete program
+  const prog = athleteProgs[a.id] || a.program || 'compete';
+  const {data} = await sb.from('blocks').select('*').eq('program_slug', prog).order('day_of_week').order('order_index');
+  athWeekBlocks = {};
+  if(data) data.forEach(b=>{ if(!athWeekBlocks[b.day_of_week]) athWeekBlocks[b.day_of_week]=[]; athWeekBlocks[b.day_of_week].push(b); });
+
+  renderAthWeek(a);
+  document.getElementById('ath-week-view').classList.add('open');
+}
+
+function renderAthWeek(a){
+  const tabBar = document.getElementById('ath-day-tabs');
+  const content = document.getElementById('ath-week-content');
+  tabBar.innerHTML = ''; content.innerHTML = '';
+
+  const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const order = [1,2,3,4,5,6,0];
+
+  order.forEach(dow=>{
+    const tab = document.createElement('button');
+    tab.className = 'day-tab' + (dow === todayDow ? ' active' : '');
+    tab.textContent = dayNames[dow] + (dow === todayDow ? ' ·' : '');
+    tab.onclick = () => showAthDay(dow);
+    tab.id = 'athtab-' + dow;
+    tabBar.appendChild(tab);
+
+    const div = document.createElement('div');
+    div.id = 'athdayc-' + dow;
+    div.style.display = dow === todayDow ? 'block' : 'none';
+    const blocks = athWeekBlocks[dow] || [];
+
+    if(!blocks.length){
+      div.innerHTML = '<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>' +
+        `<div style="padding:0 16px">${renderAddBlockBtn(dow, currentAthWeekProfile?.program || 'compete')}</div>`;
+    } else {
+      // Render blocks in coach-edit mode (always show edit button)
+      const blocksHtml = blocks.map(b => renderBlockCoachView(b)).join('');
+      div.innerHTML = `<div class="blocks">${blocksHtml}${renderAddBlockBtn(dow, currentAthWeekProfile?.program || 'compete')}</div>`;
+    }
+    content.appendChild(div);
+
+    // Load scores for this athlete
+    blocks.forEach(b => loadAthBlockScores(b.id, a.id));
+  });
+}
+
+function renderBlockCoachView(b){
+  return `<div class="block" id="athblk-${b.id}">
+    <div class="block-hdr" onclick="toggleAthBlock('${b.id}')">
+      <div class="block-dot" style="background:${b.color}"></div>
+      <div class="block-info"><div class="block-name">${b.name}</div><div class="block-meta">${b.meta||''}</div></div>
+      <div class="block-chev">▾</div>
+    </div>
+    <div class="block-body">
+      <div class="block-text">${b.content||''}</div>
+      <div class="pct-grid">
+        <div class="pct-cell"><div class="pct-lbl">Scaling RX</div><div class="pct-val" style="font-size:11px">${b.scaling_rx||'—'}</div></div>
+        <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
+      </div>
+      ${b.coach_note ? `<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">${b.coach_note}</div></div>` : ''}
+      <div class="score-sec">
+        <div class="score-lbl">Scores del atleta</div>
+        <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div></div>
+      </div>
+      <button onclick="openBlockEditor('${b.id}',event)" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar bloque</button>
+    </div>
+  </div>`;
+}
+
+function toggleAthBlock(id){ document.getElementById('athblk-'+id)?.classList.toggle('open'); }
+
+async function loadAthBlockScores(blockId, athleteId){
+  const {data} = await sb.from('scores')
+    .select('*')
+    .eq('athlete_id', athleteId)
+    .eq('block_id', blockId)
+    .order('logged_at', {ascending:false})
+    .limit(3);
+  const list = document.getElementById('athsclist-' + blockId);
+  if(!list) return;
+  if(!data || !data.length){
+    list.innerHTML = '<div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin scores aún.</div>';
+    return;
+  }
+  list.innerHTML = data.map(s=>`
+    <div class="score-entry">
+      <span class="seval">${s.value}</span>
+      <span class="semeta">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
+    </div>`).join('');
+}
+
+function showAthDay(dow){
+  document.querySelectorAll('[id^=athtab-]').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('[id^=athdayc-]').forEach(d=>d.style.display='none');
+  document.getElementById('athtab-'+dow).classList.add('active');
+  document.getElementById('athdayc-'+dow).style.display='block';
+}
+
+function closeAthWeek(){
+  document.getElementById('ath-week-view').classList.remove('open');
 }
 
 init();
