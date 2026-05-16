@@ -265,24 +265,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="hero-tag" id="hero-tag">Atleta</div>
         <div class="hero-name" id="hero-name">—</div>
         <div class="hero-meta" id="home-meta"></div>
-        <div class="hero-stats">
-          <div class="hero-stat"><div class="hstat-val">455</div><div class="hstat-lbl">Deadlift lbs</div></div>
-          <div class="hero-stat"><div class="hstat-val">250</div><div class="hstat-lbl">Snatch lbs</div></div>
-          <div class="hero-stat"><div class="hstat-val">315</div><div class="hstat-lbl">C&J lbs</div></div>
+        <div class="hero-stats" id="hero-stats">
+          <div class="hero-stat"><div class="hstat-val">—</div><div class="hstat-lbl">Cargando...</div></div>
+          <div class="hero-stat"><div class="hstat-val">—</div><div class="hstat-lbl">...</div></div>
+          <div class="hero-stat"><div class="hstat-val">—</div><div class="hstat-lbl">...</div></div>
         </div>
       </div>
       <div style="padding:16px 16px 4px"><div class="bm-sec-ttl">Hoy</div></div>
       <div class="blocks" id="home-blocks" style="padding-top:0"></div>
       <div style="padding:16px 16px 4px"><div class="bm-sec-ttl">Objetivos</div></div>
-      <div style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px">
-        <div class="comp-card">
-          <div><div class="comp-name">CrossFit Open 2027</div><div class="comp-date">Feb 2027</div><div class="comp-goal">Clasificar a Semifinals</div><div class="goal-tag gt-primary">Meta principal</div></div>
-          <div style="text-align:right"><div class="comp-days-num" id="days-open">—</div><div class="comp-days-lbl">días</div></div>
-        </div>
-        <div class="comp-card">
-          <div><div class="comp-name">CrossFit Games 2028</div><div class="comp-date">Jul 2028</div><div class="comp-goal">Ganar los Games</div><div class="goal-tag gt-secondary">Largo plazo</div></div>
-          <div style="text-align:right"><div class="comp-days-num" id="days-games">—</div><div class="comp-days-lbl">días</div></div>
-        </div>
+      <div id="home-competitions" style="padding:0 16px 20px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:var(--font-m);font-size:10px;color:var(--text3);padding:8px 0">Cargando...</div>
       </div>
     </div>
 
@@ -304,24 +297,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
     <!-- GOALS -->
     <div class="screen" id="screen-cal">
-      <div class="sec-title"><h1>COMPETENCIAS</h1><p>Calendario de objetivos</p></div>
-      <div style="padding:16px">
-        <div class="comp-card" style="border-color:#333">
-          <div><div class="comp-name">CrossFit Open 2027</div><div class="comp-date">Febrero 2027</div><div class="comp-goal">Clasificar a Semifinals</div><div class="goal-tag gt-primary">Meta principal</div></div>
-          <div style="text-align:right"><div class="comp-days-num" id="days-open2">—</div><div class="comp-days-lbl">días</div></div>
-        </div>
-        <div class="comp-card">
-          <div><div class="comp-name">CrossFit Semifinals 2027</div><div class="comp-date">Mayo 2027</div><div class="comp-goal">Clasificar a los Games</div><div class="goal-tag gt-secondary">Paso intermedio</div></div>
-          <div style="text-align:right"><div class="comp-days-num" id="days-semis">—</div><div class="comp-days-lbl">días</div></div>
-        </div>
-        <div class="comp-card">
-          <div><div class="comp-name">CrossFit Games 2028</div><div class="comp-date">Julio 2028</div><div class="comp-goal">Ganar</div><div class="goal-tag gt-secondary">Largo plazo</div></div>
-          <div style="text-align:right"><div class="comp-days-num" id="days-games2">—</div><div class="comp-days-lbl">días</div></div>
-        </div>
-        <div style="margin-top:20px"><div class="bm-sec-ttl">Historial</div>
-          <div class="comp-card" style="opacity:0.5"><div><div class="comp-name">Wodapalooza SoCal Rx 2024</div><div class="comp-date">2024</div><div class="comp-goal">Clasificado ✓</div></div></div>
-          <div class="comp-card" style="opacity:0.5"><div><div class="comp-name">CrossFit Quarterfinals</div><div class="comp-date">2022 · 2023 · 2024</div><div class="comp-goal">3 clasificaciones consecutivas ✓</div></div></div>
-        </div>
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
+        <div><h1>GOALS</h1><p>Mis competencias y objetivos</p></div>
+        <button onclick="openAddComp()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Agregar</button>
+      </div>
+      <div id="goals-content" style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div>
       </div>
     </div>
   </div>
@@ -377,6 +358,37 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="be-title" id="sh-title">Historial</div>
   </div>
   <div class="be-scroll" id="sh-content"></div>
+</div>
+
+
+<!-- COMPETITION EDITOR -->
+<div class="block-editor" id="comp-editor">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeCompEditor()">← Volver</button>
+    <div class="be-title" id="comp-editor-title">Agregar competencia</div>
+  </div>
+  <div class="be-scroll">
+    <input type="hidden" id="comp-edit-id">
+    <div class="be-field">
+      <label class="be-label">Nombre de la competencia</label>
+      <input class="be-input" id="comp-name-inp" type="text" placeholder="Ej: CrossFit Open 2027, Wodapalooza...">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Fecha</label>
+      <input class="be-input" id="comp-date-inp" type="date">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Objetivo</label>
+      <input class="be-input" id="comp-goal-inp" type="text" placeholder="Ej: Clasificar a Semifinals, Top 10...">
+    </div>
+    <div class="be-field" style="display:flex;align-items:center;gap:10px;padding:10px 0">
+      <input type="checkbox" id="comp-primary-inp" style="width:18px;height:18px;accent-color:var(--accent)">
+      <label class="be-label" style="margin:0;cursor:pointer" for="comp-primary-inp">Meta principal</label>
+    </div>
+    <button class="be-save" onclick="saveComp()">Guardar</button>
+    <button class="be-delete" id="comp-delete-btn" onclick="deleteComp()" style="display:none">Eliminar</button>
+    <div style="height:24px"></div>
+  </div>
 </div>
 
 <!-- COACH OVERLAY -->
@@ -608,6 +620,8 @@ function setupUI(){
 
   initHome();
   initWeek();
+  loadHomeStats();
+  renderHomeComps();
 }
 
 function onAvatarClick(){
@@ -757,6 +771,7 @@ function switchScreen(name){
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   if(name === 'prs') renderPRs();
+  if(name === 'cal') renderGoals();
 }
 
 // COACH
@@ -899,6 +914,8 @@ async function saveBlock(){
   await loadBlocks(prog);
   initHome();
   initWeek();
+  loadHomeStats();
+  renderHomeComps();
 }
 
 async function deleteBlock(){
@@ -912,8 +929,174 @@ async function deleteBlock(){
   await loadBlocks(b?.program_slug||'compete');
   initHome();
   initWeek();
+  loadHomeStats();
+  renderHomeComps();
 }
 
+
+
+// ── HOME STATS (dynamic PRs) ──────────────────────────
+const PR_HOME_COMPETE = ['Deadlift','Snatch','Clean & Jerk'];
+const PR_HOME_OLYMPUS = ['Bench Press','Back Squat','Strict Press'];
+const PR_HOME_GAMES   = ['Deadlift','Snatch','Clean & Jerk'];
+
+async function loadHomeStats(){
+  const prog = currentProfile?.program || 'compete';
+  const keys = prog === 'olympus' ? PR_HOME_OLYMPUS : prog === 'games' ? PR_HOME_GAMES : PR_HOME_COMPETE;
+  const {data} = await sb.from('prs').select('name,value,unit').eq('athlete_id', currentUser.id).in('name', keys);
+  const container = document.getElementById('hero-stats');
+  if(!container) return;
+  if(!data || !data.length){
+    container.innerHTML = keys.map(k=>`<div class="hero-stat"><div class="hstat-val">—</div><div class="hstat-lbl">${k}</div></div>`).join('');
+    return;
+  }
+  container.innerHTML = keys.map(k=>{
+    const pr = data.find(p=>p.name===k);
+    const val = pr ? pr.value + (pr.unit ? ' ' + pr.unit : '') : '—';
+    return `<div class="hero-stat"><div class="hstat-val">${val}</div><div class="hstat-lbl">${k}</div></div>`;
+  }).join('');
+}
+
+// ── COMPETITIONS ──────────────────────────────────────
+function daysUntilDate(dateStr){
+  const t = new Date(dateStr + 'T00:00:00');
+  const n = new Date(); n.setHours(0,0,0,0);
+  return Math.ceil((t - n) / 86400000);
+}
+
+async function loadCompetitions(){
+  const {data} = await sb.from('competitions')
+    .select('*')
+    .eq('athlete_id', currentUser.id)
+    .order('date', {ascending: true});
+  return data || [];
+}
+
+async function renderGoals(){
+  const comps = await loadCompetitions();
+  const container = document.getElementById('goals-content');
+  if(!comps.length){
+    container.innerHTML = `
+      <div style="padding:40px 0;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
+        Sin competencias agregadas aún.<br><br>
+        <button onclick="openAddComp()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primera competencia</button>
+      </div>`;
+    return;
+  }
+  const upcoming = comps.filter(c => daysUntilDate(c.date) >= 0);
+  const past = comps.filter(c => daysUntilDate(c.date) < 0);
+
+  let html = '';
+  if(upcoming.length){
+    html += upcoming.map(c => {
+      const days = daysUntilDate(c.date);
+      const dateStr = new Date(c.date + 'T00:00:00').toLocaleDateString('es-MX', {day:'numeric', month:'long', year:'numeric'});
+      return `<div class="comp-card" style="${c.is_primary?'border-color:#333':''}" onclick="openEditComp('${c.id}','${c.name.replace(/'/g,"\'")}','${c.date}','${(c.goal||'').replace(/'/g,"\'")}',${c.is_primary})">
+        <div>
+          <div class="comp-name">${c.name}</div>
+          <div class="comp-date">${dateStr}</div>
+          ${c.goal ? `<div class="comp-goal">${c.goal}</div>` : ''}
+          <div class="goal-tag ${c.is_primary?'gt-primary':'gt-secondary'}">${c.is_primary?'Meta principal':'Objetivo'}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="comp-days-num">${days}</div>
+          <div class="comp-days-lbl">días</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if(past.length){
+    html += `<div style="padding:16px 0 8px"><div class="bm-sec-ttl">Historial</div></div>`;
+    html += past.reverse().map(c => {
+      const dateStr = new Date(c.date + 'T00:00:00').toLocaleDateString('es-MX', {day:'numeric', month:'long', year:'numeric'});
+      return `<div class="comp-card" style="opacity:0.5" onclick="openEditComp('${c.id}','${c.name.replace(/'/g,"\'")}','${c.date}','${(c.goal||'').replace(/'/g,"\'")}',${c.is_primary})">
+        <div>
+          <div class="comp-name">${c.name}</div>
+          <div class="comp-date">${dateStr}</div>
+          ${c.goal ? `<div class="comp-goal">${c.goal} ✓</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  container.innerHTML = html;
+}
+
+async function renderHomeComps(){
+  const comps = await loadCompetitions();
+  const container = document.getElementById('home-competitions');
+  if(!container) return;
+  const upcoming = comps.filter(c => daysUntilDate(c.date) >= 0).slice(0, 2);
+  if(!upcoming.length){
+    container.innerHTML = `<div style="font-family:var(--font-m);font-size:10px;color:var(--text3);padding:8px 0">Sin competencias próximas. <span style="color:var(--accent);cursor:pointer" onclick="switchScreen('cal')">Agregar →</span></div>`;
+    return;
+  }
+  container.innerHTML = upcoming.map(c => {
+    const days = daysUntilDate(c.date);
+    const dateStr = new Date(c.date + 'T00:00:00').toLocaleDateString('es-MX', {month:'short', year:'numeric'});
+    return `<div class="comp-card">
+      <div>
+        <div class="comp-name">${c.name}</div>
+        <div class="comp-date">${dateStr}</div>
+        ${c.goal ? `<div class="comp-goal">${c.goal}</div>` : ''}
+        <div class="goal-tag ${c.is_primary?'gt-primary':'gt-secondary'}">${c.is_primary?'Meta principal':'Objetivo'}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="comp-days-num">${days}</div>
+        <div class="comp-days-lbl">días</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddComp(){
+  document.getElementById('comp-edit-id').value = '';
+  document.getElementById('comp-editor-title').textContent = 'Agregar competencia';
+  document.getElementById('comp-name-inp').value = '';
+  document.getElementById('comp-date-inp').value = '';
+  document.getElementById('comp-goal-inp').value = '';
+  document.getElementById('comp-primary-inp').checked = false;
+  document.getElementById('comp-delete-btn').style.display = 'none';
+  document.getElementById('comp-editor').classList.add('open');
+}
+
+function openEditComp(id, name, date, goal, isPrimary){
+  document.getElementById('comp-edit-id').value = id;
+  document.getElementById('comp-editor-title').textContent = 'Editar competencia';
+  document.getElementById('comp-name-inp').value = name;
+  document.getElementById('comp-date-inp').value = date;
+  document.getElementById('comp-goal-inp').value = goal;
+  document.getElementById('comp-primary-inp').checked = isPrimary;
+  document.getElementById('comp-delete-btn').style.display = 'block';
+  document.getElementById('comp-editor').classList.add('open');
+}
+
+function closeCompEditor(){ document.getElementById('comp-editor').classList.remove('open'); }
+
+async function saveComp(){
+  const id = document.getElementById('comp-edit-id').value;
+  const data = {
+    athlete_id: currentUser.id,
+    name: document.getElementById('comp-name-inp').value.trim(),
+    date: document.getElementById('comp-date-inp').value,
+    goal: document.getElementById('comp-goal-inp').value.trim(),
+    is_primary: document.getElementById('comp-primary-inp').checked,
+  };
+  if(!data.name || !data.date) return;
+  if(id){ await sb.from('competitions').update(data).eq('id', id); }
+  else { await sb.from('competitions').insert(data); }
+  closeCompEditor();
+  renderGoals();
+  renderHomeComps();
+}
+
+async function deleteComp(){
+  const id = document.getElementById('comp-edit-id').value;
+  if(!id || !confirm('Eliminar esta competencia?')) return;
+  await sb.from('competitions').delete().eq('id', id);
+  closeCompEditor();
+  renderGoals();
+  renderHomeComps();
+}
 
 // ── PRs ──────────────────────────────────────────────
 const PR_CATEGORIES = {
