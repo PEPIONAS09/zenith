@@ -537,6 +537,7 @@ let currentAthId = null;
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
+let athleteProgs = JSON.parse(localStorage.getItem('z_progs')||'{}');
 
 function daysUntil(y,m,d){ const t=new Date(y,m-1,d); const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((t-n)/86400000); }
 function getWeek(d){ const u=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dy=u.getUTCDay()||7; u.setUTCDate(u.getUTCDate()+4-dy); const ys=new Date(Date.UTC(u.getUTCFullYear(),0,1)); return Math.ceil((((u-ys)/86400000)+1)/7); }
