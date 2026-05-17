@@ -1013,6 +1013,23 @@ async function saveBlock(){
   if(error){ alert('Error al guardar: ' + error.message); return; }
   closeBlockEditor();
   currentWeekNumber = weekNum;
+
+  // Send email notification to athletes
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/notify-athletes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({
+        program_slug: prog,
+        week_number: weekNum,
+        block_name: data.name
+      })
+    });
+  } catch(e){ console.log('Notification skipped:', e.message); }
+
   // If we are in athlete week view, reload that view
   const athView = document.getElementById('ath-week-view');
   if(athView && athView.style.display === 'flex' && currentAthWeekProfile){
