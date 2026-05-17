@@ -912,10 +912,17 @@ function updateProgUI(prog){
 }
 async function switchProg(prog){
   if(!currentAthId) return;
-  await sb.from('profiles').update({program:prog}).eq('id',currentAthId);
+  const {error} = await sb.from('profiles').update({program:prog}).eq('id',currentAthId);
+  if(error){ alert('Error al cambiar programa: ' + error.message); return; }
+  // Update local state
   const a = athletes.find(x=>x.id===currentAthId);
   if(a) a.program = prog;
+  athleteProgs[currentAthId] = prog;
+  localStorage.setItem('z_progs', JSON.stringify(athleteProgs));
   updateProgUI(prog);
+  // Show confirmation
+  const btn = document.getElementById('psw-'+prog);
+  if(btn){ const orig = btn.textContent; btn.textContent = '✓ Guardado'; setTimeout(()=>btn.textContent=orig, 1200); }
 }
 async function saveNote(){
   if(!currentAthId) return;
