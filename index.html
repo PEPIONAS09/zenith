@@ -401,6 +401,47 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- ADD ATHLETE -->
+<div class="block-editor" id="add-athlete-editor" style="z-index:250">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeAddAthlete()">← Volver</button>
+    <div class="be-title">Nuevo atleta</div>
+  </div>
+  <div class="be-scroll">
+    <div class="be-field">
+      <label class="be-label">Nombre completo</label>
+      <input class="be-input" id="ath-fullname" type="text" placeholder="Nombre Apellido">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Iniciales</label>
+      <input class="be-input" id="ath-initials" type="text" placeholder="NA" maxlength="3">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Email</label>
+      <input class="be-input" id="ath-email" type="email" placeholder="atleta@email.com">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Contraseña temporal</label>
+      <input class="be-input" id="ath-password" type="text" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Programa</label>
+      <select class="be-select" id="ath-program">
+        <option value="compete">⚡ Compete</option>
+        <option value="olympus">◈ Olympus</option>
+        <option value="games">🎮 Games</option>
+      </select>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Objetivo</label>
+      <input class="be-input" id="ath-goal" type="text" placeholder="Clasificar al Open, Hipertrofia...">
+    </div>
+    <button class="be-save" onclick="createAthlete()">Crear atleta</button>
+    <div id="ath-create-msg" style="margin-top:12px;font-family:var(--font-m);font-size:11px;text-align:center;min-height:16px"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
 <!-- PASSWORD CHANGE -->
 <div class="block-editor" id="pw-editor">
   <div class="be-header">
@@ -426,7 +467,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="coach-overlay" id="coach-overlay">
   <div class="co-header">
     <div class="co-title">COACH VIEW</div>
-    <button class="co-close" onclick="closeCoach()">✕ Cerrar</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Atleta</button>
+      <button class="co-close" onclick="closeCoach()">✕</button>
+    </div>
   </div>
   <div class="ath-list" id="ath-list"></div>
 </div>
@@ -1235,6 +1279,82 @@ async function deleteComp(){
   renderHomeComps();
 }
 
+
+
+// ── ADD ATHLETE ───────────────────────────────────────
+function openAddAthlete(){
+  document.getElementById('ath-fullname').value = '';
+  document.getElementById('ath-initials').value = '';
+  document.getElementById('ath-email').value = '';
+  document.getElementById('ath-password').value = '';
+  document.getElementById('ath-program').value = 'compete';
+  document.getElementById('ath-goal').value = '';
+  document.getElementById('ath-create-msg').textContent = '';
+  document.getElementById('add-athlete-editor').classList.add('open');
+}
+
+function closeAddAthlete(){
+  document.getElementById('add-athlete-editor').classList.remove('open');
+}
+
+async function createAthlete(){
+  const full_name = document.getElementById('ath-fullname').value.trim();
+  const initials = document.getElementById('ath-initials').value.trim().toUpperCase();
+  const email = document.getElementById('ath-email').value.trim();
+  const password = document.getElementById('ath-password').value.trim();
+  const program = document.getElementById('ath-program').value;
+  const goal = document.getElementById('ath-goal').value.trim();
+  const msg = document.getElementById('ath-create-msg');
+
+  if(!full_name || !email || !password){
+    msg.textContent = 'Nombre, email y contraseña son obligatorios';
+    msg.style.color = '#ff4444';
+    return;
+  }
+  if(password.length < 6){
+    msg.textContent = 'La contraseña debe tener al menos 6 caracteres';
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  msg.textContent = 'Creando atleta...';
+  msg.style.color = 'var(--text3)';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-athlete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({ full_name, initials: initials || full_name.substring(0,2).toUpperCase(), email, password, program, goal })
+    });
+
+    const data = await res.json();
+
+    if(data.error){
+      msg.textContent = 'Error: ' + data.error;
+      msg.style.color = '#ff4444';
+      return;
+    }
+
+    msg.textContent = '✓ Atleta creado exitosamente';
+    msg.style.color = 'var(--accent)';
+
+    // Refresh athlete list
+    const {data: newAthletes} = await sb.from('profiles').select('*').eq('role','athlete');
+    athletes = newAthletes || [];
+
+    setTimeout(()=>{
+      closeAddAthlete();
+      renderAthList();
+    }, 1500);
+
+  } catch(err){
+    msg.textContent = 'Error: ' + err.message;
+    msg.style.color = '#ff4444';
+  }
+}
 
 // ── PASSWORD CHANGE ───────────────────────────────────
 function openPWEditor(){
