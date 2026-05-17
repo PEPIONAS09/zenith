@@ -395,6 +395,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- PASSWORD CHANGE -->
+<div class="block-editor" id="pw-editor">
+  <div class="be-header">
+    <button class="ad-back" onclick="closePWEditor()">← Volver</button>
+    <div class="be-title">Cambiar contraseña</div>
+  </div>
+  <div class="be-scroll">
+    <div class="be-field">
+      <label class="be-label">Nueva contraseña</label>
+      <input class="be-input" id="pw-new" type="password" placeholder="Mínimo 6 caracteres">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Confirmar contraseña</label>
+      <input class="be-input" id="pw-confirm" type="password" placeholder="Repite la contraseña">
+    </div>
+    <button class="be-save" onclick="savePassword()">Guardar contraseña</button>
+    <div id="pw-msg" style="margin-top:12px;font-family:var(--font-m);font-size:11px;text-align:center;min-height:16px"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
 <!-- COACH OVERLAY -->
 <div class="coach-overlay" id="coach-overlay">
   <div class="co-header">
@@ -673,6 +694,7 @@ function openUserMenu(){
   menu.innerHTML = `
     <div style="padding:10px 16px;font-family:var(--font-m);font-size:10px;color:var(--text3);border-bottom:1px solid var(--border)">${currentProfile?.full_name||'Mi cuenta'} · ${isCoach?'Coach':'Atleta'}</div>
     ${coachBtn}
+    <button onclick="document.getElementById('user-menu').remove();openPWEditor()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🔑 Cambiar contraseña</button>
     <button onclick="doLogout()" style="width:100%;padding:13px 16px;background:none;border:none;font-family:var(--font-m);font-size:11px;color:#ff4444;cursor:pointer;text-align:left;letter-spacing:0.05em">⎋ Cerrar sesión</button>
   `;
   document.body.appendChild(menu);
@@ -1181,6 +1203,50 @@ async function deleteComp(){
   closeCompEditor();
   renderGoals();
   renderHomeComps();
+}
+
+
+// ── PASSWORD CHANGE ───────────────────────────────────
+function openPWEditor(){
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-msg').textContent = '';
+  document.getElementById('pw-msg').style.color = 'var(--text3)';
+  document.getElementById('pw-editor').classList.add('open');
+}
+
+function closePWEditor(){
+  document.getElementById('pw-editor').classList.remove('open');
+}
+
+async function savePassword(){
+  const newPw = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const msg = document.getElementById('pw-msg');
+
+  if(newPw.length < 6){
+    msg.textContent = 'La contraseña debe tener al menos 6 caracteres';
+    msg.style.color = '#ff4444';
+    return;
+  }
+  if(newPw !== confirm){
+    msg.textContent = 'Las contraseñas no coinciden';
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  msg.textContent = 'Guardando...';
+  msg.style.color = 'var(--text3)';
+
+  const {error} = await sb.auth.updateUser({password: newPw});
+  if(error){
+    msg.textContent = 'Error: ' + error.message;
+    msg.style.color = '#ff4444';
+  } else {
+    msg.textContent = '✓ Contraseña actualizada';
+    msg.style.color = 'var(--accent)';
+    setTimeout(()=>closePWEditor(), 1500);
+  }
 }
 
 // ── PRs ──────────────────────────────────────────────
