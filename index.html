@@ -914,9 +914,13 @@ function backToList(){
 
 // BLOCK EDITOR
 function openBlockEditor(blockId, e){ e.stopPropagation();
-  const allB = Object.values(allBlocks).flat();
+  // Search in both allBlocks and athWeekBlocks
+  const allB = [
+    ...Object.values(allBlocks).flat(),
+    ...Object.values(athWeekBlocks).flat()
+  ];
   const b = allB.find(x=>x.id===blockId);
-  if(!b) return;
+  if(!b){ console.error('Block not found:', blockId); return; }
   document.getElementById('be-block-id').value = b.id;
   document.getElementById('be-name').value = b.name||'';
   document.getElementById('be-meta').value = b.meta||'';
