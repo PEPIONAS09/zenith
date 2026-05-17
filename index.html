@@ -825,13 +825,20 @@ function showDay(dow){
   document.getElementById('dayc-'+dow).style.display='block';
 }
 
-function switchScreen(name){
+async function switchScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   if(name === 'prs') renderPRs();
   if(name === 'cal') renderGoals();
+  if(name === 'week'){
+    weekOffset = 0;
+    currentWeekNumber = 1;
+    const prog = currentProfile?.program || 'compete';
+    await loadBlocks(prog, 1);
+    initWeek();
+  }
 }
 
 // COACH
@@ -914,8 +921,9 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-name').value = b.name||'';
   document.getElementById('be-meta').value = b.meta||'';
   document.getElementById('be-program').value = b.program_slug||'compete';
-  document.getElementById('be-week-num').value = b.week_number||1;
+  document.getElementById('be-week-num').value = b.week_number||currentWeekNumber||1;
   document.getElementById('be-day').value = b.day_of_week;
+  currentWeekNumber = b.week_number || currentWeekNumber || 1;
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-type').value = b.score_type||'';
@@ -979,9 +987,16 @@ async function saveBlock(){
   if(error){ alert('Error al guardar: ' + error.message); return; }
   closeBlockEditor();
   currentWeekNumber = weekNum;
-  await loadBlocks(prog, weekNum);
-  initHome();
-  initWeek();
+  // If we are in athlete week view, reload that view
+  const athView = document.getElementById('ath-week-view');
+  if(athView && athView.style.display === 'flex' && currentAthWeekProfile){
+    await loadAthWeekBlocks(currentAthWeekProfile);
+    renderAthWeek(currentAthWeekProfile);
+  } else {
+    await loadBlocks(prog, weekNum);
+    initHome();
+    initWeek();
+  }
 }
 
 async function deleteBlock(){
@@ -1509,6 +1524,18 @@ function renderAthWeek(a){
   });
 }
 
+
+function openBlockEditorAth(blockId, e){
+  e.stopPropagation();
+  // Find block in athWeekBlocks
+  const allB = Object.values(athWeekBlocks).flat();
+  const b = allB.find(x=>x.id===blockId);
+  if(!b) return;
+  // Set currentWeekNumber to athlete's current week
+  currentWeekNumber = Math.max(1, 1 + athWeekOffset);
+  openBlockEditor(blockId, e);
+}
+
 function renderBlockCoachView(b){
   return `<div class="block" id="athblk-${b.id}">
     <div class="block-hdr" onclick="toggleAthBlock('${b.id}')">
@@ -1527,7 +1554,7 @@ function renderBlockCoachView(b){
         <div class="score-lbl">Scores del atleta</div>
         <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div></div>
       </div>
-      <button onclick="openBlockEditor('${b.id}',event)" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar bloque</button>
+      <button onclick="openBlockEditorAth('${b.id}',event)" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar bloque</button>
     </div>
   </div>`;
 }
