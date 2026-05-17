@@ -1023,7 +1023,7 @@ async function saveBlock(){
 
   // Send email notification to athletes
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/notify-athletes`, {
+    await fetch(`${SUPABASE_URL}/functions/v1/bright-task`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
