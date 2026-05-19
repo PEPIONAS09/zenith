@@ -472,6 +472,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <button class="co-close" onclick="closeCoach()">✕</button>
     </div>
   </div>
+  <div style="padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2)">
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Semana actual por programa</div>
+    <div style="display:flex;flex-direction:column;gap:6px" id="week-controls"></div>
+  </div>
   <div class="ath-list" id="ath-list"></div>
 </div>
 
@@ -616,6 +620,7 @@ let currentScale = {};
 let currentAthId = null;
 let weekOffset = 0;
 let currentWeekNumber = 1;
+let programWeeks = {};
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
@@ -683,8 +688,11 @@ async function init(){
   });
 
   const prog = currentProfile?.program || 'compete';
-  currentWeekNumber = 1;
-  await loadBlocks(prog, 1);
+  // Load program weeks from Supabase
+  const {data: pwData} = await sb.from('program_weeks').select('*');
+  if(pwData) pwData.forEach(pw => programWeeks[pw.program_slug] = pw.current_week);
+  currentWeekNumber = programWeeks[prog] || 1;
+  await loadBlocks(prog, currentWeekNumber);
   setupUI();
   document.getElementById('loading').classList.add('hidden');
 }
@@ -849,9 +857,9 @@ function getMainWeekDates(offset){
 
 async function changeWeek(dir){
   weekOffset += dir;
-  // Week number = current week + offset, minimum 1
-  currentWeekNumber = Math.max(1, 1 + weekOffset);
   const prog = currentProfile?.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  currentWeekNumber = Math.max(1, baseWeek + weekOffset);
   await loadBlocks(prog, currentWeekNumber);
   initWeek();
 }
@@ -867,8 +875,10 @@ function initWeek(){
   const activeDow = weekOffset === 0 ? todayDow : 1;
 
   const lbl = document.getElementById('main-week-label');
-  const weekNum = Math.max(1, 1 + weekOffset);
-  if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
+  const prog = currentProfile?.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const weekNum = Math.max(1, baseWeek + weekOffset);
+  if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
@@ -918,8 +928,44 @@ async function openCoach(){
   const {data} = await sb.from('profiles').select('*').eq('role','athlete');
   athletes = data || [];
   renderAthList();
+  renderWeekControls();
   document.getElementById('coach-overlay').classList.add('open');
   document.getElementById('ath-detail').classList.remove('open');
+}
+
+function renderWeekControls(){
+  const container = document.getElementById('week-controls');
+  if(!container) return;
+  const progs = [
+    {slug:'games', label:'Games', color:'var(--accent)'},
+    {slug:'compete', label:'Compete', color:'var(--accent)'},
+    {slug:'olympus', label:'Olympus', color:'var(--purple)'}
+  ];
+  container.innerHTML = progs.map(p => {
+    const week = programWeeks[p.slug] || 1;
+    return `<div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:var(--font-m);font-size:9px;color:${p.color};text-transform:uppercase;letter-spacing:0.05em;width:60px">${p.label}</span>
+      <button onclick="adjustProgramWeek('${p.slug}',-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:2px 8px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">−</button>
+      <span id="pw-${p.slug}" style="font-family:var(--font-m);font-size:12px;color:var(--text);min-width:60px;text-align:center">Sem ${week}</span>
+      <button onclick="adjustProgramWeek('${p.slug}',1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:2px 8px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">+</button>
+    </div>`;
+  }).join('');
+}
+
+async function adjustProgramWeek(prog, dir){
+  const current = programWeeks[prog] || 1;
+  const newWeek = Math.max(1, current + dir);
+  await updateProgramWeek(prog, newWeek);
+  const el = document.getElementById('pw-' + prog);
+  if(el) el.textContent = 'Sem ' + newWeek;
+  // If this is coach's own program, reload
+  if(prog === currentProfile?.program){
+    currentWeekNumber = newWeek;
+    weekOffset = 0;
+    await loadBlocks(prog, newWeek);
+    initHome();
+    initWeek();
+  }
 }
 function closeCoach(){
   document.getElementById('coach-overlay').classList.remove('open');
@@ -1689,7 +1735,8 @@ async function openAthWeek(){
 
 async function loadAthWeekBlocks(a){
   const prog = athleteProgs[a?.id] || a?.program || 'compete';
-  const week = Math.max(1, 1 + athWeekOffset);
+  const baseWeek = programWeeks[prog] || 1;
+  const week = Math.max(1, baseWeek + athWeekOffset);
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', prog)
     .eq('week_number', week)
@@ -1704,15 +1751,22 @@ async function changeAthWeek(dir){
   renderAthWeek(currentAthWeekProfile);
 }
 
+async function updateProgramWeek(prog, week){
+  await sb.from('program_weeks').update({current_week: week, updated_at: new Date()}).eq('program_slug', prog);
+  programWeeks[prog] = week;
+}
+
 function renderAthWeek(a){
   const tabBar = document.getElementById('ath-day-tabs');
   const content = document.getElementById('ath-week-content');
   tabBar.innerHTML = ''; content.innerHTML = '';
 
   const {label} = getWeekDates(athWeekOffset);
-  const weekNum = Math.max(1, 1 + athWeekOffset);
+  const athProg = athleteProgs[a?.id] || a?.program || 'compete';
+  const athBaseWeek = programWeeks[athProg] || 1;
+  const weekNum = Math.max(1, athBaseWeek + athWeekOffset);
   const weekLbl = document.getElementById('ath-week-label');
-  if(weekLbl) weekLbl.textContent = 'Semana ' + weekNum + ' · ' + label;
+  if(weekLbl) weekLbl.textContent = 'Semana ' + weekNum + (athWeekOffset===0?' (actual)':'') + ' · ' + label;
 
   const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const order = [1,2,3,4,5,6,0];
