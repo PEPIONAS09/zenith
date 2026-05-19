@@ -875,7 +875,6 @@ function initWeek(){
   const activeDow = weekOffset === 0 ? todayDow : 1;
 
   const lbl = document.getElementById('main-week-label');
-  const prog = currentProfile?.program || 'compete';
   const baseWeek = programWeeks[prog] || 1;
   const weekNum = Math.max(1, baseWeek + weekOffset);
   if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
