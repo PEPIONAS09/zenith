@@ -224,6 +224,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .add-block-btn{display:flex;align-items:center;gap:8px;padding:14px 16px;border:1px dashed var(--border2);border-radius:4px;cursor:pointer;background:none;width:100%;font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
 .add-block-btn:active{background:var(--bg2)}
 
+/* COMPLETED BLOCK */
+.block.completed{border-color:#1D9E75;background:#0d1f1a}
+.block.completed .block-hdr{opacity:0.7}
+.complete-btn{width:100%;margin-top:12px;background:none;border:1px solid var(--border2);border-radius:2px;padding:9px;font-family:var(--font-m);font-size:10px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s}
+.complete-btn:active{opacity:0.7}
+.complete-btn.done{background:#0d1f1a;border-color:#1D9E75;color:#1D9E75}
+.done-banner{display:none;padding:12px 16px;background:#0d1f1a;border-top:1px solid #1D9E75;text-align:center}
+.done-banner.show{display:block}
+.done-banner-text{font-family:var(--font-m);font-size:11px;color:#1D9E75;letter-spacing:0.1em;text-transform:uppercase}
+
+/* PULL TO REFRESH */
+.ptr-indicator{height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:height 0.2s;background:var(--bg2);flex-shrink:0}
+.ptr-indicator.visible{height:44px}
+.ptr-spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* LOADING */
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .loading-overlay.hidden{display:none}
@@ -265,6 +281,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
   <div class="screens">
     <!-- HOME -->
+    <div class="ptr-indicator" id="ptr-home"><div class="ptr-spinner"></div></div>
     <div class="screen active" id="screen-home">
       <div class="hero">
         <div class="hero-tag" id="hero-tag">Atleta</div>
@@ -285,6 +302,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
 
     <!-- WEEK -->
+    <div class="ptr-indicator" id="ptr-week"><div class="ptr-spinner"></div></div>
     <div class="screen screen-week" id="screen-week">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
         <button onclick="changeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
@@ -621,6 +639,7 @@ let currentAthId = null;
 let weekOffset = 0;
 let currentWeekNumber = 1;
 let programWeeks = {};
+let completedBlocks = JSON.parse(localStorage.getItem('z_completed')||'{}');
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
@@ -692,6 +711,7 @@ async function init(){
   const {data: pwData} = await sb.from('program_weeks').select('*');
   if(pwData) pwData.forEach(pw => programWeeks[pw.program_slug] = pw.current_week);
   currentWeekNumber = programWeeks[prog] || 1;
+  weekOffset = 0;
   await loadBlocks(prog, currentWeekNumber);
   setupUI();
   document.getElementById('loading').classList.add('hidden');
@@ -795,6 +815,10 @@ function renderBlock(b){
         <button onclick="openScoreHistory('${b.id}', this);event.stopPropagation()" data-bname="${b.name}" style="margin-top:8px;width:100%;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-align:left;padding:0;letter-spacing:0.05em">Ver historial completo →</button>
       </div>
       ${editBtn}
+      ${isCoach ? '' : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
+      <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
+        <div class="done-banner-text">💪 Buen trabajo — bloque completado</div>
+      </div>
     </div>
   </div>`;
 }
@@ -915,9 +939,9 @@ async function switchScreen(name){
   if(name === 'cal') renderGoals();
   if(name === 'week'){
     weekOffset = 0;
-    currentWeekNumber = 1;
     const prog = currentProfile?.program || 'compete';
-    await loadBlocks(prog, 1);
+    currentWeekNumber = programWeeks[prog] || 1;
+    await loadBlocks(prog, currentWeekNumber);
     initWeek();
   }
 }
@@ -1867,7 +1891,78 @@ function closeAthWeek(){
   overlay.style.display = 'none';
 }
 
+
+// ── COMPLETE BLOCKS ───────────────────────────────────
+function toggleComplete(blockId, e){
+  e.stopPropagation();
+  const isCoach = currentProfile?.role === 'coach';
+  if(isCoach) return;
+  
+  completedBlocks[blockId] = !completedBlocks[blockId];
+  localStorage.setItem('z_completed', JSON.stringify(completedBlocks));
+  
+  const blk = document.getElementById('blk-' + blockId);
+  if(!blk) return;
+  
+  const btn = blk.querySelector('.complete-btn');
+  const banner = document.getElementById('done-' + blockId);
+  
+  if(completedBlocks[blockId]){
+    blk.classList.add('completed');
+    if(btn){ btn.textContent = '✓ Completado'; btn.classList.add('done'); }
+    if(banner){ banner.classList.add('show'); }
+  } else {
+    blk.classList.remove('completed');
+    if(btn){ btn.textContent = 'Marcar como completado'; btn.classList.remove('done'); }
+    if(banner){ banner.classList.remove('show'); }
+  }
+}
+
+// ── PULL TO REFRESH ───────────────────────────────────
+function initPullToRefresh(){
+  const screens = document.querySelectorAll('.screen, .week-scroll, .ad-scroll');
+  screens.forEach(screen => {
+    let startY = 0;
+    let isPulling = false;
+    
+    screen.addEventListener('touchstart', e => {
+      if(screen.scrollTop === 0) startY = e.touches[0].clientY;
+    }, {passive: true});
+    
+    screen.addEventListener('touchmove', e => {
+      if(startY === 0) return;
+      const delta = e.touches[0].clientY - startY;
+      if(delta > 60 && !isPulling){
+        isPulling = true;
+        const ptr = screen.previousElementSibling;
+        if(ptr && ptr.classList.contains('ptr-indicator')) ptr.classList.add('visible');
+      }
+    }, {passive: true});
+    
+    screen.addEventListener('touchend', async () => {
+      if(isPulling){
+        isPulling = false; startY = 0;
+        const ptr = screen.previousElementSibling;
+        if(ptr && ptr.classList.contains('ptr-indicator')) ptr.classList.remove('visible');
+        await refreshApp();
+      } else { startY = 0; }
+    });
+  });
+}
+
+async function refreshApp(){
+  const prog = currentProfile?.program || 'compete';
+  const {data: pwData} = await sb.from('program_weeks').select('*');
+  if(pwData) pwData.forEach(pw => programWeeks[pw.program_slug] = pw.current_week);
+  currentWeekNumber = programWeeks[prog] || 1;
+  weekOffset = 0;
+  await loadBlocks(prog, currentWeekNumber);
+  initHome();
+  initWeek();
+}
+
 init();
+initPullToRefresh();
 
 // Register service worker for PWA
 if('serviceWorker' in navigator){
