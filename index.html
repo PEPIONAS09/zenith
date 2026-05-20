@@ -492,6 +492,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- NOTIFY PANEL -->
+<div class="block-editor" id="notify-panel" style="z-index:250">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeNotifyPanel()">← Volver</button>
+    <div class="be-title">Notificar atletas</div>
+  </div>
+  <div class="be-scroll">
+    <div style="margin-bottom:20px;padding:14px;background:var(--bg2);border-radius:4px;border-left:2px solid var(--accent)">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Preview del email</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">"Tu ZENITH te llama. La programación a tu mejor versión está lista. Hora de entrenar."</div>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Enviar a</label>
+      <div style="display:flex;flex-direction:column;gap:8px" id="notify-targets">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="notify-compete" checked style="width:16px;height:16px;accent-color:var(--accent)">
+          <span style="font-family:var(--font-m);font-size:11px;color:var(--text)">⚡ Compete</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="notify-olympus" checked style="width:16px;height:16px;accent-color:var(--accent)">
+          <span style="font-family:var(--font-m);font-size:11px;color:var(--text)">◈ Olympus</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="notify-games" style="width:16px;height:16px;accent-color:var(--accent)">
+          <span style="font-family:var(--font-m);font-size:11px;color:var(--text)">🎮 Games</span>
+        </label>
+      </div>
+    </div>
+    <button class="be-save" onclick="sendNotifications()" id="notify-send-btn">✉ Enviar notificación</button>
+    <div id="notify-msg" style="margin-top:12px;font-family:var(--font-m);font-size:11px;text-align:center;min-height:16px"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
 <!-- PASSWORD CHANGE -->
 <div class="block-editor" id="pw-editor">
   <div class="be-header">
@@ -519,6 +553,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="co-title">COACH VIEW</div>
     <div style="display:flex;gap:8px">
       <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Atleta</button>
+      <button onclick="openNotifyPanel()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✉ Notificar</button>
       <button class="co-close" onclick="closeCoach()">✕</button>
     </div>
   </div>
@@ -1240,22 +1275,6 @@ async function saveBlock(){
   if(error){ alert('Error al guardar: ' + error.message); return; }
   closeBlockEditor();
   currentWeekNumber = weekNum;
-
-  // Send email notification to athletes
-  try {
-    await fetch(`${SUPABASE_URL}/functions/v1/bright-task`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      },
-      body: JSON.stringify({
-        program_slug: prog,
-        week_number: weekNum,
-        block_name: data.name
-      })
-    });
-  } catch(e){ console.log('Notification skipped:', e.message); }
 
   // If we are in athlete week view, reload that view
   const athView = document.getElementById('ath-week-view');
@@ -2202,6 +2221,67 @@ async function refreshApp(){
 
 
 
+
+
+// ── NOTIFICATIONS ─────────────────────────────────────
+function openNotifyPanel(){ document.getElementById('notify-panel').classList.add('open'); }
+function closeNotifyPanel(){ document.getElementById('notify-panel').classList.remove('open'); }
+
+async function sendNotifications(){
+  const btn = document.getElementById('notify-send-btn');
+  const msg = document.getElementById('notify-msg');
+  const programs = [];
+  if(document.getElementById('notify-compete')?.checked) programs.push('compete');
+  if(document.getElementById('notify-olympus')?.checked) programs.push('olympus');
+  if(document.getElementById('notify-games')?.checked) programs.push('games');
+
+  if(!programs.length){
+    msg.textContent = 'Selecciona al menos un programa';
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  msg.textContent = '';
+
+  let totalSent = 0;
+  let errors = [];
+
+  for(const prog of programs){
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/bright-task`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          program_slug: prog,
+          week_number: programWeeks[prog] || 1,
+          block_name: 'nueva programación',
+          custom_message: true
+        })
+      });
+      const data = await res.json();
+      if(data.sent) totalSent += data.sent;
+    } catch(e){
+      errors.push(prog);
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✉ Enviar notificación';
+
+  if(totalSent > 0){
+    msg.textContent = `✓ Notificación enviada a ${totalSent} atleta${totalSent>1?'s':''}`;
+    msg.style.color = 'var(--accent)';
+    setTimeout(()=>closeNotifyPanel(), 2000);
+  } else {
+    msg.textContent = errors.length ? 'Error al enviar' : 'Sin atletas en los programas seleccionados';
+    msg.style.color = '#ff4444';
+  }
+}
 
 // ── COPY / PASTE / DELETE BLOCKS ─────────────────────
 function copyBlock(blockId, e){
