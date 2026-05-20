@@ -2071,7 +2071,8 @@ function toggleStrengthFields(){
 function renderAutoWeight(b){
   const isCoach = currentProfile?.role === 'coach';
   // Try to get PR for this movement
-  const prKey = 'z_pr_' + b.base_movement?.replace(/\s+/g,'_');
+  const uid = currentUser?.id || '';
+  const prKey = 'z_pr_' + uid + '_' + b.base_movement;
   const prVal = parseFloat(localStorage.getItem(prKey));
   
   if(!prVal || isNaN(prVal)){
@@ -2091,10 +2092,11 @@ function renderAutoWeight(b){
 async function loadPRsToCache(){
   const {data} = await sb.from('prs').select('name,value,unit').eq('athlete_id', currentUser.id);
   if(!data) return;
+  const uid = currentUser.id;
   data.forEach(pr => {
     const num = parseFloat(pr.value);
     if(!isNaN(num)){
-      localStorage.setItem('z_pr_' + pr.name.replace(/\s+/g,'_'), num);
+      localStorage.setItem('z_pr_' + uid + '_' + pr.name, num);
     }
   });
 }
