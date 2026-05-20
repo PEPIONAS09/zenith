@@ -1012,6 +1012,8 @@ function initWeek(){
     content.appendChild(div);
     blocks.forEach(b=>loadBlockScores(b.id));
   });
+  // Show replace buttons if block is copied
+  setTimeout(updateReplaceBtns, 50);
 }
 
 function showDay(dow){
@@ -1019,6 +1021,7 @@ function showDay(dow){
   document.querySelectorAll('[id^=dayc-]').forEach(d=>d.style.display='none');
   document.getElementById('dtab-'+dow).classList.add('active');
   document.getElementById('dayc-'+dow).style.display='block';
+  setTimeout(updateReplaceBtns, 20);
 }
 
 async function switchScreen(name){
@@ -2118,6 +2121,7 @@ function showAthDay(dow){
   document.querySelectorAll('[id^=athdayc-]').forEach(d=>d.style.display='none');
   document.getElementById('athtab-'+dow).classList.add('active');
   document.getElementById('athdayc-'+dow).style.display='block';
+  setTimeout(updateReplaceBtns, 20);
 }
 
 function closeAthWeek(){
