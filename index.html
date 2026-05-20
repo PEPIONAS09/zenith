@@ -705,6 +705,7 @@ let weekOffset = 0;
 let currentWeekNumber = 1;
 let programWeeks = {};
 let completedBlocks = JSON.parse(localStorage.getItem('z_completed')||'{}');
+let copiedBlock = null;
 let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
@@ -878,7 +879,11 @@ function renderBlock(b){
         <button onclick="openScoreLogger('${b.id}','${b.name}','${b.score_format||'text'}',event)" style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">+ Registrar score</button>
       </div>
       ${editBtn}
-      ${isCoach ? '' : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
+      ${isCoach ? `
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button onclick="copyBlock('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Copiar</button>
+          <button onclick="confirmDeleteBlock('${b.id}','${b.name}',event)" style="flex:1;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕ Eliminar</button>
+        </div>` : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
         <div class="done-banner-text">💪 Buen trabajo — bloque completado</div>
       </div>
@@ -887,7 +892,8 @@ function renderBlock(b){
 }
 
 function renderAddBlockBtn(dow, prog){
-  return `<button class="add-block-btn" onclick="openNewBlock(${dow},'${prog}')">+ Agregar bloque</button>`;
+  const pasteBtn = copiedBlock ? `<button class="add-block-btn" onclick="pasteBlock(${dow},'${prog}')" style="border-color:var(--accent);color:var(--accent)">⎘ Pegar "${copiedBlock.name}"</button>` : '';
+  return `<button class="add-block-btn" onclick="openNewBlock(${dow},'${prog}')">+ Agregar bloque</button>${pasteBtn}`;
 }
 
 function toggleBlock(id){ document.getElementById('blk-'+id).classList.toggle('open'); }
@@ -2060,6 +2066,102 @@ async function refreshApp(){
 }
 
 
+
+
+// ── COPY / PASTE / DELETE BLOCKS ─────────────────────
+function copyBlock(blockId, e){
+  e.stopPropagation();
+  const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
+  const b = allB.find(x=>x.id===blockId);
+  if(!b) return;
+  copiedBlock = {...b, id: null}; // remove id so it inserts as new
+  
+  // Show toast
+  showToast('⎘ Bloque copiado: ' + b.name);
+  
+  // Refresh week to show paste buttons
+  initWeek();
+  initHome();
+}
+
+async function pasteBlock(dow, prog){
+  if(!copiedBlock) return;
+  
+  const data = {
+    program_slug: prog,
+    day_of_week: dow,
+    week_number: currentWeekNumber,
+    order_index: (allBlocks[dow]?.length || 0),
+    name: copiedBlock.name,
+    meta: copiedBlock.meta,
+    color: copiedBlock.color,
+    content: copiedBlock.content,
+    coach_note: copiedBlock.coach_note,
+    score_type: copiedBlock.score_type,
+    score_format: copiedBlock.score_format,
+    base_movement: copiedBlock.base_movement,
+    percentage: copiedBlock.percentage,
+    scaling_rx: copiedBlock.scaling_rx,
+    scaling_sc: copiedBlock.scaling_sc,
+    scaling_beg: copiedBlock.scaling_beg,
+  };
+  
+  const {error} = await sb.from('blocks').insert(data);
+  if(error){ showToast('Error: ' + error.message, true); return; }
+  
+  showToast('✓ Bloque pegado');
+  await loadBlocks(prog, currentWeekNumber);
+  initHome();
+  initWeek();
+}
+
+async function confirmDeleteBlock(blockId, blockName, e){
+  e.stopPropagation();
+  
+  // Show inline confirm instead of browser alert
+  const blk = document.getElementById('blk-' + blockId);
+  if(!blk) return;
+  
+  const existing = blk.querySelector('.delete-confirm');
+  if(existing){ existing.remove(); return; }
+  
+  const confirm = document.createElement('div');
+  confirm.className = 'delete-confirm';
+  confirm.style.cssText = 'margin-top:8px;padding:10px 12px;background:#1a0a0a;border:1px solid #ff4444;border-radius:2px;display:flex;align-items:center;justify-content:space-between;gap:8px';
+  confirm.innerHTML = `
+    <span style="font-family:var(--font-m);font-size:10px;color:#ff4444">¿Eliminar "${blockName}"?</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="this.closest('.delete-confirm').remove()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">No</button>
+      <button onclick="executeDeleteBlock('${blockId}')" style="background:#ff4444;border:none;border-radius:2px;padding:4px 10px;font-family:var(--font-m);font-size:9px;color:#fff;cursor:pointer">Sí, eliminar</button>
+    </div>`;
+  blk.querySelector('.block-body').appendChild(confirm);
+}
+
+async function executeDeleteBlock(blockId){
+  const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
+  const b = allB.find(x=>x.id===blockId);
+  const prog = b?.program_slug || currentProfile?.program || 'compete';
+  const weekNum = b?.week_number || currentWeekNumber || 1;
+  
+  await sb.from('blocks').delete().eq('id', blockId);
+  showToast('Bloque eliminado');
+  await loadBlocks(prog, weekNum);
+  initHome();
+  initWeek();
+}
+
+// ── TOAST NOTIFICATION ────────────────────────────────
+function showToast(msg, isError){
+  const existing = document.getElementById('toast');
+  if(existing) existing.remove();
+  
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:${isError?'#ff4444':'var(--accent)'};color:${isError?'#fff':'#000'};padding:10px 20px;border-radius:2px;font-family:var(--font-m);font-size:11px;font-weight:500;z-index:999;white-space:nowrap;letter-spacing:0.05em;transition:opacity 0.3s`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.style.opacity='0'; setTimeout(()=>toast.remove(), 300); }, 2000);
+}
 
 // ── AUTO WEIGHT ───────────────────────────────────────
 function toggleStrengthFields(){
