@@ -637,7 +637,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <div class="be-field">
       <label class="be-label">Formato de score</label>
-      <select class="be-select" id="be-score-format">
+      <select class="be-select" id="be-score-format" onchange="toggleStrengthFields()">
         <option value="weight_reps">Fuerza / Hipertrofia (peso + reps)</option>
         <option value="reps_notes">Gymnastics (sets + reps)</option>
         <option value="pace_hr">Engine (watts/pace + HR)</option>
@@ -646,6 +646,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="sets_notes">Barbell Cycling (sets + peso)</option>
         <option value="text">Libre (texto)</option>
       </select>
+    </div>
+    <div id="be-strength-fields" style="display:none">
+      <div class="be-field">
+        <label class="be-label">Movimiento base (para % automático)</label>
+        <select class="be-select" id="be-base-movement">
+          <option value="">— Sin cálculo automático —</option>
+          <option value="Deadlift">Deadlift</option>
+          <option value="Back Squat">Back Squat</option>
+          <option value="Front Squat">Front Squat</option>
+          <option value="Bench Press">Bench Press</option>
+          <option value="Strict Press">Strict Press</option>
+          <option value="Clean & Jerk">Clean & Jerk</option>
+          <option value="Snatch">Snatch</option>
+          <option value="Power Clean">Power Clean</option>
+          <option value="Power Snatch">Power Snatch</option>
+        </select>
+      </div>
+      <div class="be-field">
+        <label class="be-label">Porcentaje (%)</label>
+        <input class="be-input" id="be-percentage" type="number" min="1" max="110" placeholder="82">
+      </div>
     </div>
     <div class="be-field">
       <label class="be-label">Descripción del score (opcional)</label>
@@ -799,6 +820,7 @@ function setupUI(){
   initWeek();
   loadHomeStats();
   renderHomeComps();
+  loadPRsToCache();
 }
 
 function onAvatarClick(){
@@ -839,6 +861,7 @@ function renderBlock(b){
     </div>
     <div class="block-body">
       <div class="block-text">${b.content||''}</div>
+      ${(b.base_movement && b.percentage && b.score_format === 'weight_reps') ? renderAutoWeight(b) : ''}
       <div class="scale-row">
         <button class="scale-pill ${scale==='rx'?'active':''}" onclick="setScale('${b.id}','rx',event)">RX</button>
         <button class="scale-pill ${scale==='sc'?'active':''}" onclick="setScale('${b.id}','sc',event)">Scaled</button>
@@ -1138,6 +1161,9 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
   document.getElementById('be-score-type').value = b.score_type||'';
+  document.getElementById('be-base-movement').value = b.base_movement||'';
+  document.getElementById('be-percentage').value = b.percentage||'';
+  toggleStrengthFields();
   document.getElementById('be-rx').value = b.scaling_rx||'';
   document.getElementById('be-sc').value = b.scaling_sc||'';
   document.getElementById('be-beg').value = b.scaling_beg||'';
@@ -1188,6 +1214,8 @@ async function saveBlock(){
     coach_note: document.getElementById('be-coach-note').value,
     score_format: document.getElementById('be-score-format')?.value || 'text',
     score_type: document.getElementById('be-score-type').value,
+    base_movement: document.getElementById('be-base-movement')?.value || null,
+    percentage: parseInt(document.getElementById('be-percentage')?.value) || null,
     scaling_rx: document.getElementById('be-rx').value,
     scaling_sc: document.getElementById('be-sc').value,
     scaling_beg: document.getElementById('be-beg').value,
@@ -1911,6 +1939,7 @@ function renderBlockCoachView(b){
     </div>
     <div class="block-body">
       <div class="block-text">${b.content||''}</div>
+      ${(b.base_movement && b.percentage && b.score_format === 'weight_reps') ? renderAutoWeight(b) : ''}
       <div class="pct-grid">
         <div class="pct-cell"><div class="pct-lbl">Scaling RX</div><div class="pct-val" style="font-size:11px">${b.scaling_rx||'—'}</div></div>
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
@@ -2030,6 +2059,45 @@ async function refreshApp(){
   initWeek();
 }
 
+
+
+// ── AUTO WEIGHT ───────────────────────────────────────
+function toggleStrengthFields(){
+  const fmt = document.getElementById('be-score-format')?.value;
+  const fields = document.getElementById('be-strength-fields');
+  if(fields) fields.style.display = fmt === 'weight_reps' ? 'block' : 'none';
+}
+
+function renderAutoWeight(b){
+  const isCoach = currentProfile?.role === 'coach';
+  // Try to get PR for this movement
+  const prKey = 'z_pr_' + b.base_movement?.replace(/\s+/g,'_');
+  const prVal = parseFloat(localStorage.getItem(prKey));
+  
+  if(!prVal || isNaN(prVal)){
+    return `<div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:2px;border-left:2px solid var(--border2)">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em">Peso calculado @ ${b.percentage}%</div>
+      <div style="font-family:var(--font-m);font-size:13px;color:var(--text3);margin-top:4px">Agrega tu PR de ${b.base_movement} para ver el peso</div>
+    </div>`;
+  }
+  
+  const calculated = Math.round(prVal * b.percentage / 100);
+  return `<div style="margin-top:10px;padding:10px 12px;background:#0d1f1a;border-radius:2px;border-left:2px solid var(--accent)">
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">${b.base_movement} @ ${b.percentage}% de ${prVal} lbs</div>
+    <div style="font-family:var(--font-d);font-size:36px;color:var(--accent);letter-spacing:0.05em;line-height:1.1">${calculated} lbs</div>
+  </div>`;
+}
+
+async function loadPRsToCache(){
+  const {data} = await sb.from('prs').select('name,value,unit').eq('athlete_id', currentUser.id);
+  if(!data) return;
+  data.forEach(pr => {
+    const num = parseFloat(pr.value);
+    if(!isNaN(num)){
+      localStorage.setItem('z_pr_' + pr.name.replace(/\s+/g,'_'), num);
+    }
+  });
+}
 
 // ── SCORE LOGGER ──────────────────────────────────────
 let currentLoggerBlockId = null;
