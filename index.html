@@ -2087,11 +2087,16 @@ function copyBlock(blockId, e){
 async function pasteBlock(dow, prog){
   if(!copiedBlock) return;
   
+  const athView = document.getElementById('ath-week-view');
+  const isInAthView = athView && athView.style.display === 'flex';
+  const weekNum = isInAthView ? Math.max(1, (programWeeks[prog]||1) + athWeekOffset) : currentWeekNumber;
+  const sourceBlocks = isInAthView ? athWeekBlocks : allBlocks;
+  
   const data = {
     program_slug: prog,
     day_of_week: dow,
-    week_number: currentWeekNumber,
-    order_index: (allBlocks[dow]?.length || 0),
+    week_number: weekNum,
+    order_index: (sourceBlocks[dow]?.length || 0),
     name: copiedBlock.name,
     meta: copiedBlock.meta,
     color: copiedBlock.color,
@@ -2110,9 +2115,15 @@ async function pasteBlock(dow, prog){
   if(error){ showToast('Error: ' + error.message, true); return; }
   
   showToast('✓ Bloque pegado');
-  await loadBlocks(prog, currentWeekNumber);
-  initHome();
-  initWeek();
+  
+  if(isInAthView && currentAthWeekProfile){
+    await loadAthWeekBlocks(currentAthWeekProfile);
+    renderAthWeek(currentAthWeekProfile);
+  } else {
+    await loadBlocks(prog, weekNum);
+    initHome();
+    initWeek();
+  }
 }
 
 async function confirmDeleteBlock(blockId, blockName, e){
