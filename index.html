@@ -852,7 +852,7 @@ function renderBlock(b){
   const scale = currentScale[b.id] || 'rx';
   const scaleVal = scale==='rx' ? b.scaling_rx : scale==='sc' ? b.scaling_sc : b.scaling_beg;
   const isCoach = currentProfile?.role === 'coach';
-  const editBtn = isCoach ? `<button onclick="openBlockEditor('${b.id}',event)" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar bloque</button>` : '';
+  const editBtn = ''; // moved to action bar below
 
   return `<div class="block" id="blk-${b.id}">
     <div class="block-hdr" onclick="toggleBlock('${b.id}')">
@@ -880,9 +880,12 @@ function renderBlock(b){
       </div>
       ${editBtn}
       ${isCoach ? `
-        <div style="display:flex;gap:6px;margin-top:10px">
-          <button onclick="copyBlock('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Copiar</button>
-          <button onclick="confirmDeleteBlock('${b.id}','${b.name}',event)" style="flex:1;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕ Eliminar</button>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="openBlockEditor('${b.id}',event)" style="flex:1;min-width:60px;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏</button>
+          <button onclick="copyBlock('${b.id}',event)" style="flex:1;min-width:60px;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Copiar</button>
+          <button onclick="moveMainBlock('${b.id}',-1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">↑</button>
+          <button onclick="moveMainBlock('${b.id}',1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">↓</button>
+          <button onclick="confirmDeleteBlock('${b.id}','${b.name}',event)" style="flex:1;min-width:60px;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕</button>
         </div>` : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
         <div class="done-banner-text">💪 Buen trabajo — bloque completado</div>
@@ -1916,7 +1919,7 @@ function renderAthWeek(a){
       div.innerHTML = '<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>' +
         `<div style="padding:0 16px">${renderAddBlockBtn(dow, prog)}</div>`;
     } else {
-      const blocksHtml = blocks.map(b => renderBlockCoachView(b)).join('');
+      const blocksHtml = blocks.map((b,i) => renderBlockCoachView(b, i, blocks.length)).join('');
       div.innerHTML = `<div class="blocks">${blocksHtml}${renderAddBlockBtn(dow, prog)}</div>`;
     }
     content.appendChild(div);
@@ -1936,12 +1939,16 @@ function openBlockEditorAth(blockId, e){
   openBlockEditor(blockId, e);
 }
 
-function renderBlockCoachView(b){
-  return `<div class="block" id="athblk-${b.id}">
+function renderBlockCoachView(b, index, total){
+  return `<div class="block" id="athblk-${b.id}" data-order="${b.order_index}">
     <div class="block-hdr" onclick="toggleAthBlock('${b.id}')">
       <div class="block-dot" style="background:${b.color}"></div>
       <div class="block-info"><div class="block-name">${b.name}</div><div class="block-meta">${b.meta||''}</div></div>
-      <div class="block-chev">▾</div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <button onclick="moveAthBlock('${b.id}',-1,event)" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;font-size:12px" ${index===0?'disabled':''}>↑</button>
+        <button onclick="moveAthBlock('${b.id}',1,event)" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;font-size:12px" ${index===total-1?'disabled':''}>↓</button>
+        <div class="block-chev">▾</div>
+      </div>
     </div>
     <div class="block-body">
       <div class="block-text">${b.content||''}</div>
@@ -1955,9 +1962,77 @@ function renderBlockCoachView(b){
         <div class="score-lbl">Scores del atleta</div>
         <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div></div>
       </div>
-      <button onclick="openBlockEditorAth('${b.id}',event)" style="margin-top:10px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar bloque</button>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button onclick="openBlockEditorAth('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Editar</button>
+        <button onclick="copyBlock('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Copiar</button>
+        <button onclick="confirmDeleteAthBlock('${b.id}','${b.name}',event)" style="flex:1;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕</button>
+      </div>
     </div>
   </div>`;
+}
+
+
+async function moveAthBlock(blockId, dir, e){
+  e.stopPropagation();
+  const allB = Object.values(athWeekBlocks).flat();
+  const b = allB.find(x=>x.id===blockId);
+  if(!b) return;
+  const dayBlocks = athWeekBlocks[b.day_of_week] || [];
+  const idx = dayBlocks.findIndex(x=>x.id===blockId);
+  const swapIdx = idx + dir;
+  if(swapIdx < 0 || swapIdx >= dayBlocks.length) return;
+  const swap = dayBlocks[swapIdx];
+  // Swap order_index values
+  await sb.from('blocks').update({order_index: swap.order_index}).eq('id', b.id);
+  await sb.from('blocks').update({order_index: b.order_index}).eq('id', swap.id);
+  showToast('Orden actualizado');
+  await loadAthWeekBlocks(currentAthWeekProfile);
+  renderAthWeek(currentAthWeekProfile);
+}
+
+async function confirmDeleteAthBlock(blockId, blockName, e){
+  e.stopPropagation();
+  const blk = document.getElementById('athblk-'+blockId);
+  if(!blk) return;
+  const existing = blk.querySelector('.delete-confirm');
+  if(existing){ existing.remove(); return; }
+  const confirm = document.createElement('div');
+  confirm.className = 'delete-confirm';
+  confirm.style.cssText = 'margin-top:8px;padding:10px 12px;background:#1a0a0a;border:1px solid #ff4444;border-radius:2px;display:flex;align-items:center;justify-content:space-between;gap:8px';
+  confirm.innerHTML = `
+    <span style="font-family:var(--font-m);font-size:10px;color:#ff4444">¿Eliminar "${blockName}"?</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="this.closest('.delete-confirm').remove()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 10px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">No</button>
+      <button onclick="executeDeleteAthBlock('${blockId}')" style="background:#ff4444;border:none;border-radius:2px;padding:4px 10px;font-family:var(--font-m);font-size:9px;color:#fff;cursor:pointer">Sí</button>
+    </div>`;
+  blk.querySelector('.block-body').appendChild(confirm);
+}
+
+async function executeDeleteAthBlock(blockId){
+  await sb.from('blocks').delete().eq('id', blockId);
+  showToast('Bloque eliminado');
+  await loadAthWeekBlocks(currentAthWeekProfile);
+  renderAthWeek(currentAthWeekProfile);
+}
+
+// Also add move block for main view
+async function moveMainBlock(blockId, dir, e){
+  e.stopPropagation();
+  const allB = Object.values(allBlocks).flat();
+  const b = allB.find(x=>x.id===blockId);
+  if(!b) return;
+  const dayBlocks = allBlocks[b.day_of_week] || [];
+  const idx = dayBlocks.findIndex(x=>x.id===blockId);
+  const swapIdx = idx + dir;
+  if(swapIdx < 0 || swapIdx >= dayBlocks.length) return;
+  const swap = dayBlocks[swapIdx];
+  await sb.from('blocks').update({order_index: swap.order_index}).eq('id', b.id);
+  await sb.from('blocks').update({order_index: b.order_index}).eq('id', swap.id);
+  showToast('Orden actualizado');
+  const prog = currentProfile?.program || 'compete';
+  await loadBlocks(prog, currentWeekNumber);
+  initHome();
+  initWeek();
 }
 
 function toggleAthBlock(id){ document.getElementById('athblk-'+id)?.classList.toggle('open'); }
