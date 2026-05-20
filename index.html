@@ -224,6 +224,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .add-block-btn{display:flex;align-items:center;gap:8px;padding:14px 16px;border:1px dashed var(--border2);border-radius:4px;cursor:pointer;background:none;width:100%;font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
 .add-block-btn:active{background:var(--bg2)}
 
+/* SCORE LOGGER */
+.sl-field{margin-bottom:14px}
+.sl-label{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;display:block}
+.sl-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px 12px;font-family:var(--font-m);font-size:14px;color:var(--text);outline:none;transition:border-color 0.15s}
+.sl-input:focus{border-color:var(--accent)}
+.sl-input::placeholder{color:var(--text3)}
+.sl-unit{font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:4px}
+.sl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sl-save{width:100%;background:var(--accent);color:#000;border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
+.sl-save:active{opacity:0.8}
+.sl-history{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+.sl-history-title{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sl-history-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.sl-entry{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)}
+.sl-entry:last-child{border-bottom:none}
+.sl-entry-val{font-family:var(--font-m);font-size:12px;color:var(--text);font-weight:500}
+.sl-entry-note{font-size:11px;color:var(--text3);margin-top:2px;font-style:italic}
+.sl-entry-date{font-family:var(--font-m);font-size:9px;color:var(--text3)}
+.sl-msg{font-family:var(--font-m);font-size:10px;text-align:center;margin-top:10px;min-height:16px}
+.set-tracker{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.set-row{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px;align-items:center}
+.set-label{font-family:var(--font-m);font-size:10px;color:var(--text3);width:40px}
+
 /* COMPLETED BLOCK */
 .block.completed{border-color:#1D9E75;background:#0d1f1a}
 .block.completed .block-hdr{opacity:0.7}
@@ -419,6 +442,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- SCORE LOGGER -->
+<div class="block-editor" id="score-logger" style="z-index:250">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeScoreLogger()">← Volver</button>
+    <div class="be-title" id="sl-title">Registrar score</div>
+  </div>
+  <div class="be-scroll" id="sl-content"></div>
+</div>
+
 <!-- ADD ATHLETE -->
 <div class="block-editor" id="add-athlete-editor" style="z-index:250">
   <div class="be-header">
@@ -604,8 +636,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <textarea class="be-textarea" id="be-coach-note" rows="3" placeholder="Tip de coaching, intención del entrenamiento..."></textarea>
     </div>
     <div class="be-field">
-      <label class="be-label">Tipo de score</label>
-      <input class="be-input" id="be-score-type" type="text" placeholder="Tiempo / Peso / Rondas completadas...">
+      <label class="be-label">Formato de score</label>
+      <select class="be-select" id="be-score-format">
+        <option value="weight_reps">Fuerza / Hipertrofia (peso + reps)</option>
+        <option value="reps_notes">Gymnastics (sets + reps)</option>
+        <option value="pace_hr">Engine (watts/pace + HR)</option>
+        <option value="time">Metcon (tiempo o rondas)</option>
+        <option value="weight_notes">Oly Lifting (peso + sets)</option>
+        <option value="sets_notes">Barbell Cycling (sets + peso)</option>
+        <option value="text">Libre (texto)</option>
+      </select>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Descripción del score (opcional)</label>
+      <input class="be-input" id="be-score-type" type="text" placeholder="Ej: Watts promedio por set...">
     </div>
     <div class="be-field">
       <label class="be-label">Scaling RX</label>
@@ -806,13 +850,9 @@ function renderBlock(b){
       </div>
       ${b.coach_note ? `<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">${b.coach_note}</div></div>` : ''}
       <div class="score-sec">
-        <div class="score-lbl">Registrar score</div>
-        <div class="score-row">
-          <input class="score-inp" id="inp-${b.id}" type="text" placeholder="Ej: 7:42 / 185 lbs / 6 sets...">
-          <button class="score-save" onclick="saveScore('${b.id}',event)">OK</button>
-        </div>
+        <div class="score-lbl">Score</div>
         <div class="scores-list" id="sclist-${b.id}"></div>
-        <button onclick="openScoreHistory('${b.id}', this);event.stopPropagation()" data-bname="${b.name}" style="margin-top:8px;width:100%;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-align:left;padding:0;letter-spacing:0.05em">Ver historial completo →</button>
+        <button onclick="openScoreLogger('${b.id}','${b.name}','${b.score_format||'text'}',event)" style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">+ Registrar score</button>
       </div>
       ${editBtn}
       ${isCoach ? '' : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
@@ -852,7 +892,16 @@ async function saveScore(id, e){ e.stopPropagation();
 async function loadBlockScores(blockId){
   const {data} = await sb.from('scores').select('*').eq('athlete_id', currentUser.id).eq('block_id', blockId).order('logged_at', {ascending:false}).limit(3);
   const list = document.getElementById('sclist-'+blockId);
-  if(list && data) list.innerHTML = data.map(s=>`<div class="score-entry"><span class="seval">${s.value}</span><span class="semeta">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span></div>`).join('');
+  if(!list || !data) return;
+  if(!data.length){ list.innerHTML = ''; return; }
+  list.innerHTML = data.map(s=>`
+    <div class="score-entry" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <div style="display:flex;justify-content:space-between;width:100%">
+        <span class="seval">${s.value}</span>
+        <span class="semeta">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
+      </div>
+      ${s.notes ? `<span style="font-size:10px;color:var(--text3);font-style:italic">${s.notes}</span>` : ''}
+    </div>`).join('');
 }
 
 function initHome(){
@@ -1078,6 +1127,7 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   currentWeekNumber = b.week_number || currentWeekNumber || 1;
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
+  document.getElementById('be-score-format').value = b.score_format||'text';
   document.getElementById('be-score-type').value = b.score_type||'';
   document.getElementById('be-rx').value = b.scaling_rx||'';
   document.getElementById('be-sc').value = b.scaling_sc||'';
@@ -1127,6 +1177,7 @@ async function saveBlock(){
     color: selectedColor,
     content: document.getElementById('be-content').value,
     coach_note: document.getElementById('be-coach-note').value,
+    score_format: document.getElementById('be-score-format')?.value || 'text',
     score_type: document.getElementById('be-score-type').value,
     scaling_rx: document.getElementById('be-rx').value,
     scaling_sc: document.getElementById('be-sc').value,
@@ -1959,6 +2010,184 @@ async function refreshApp(){
   await loadBlocks(prog, currentWeekNumber);
   initHome();
   initWeek();
+}
+
+
+// ── SCORE LOGGER ──────────────────────────────────────
+let currentLoggerBlockId = null;
+let currentLoggerFormat = 'text';
+
+const SCORE_FORMATS = {
+  weight_reps: {
+    label: 'Fuerza / Hipertrofia',
+    fields: [
+      {id:'sets', label:'Sets completados', placeholder:'4', unit:'sets', type:'number'},
+      {id:'weight', label:'Peso usado', placeholder:'185', unit:'lbs', type:'number'},
+      {id:'reps', label:'Reps por set', placeholder:'8,8,7,6', unit:'reps', type:'text'},
+    ],
+    format: d => `${d.weight} lbs × ${d.reps} reps (${d.sets} sets)`
+  },
+  reps_notes: {
+    label: 'Gymnastics',
+    fields: [
+      {id:'sets', label:'Sets completados', placeholder:'8', unit:'sets', type:'number'},
+      {id:'reps', label:'Reps por set', placeholder:'5,5,5,4', unit:'reps', type:'text'},
+    ],
+    format: d => `${d.sets} sets — ${d.reps} reps`
+  },
+  pace_hr: {
+    label: 'Engine',
+    fields: [
+      {id:'output', label:'Output (watts, pace o cals)', placeholder:'320W / 2:05/500m / 186cal', unit:'', type:'text'},
+      {id:'hr', label:'HR promedio', placeholder:'148', unit:'bpm', type:'number'},
+      {id:'duration', label:'Duración real', placeholder:'60', unit:'min', type:'number'},
+    ],
+    format: d => `${d.output} · HR ${d.hr}bpm · ${d.duration}min`
+  },
+  time: {
+    label: 'Metcon — For Time',
+    fields: [
+      {id:'time', label:'Tiempo final', placeholder:'12:34', unit:'mm:ss', type:'text'},
+    ],
+    format: d => d.time,
+    extra: {id:'amrap', label:'O si es AMRAP — Rondas + Reps', placeholder:'4 + 12 reps', type:'text'}
+  },
+  weight_notes: {
+    label: 'Oly Lifting',
+    fields: [
+      {id:'weight', label:'Peso usado', placeholder:'195', unit:'lbs', type:'number'},
+      {id:'sets', label:'Sets completados', placeholder:'5', unit:'sets', type:'number'},
+    ],
+    format: d => `${d.weight} lbs × ${d.sets} sets`
+  },
+  sets_notes: {
+    label: 'Barbell Cycling',
+    fields: [
+      {id:'sets', label:'Sets completados', placeholder:'6', unit:'sets', type:'number'},
+      {id:'weight', label:'Peso usado', placeholder:'115', unit:'lbs', type:'number'},
+    ],
+    format: d => `${d.sets} sets @ ${d.weight} lbs`
+  },
+  text: {
+    label: 'Score libre',
+    fields: [
+      {id:'value', label:'Score', placeholder:'Tiempo, peso, rondas...', unit:'', type:'text'},
+    ],
+    format: d => d.value
+  }
+};
+
+async function openScoreLogger(blockId, blockName, format, e){
+  e.stopPropagation();
+  currentLoggerBlockId = blockId;
+  currentLoggerFormat = format || 'text';
+  
+  document.getElementById('sl-title').textContent = blockName;
+  
+  const fmt = SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
+  
+  // Build form fields
+  let fieldsHtml = fmt.fields.map(f => `
+    <div class="sl-field">
+      <label class="sl-label">${f.label}</label>
+      <input class="sl-input" id="slf-${f.id}" type="${f.type}" placeholder="${f.placeholder}" inputmode="${f.type==='number'?'decimal':'text'}">
+      ${f.unit ? `<div class="sl-unit">${f.unit}</div>` : ''}
+    </div>`).join('');
+
+  if(fmt.extra){
+    fieldsHtml += `
+      <div class="sl-field" style="margin-top:4px">
+        <label class="sl-label">${fmt.extra.label}</label>
+        <input class="sl-input" id="slf-${fmt.extra.id}" type="text" placeholder="${fmt.extra.placeholder}">
+      </div>`;
+  }
+
+  // Notes field always at bottom
+  fieldsHtml += `
+    <div class="sl-field">
+      <label class="sl-label">Notas (opcional)</label>
+      <input class="sl-input" id="slf-notes" type="text" placeholder="Cómo te sentiste, qué mejorar...">
+    </div>`;
+
+  // Load history
+  const {data: history} = await sb.from('scores')
+    .select('*')
+    .eq('athlete_id', currentUser.id)
+    .eq('block_id', blockId)
+    .order('logged_at', {ascending: false})
+    .limit(5);
+
+  const historyHtml = history?.length ? `
+    <div class="sl-history">
+      <div class="sl-history-title">Historial</div>
+      ${history.map(s => `
+        <div class="sl-entry">
+          <div>
+            <div class="sl-entry-val">${s.value}</div>
+            ${s.notes ? `<div class="sl-entry-note">${s.notes}</div>` : ''}
+          </div>
+          <div class="sl-entry-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div>
+        </div>`).join('')}
+    </div>` : '';
+
+  document.getElementById('sl-content').innerHTML = fieldsHtml +
+    `<button class="sl-save" onclick="submitScore()">Guardar score</button>
+     <div class="sl-msg" id="sl-msg"></div>` +
+    historyHtml +
+    '<div style="height:24px"></div>';
+
+  document.getElementById('score-logger').classList.add('open');
+}
+
+function closeScoreLogger(){
+  document.getElementById('score-logger').classList.remove('open');
+}
+
+async function submitScore(){
+  const fmt = SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
+  const msg = document.getElementById('sl-msg');
+  
+  // Collect field values
+  const data = {};
+  let hasValue = false;
+  
+  for(const f of fmt.fields){
+    const el = document.getElementById('slf-' + f.id);
+    if(el) { data[f.id] = el.value.trim(); if(data[f.id]) hasValue = true; }
+  }
+  if(fmt.extra){
+    const el = document.getElementById('slf-' + fmt.extra.id);
+    if(el && el.value.trim()) { data[fmt.extra.id] = el.value.trim(); hasValue = true; }
+  }
+  
+  const notesEl = document.getElementById('slf-notes');
+  const notes = notesEl ? notesEl.value.trim() : '';
+  
+  if(!hasValue){ msg.textContent = 'Llena al menos un campo'; msg.style.color='#ff4444'; return; }
+  
+  // Format display value
+  let displayValue = '';
+  try { displayValue = fmt.format(data); } 
+  catch(e) { displayValue = Object.values(data).filter(Boolean).join(' · '); }
+  
+  msg.textContent = 'Guardando...'; msg.style.color = 'var(--text3)';
+  
+  const {error} = await sb.from('scores').insert({
+    athlete_id: currentUser.id,
+    block_id: currentLoggerBlockId,
+    value: displayValue,
+    notes: notes,
+    score_data: data
+  });
+  
+  if(error){ msg.textContent = 'Error: ' + error.message; msg.style.color='#ff4444'; return; }
+  
+  msg.textContent = '✓ Score guardado'; msg.style.color = 'var(--accent)';
+  
+  // Update score list in block
+  loadBlockScores(currentLoggerBlockId);
+  
+  setTimeout(()=>closeScoreLogger(), 1200);
 }
 
 init();
