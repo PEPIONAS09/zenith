@@ -886,7 +886,8 @@ function renderBlock(b){
           <button onclick="moveMainBlock('${b.id}',-1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">↑</button>
           <button onclick="moveMainBlock('${b.id}',1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">↓</button>
           <button onclick="confirmDeleteBlock('${b.id}','${b.name}',event)" style="flex:1;min-width:60px;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕</button>
-        </div>` : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
+        </div>
+        <div id="replace-btn-${b.id}"></div>` : `<button class="complete-btn ${completedBlocks['${b.id}']?'done':''}" onclick="toggleComplete('${b.id}',event)">${completedBlocks['${b.id}']?'✓ Completado':'Marcar como completado'}</button>`}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
         <div class="done-banner-text">💪 Buen trabajo — bloque completado</div>
       </div>
@@ -1970,7 +1971,7 @@ function renderBlockCoachView(b, index, total){
         <button onclick="moveAthBlock('${b.id}',1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-size:11px;color:var(--text3);cursor:pointer">↓</button>
         <button onclick="confirmDeleteAthBlock('${b.id}','${b.name}',event)" style="flex:1;background:none;border:1px solid #ff4444;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✕</button>
       </div>
-      \${copiedBlock ? \`<button onclick="replaceBlock('\${b.id}',event)" style="width:100%;margin-top:6px;background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Reemplazar con "\${copiedBlock?.name}"</button>\` : ''}
+      <div id="replace-btn-${b.id}"></div>
     </div>
   </div>`;
 }
@@ -2003,6 +2004,7 @@ async function replaceBlock(blockId, e){
   const {error} = await sb.from('blocks').update(data).eq('id', blockId);
   if(error){ showToast('Error: ' + error.message, true); return; }
 
+  copiedBlock = null;
   showToast('✓ Bloque reemplazado');
 
   const athView = document.getElementById('ath-week-view');
@@ -2203,14 +2205,20 @@ function copyBlock(blockId, e){
   const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
   const b = allB.find(x=>x.id===blockId);
   if(!b) return;
-  copiedBlock = {...b, id: null}; // remove id so it inserts as new
-  
-  // Show toast
-  showToast('⎘ Bloque copiado: ' + b.name);
-  
-  // Refresh week to show paste buttons
-  initWeek();
-  initHome();
+  copiedBlock = {...b, id: null};
+  showToast('⎘ Copiado: ' + b.name + ' — toca "Reemplazar" en cualquier bloque');
+  updateReplaceBtns();
+}
+
+function updateReplaceBtns(){
+  document.querySelectorAll('[id^=replace-btn-]').forEach(div => {
+    const blockId = div.id.replace('replace-btn-','');
+    if(copiedBlock){
+      div.innerHTML = `<button onclick="replaceBlock('${blockId}',event)" style="width:100%;margin-top:6px;background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Reemplazar con "${copiedBlock.name}"</button>`;
+    } else {
+      div.innerHTML = '';
+    }
+  });
 }
 
 async function pasteBlock(dow, prog){
@@ -2243,6 +2251,7 @@ async function pasteBlock(dow, prog){
   const {error} = await sb.from('blocks').insert(data);
   if(error){ showToast('Error: ' + error.message, true); return; }
   
+  copiedBlock = null;
   showToast('✓ Bloque pegado');
   
   if(isInAthView && currentAthWeekProfile){
