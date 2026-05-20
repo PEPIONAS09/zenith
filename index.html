@@ -890,7 +890,16 @@ async function saveScore(id, e){ e.stopPropagation();
 }
 
 async function loadBlockScores(blockId){
-  const {data} = await sb.from('scores').select('*').eq('athlete_id', currentUser.id).eq('block_id', blockId).order('logged_at', {ascending:false}).limit(3);
+  // Get all block IDs with same name across weeks
+  const allB = Object.values(allBlocks).flat();
+  const thisBlock = allB.find(x=>x.id===blockId);
+  const prog = currentProfile?.program || 'compete';
+  let blockIds = [blockId];
+  if(thisBlock){
+    const {data: sameBlocks} = await sb.from('blocks').select('id').eq('program_slug', prog).eq('name', thisBlock.name);
+    if(sameBlocks) blockIds = sameBlocks.map(b=>b.id);
+  }
+  const {data} = await sb.from('scores').select('*').eq('athlete_id', currentUser.id).in('block_id', blockIds).order('logged_at', {ascending:false}).limit(3);
   const list = document.getElementById('sclist-'+blockId);
   if(!list || !data) return;
   if(!data.length){ list.innerHTML = ''; return; }
@@ -1621,10 +1630,19 @@ async function openScoreHistory(blockId, btnEl){
   document.getElementById('sh-content').innerHTML = '<div style="padding:20px;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div>';
   document.getElementById('score-history-overlay').classList.add('open');
 
+  // Search by block name across all weeks
+  const allB = Object.values(allBlocks).flat();
+  const thisBlock = allB.find(x=>x.id===blockId);
+  const prog = currentProfile?.program || 'compete';
+  let blockIds = [blockId];
+  if(thisBlock){
+    const {data: sameBlocks} = await sb.from('blocks').select('id').eq('program_slug', prog).eq('name', thisBlock.name);
+    if(sameBlocks) blockIds = sameBlocks.map(b=>b.id);
+  }
   const {data} = await sb.from('scores')
     .select('*')
     .eq('athlete_id', currentUser.id)
-    .eq('block_id', blockId)
+    .in('block_id', blockIds)
     .order('logged_at', {ascending: true})
     .limit(20);
 
@@ -2109,11 +2127,25 @@ async function openScoreLogger(blockId, blockName, format, e){
       <input class="sl-input" id="slf-notes" type="text" placeholder="Cómo te sentiste, qué mejorar...">
     </div>`;
 
-  // Load history
+  // Load history by block name across all weeks (not just this block_id)
+  // First get all block IDs with the same name in the same program
+  const allB = Object.values(allBlocks).flat();
+  const thisBlock = allB.find(x=>x.id===blockId);
+  const prog = currentProfile?.program || 'compete';
+  
+  let blockIds = [blockId];
+  if(thisBlock){
+    const {data: sameBlocks} = await sb.from('blocks')
+      .select('id')
+      .eq('program_slug', prog)
+      .eq('name', thisBlock.name);
+    if(sameBlocks) blockIds = sameBlocks.map(b=>b.id);
+  }
+
   const {data: history} = await sb.from('scores')
     .select('*')
     .eq('athlete_id', currentUser.id)
-    .eq('block_id', blockId)
+    .in('block_id', blockIds)
     .order('logged_at', {ascending: false})
     .limit(5);
 
