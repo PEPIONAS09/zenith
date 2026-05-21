@@ -340,10 +340,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="screen" id="screen-prs">
       <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
         <div><h1>PRs</h1><p id="prs-subtitle">Marcas personales</p></div>
-        <button onclick="openAddPR()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Agregar</button>
+        <div id="pr-add-btn"></div>
       </div>
       <div id="prs-content"><div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando PRs...</div></div>
       <div style="height:20px"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="screen" id="screen-stats">
+      <div class="sec-title"><h1>STATS</h1><p id="stats-subtitle">Tu progreso</p></div>
+      <div id="stats-content"><div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando estadísticas...</div></div>
     </div>
 
     <!-- GOALS -->
@@ -362,6 +368,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')"><span class="nav-icon">⌂</span>inicio</button>
     <button class="nav-btn" id="nav-week" onclick="switchScreen('week')"><span class="nav-icon">▤</span>semana</button>
     <button class="nav-btn" id="nav-prs" onclick="switchScreen('prs')"><span class="nav-icon">◎</span>prs</button>
+    <button class="nav-btn" id="nav-stats" onclick="switchScreen('stats')"><span class="nav-icon">↗</span>stats</button>
     <button class="nav-btn" id="nav-cal" onclick="switchScreen('cal')"><span class="nav-icon">◷</span>goals</button>
   </div>
 </div>
@@ -1065,6 +1072,7 @@ async function switchScreen(name){
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   if(name === 'prs') renderPRs();
+  if(name === 'stats') renderStats();
   if(name === 'cal') renderGoals();
   if(name === 'week'){
     weekOffset = 0;
@@ -1545,6 +1553,106 @@ async function createAthlete(){
   }
 }
 
+
+
+// ── STATS ─────────────────────────────────────────────
+async function renderStats(athleteId){
+  const uid = athleteId || currentUser.id;
+  const container = document.getElementById('stats-content');
+  if(!container) return;
+
+  container.innerHTML = '<div style="padding:20px;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div>';
+
+  // 1. PR History - progress over time
+  const {data: prHistory} = await sb.from('pr_history')
+    .select('*')
+    .eq('athlete_id', uid)
+    .order('logged_at', {ascending: true});
+
+  // 2. Completed blocks - consistency
+  const completedData = JSON.parse(localStorage.getItem('z_completed') || '{}');
+  const completedCount = Object.values(completedData).filter(Boolean).length;
+
+  // Group PR history by name
+  const prGroups = {};
+  if(prHistory) prHistory.forEach(h => {
+    if(!prGroups[h.pr_name]) prGroups[h.pr_name] = [];
+    prGroups[h.pr_name].push(h);
+  });
+
+  // Build PR progress charts
+  let prHtml = '';
+  const importantPRs = ['Back Squat', 'Deadlift', 'Clean & Jerk', 'Snatch', 'Bench Press', 'Front Squat'];
+  
+  for(const prName of importantPRs){
+    const entries = prGroups[prName] || [];
+    if(entries.length < 1) continue;
+    
+    const vals = entries.map(e=>e.value);
+    const max = Math.max(...vals);
+    const min = Math.min(...vals);
+    const range = max - min || 1;
+    const latest = vals[vals.length-1];
+    const first = vals[0];
+    const change = latest - first;
+    const changeStr = change >= 0 ? `+${change.toFixed(1)}` : change.toFixed(1);
+    const changeColor = change >= 0 ? 'var(--accent)' : '#ff4444';
+
+    const chartBars = vals.slice(-8).map((v,i,arr) => {
+      const h = Math.max(6, ((v-min)/range)*50);
+      const isLast = i === arr.length-1;
+      return `<div style="flex:1;background:${isLast?'var(--accent)':'var(--bg3)'};border-radius:1px 1px 0 0;height:${h}px;border:1px solid ${isLast?'var(--accent)':'var(--border2)'}"></div>`;
+    }).join('');
+
+    prHtml += `
+      <div style="margin:0 16px 12px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div>
+            <div style="font-family:var(--font-m);font-size:11px;font-weight:500;color:var(--text)">${prName}</div>
+            <div style="font-family:var(--font-d);font-size:28px;color:var(--accent);line-height:1.1">${latest} <span style="font-size:14px">lbs</span></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--font-m);font-size:10px;color:${changeColor}">${changeStr} lbs</div>
+            <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">${entries.length} registros</div>
+          </div>
+        </div>
+        ${vals.length > 1 ? `<div style="display:flex;align-items:flex-end;gap:3px;height:56px">${chartBars}</div>` : '<div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Actualiza tu PR para ver progresión</div>'}
+      </div>`;
+  }
+
+  if(!prHtml){
+    prHtml = '<div style="padding:20px;font-family:var(--font-m);font-size:10px;color:var(--text3);text-align:center">Actualiza tus PRs para ver progresión</div>';
+  }
+
+  container.innerHTML = `
+    <div class="bm-sec" style="padding-top:16px"><div class="bm-sec-ttl">Progreso de PRs</div></div>
+    ${prHtml}
+    <div class="bm-sec"><div class="bm-sec-ttl">Consistencia</div></div>
+    <div style="margin:0 16px 20px;border:1px solid var(--border);background:var(--bg2);border-radius:4px;padding:14px">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Bloques completados</div>
+      <div style="font-family:var(--font-d);font-size:48px;color:var(--accent);line-height:1">${completedCount}</div>
+      <div style="font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:4px">bloques marcados como completados</div>
+    </div>
+    <div style="height:20px"></div>`;
+}
+
+// ── PR VALUE UPDATE (ATHLETE) ─────────────────────────
+function openUpdatePRValue(id, name, value, unit){
+  document.getElementById('pr-edit-id').value = id;
+  document.getElementById('pr-editor-title').textContent = name;
+  document.getElementById('pr-category').value = 'strength';
+  document.getElementById('pr-name').value = name;
+  document.getElementById('pr-value').value = value;
+  document.getElementById('pr-unit').value = unit;
+  // Hide category, name, delete for athletes
+  document.getElementById('pr-delete-btn').style.display = 'none';
+  const catField = document.getElementById('pr-category')?.closest('.be-field');
+  const nameField = document.getElementById('pr-name')?.closest('.be-field');
+  if(catField) catField.style.display = 'none';
+  if(nameField) nameField.style.display = 'none';
+  document.getElementById('pr-editor').classList.add('open');
+}
+
 // ── PASSWORD CHANGE ───────────────────────────────────
 function openPWEditor(){
   document.getElementById('pw-new').value = '';
@@ -1658,6 +1766,7 @@ function closePREditor(){ document.getElementById('pr-editor').classList.remove(
 
 async function savePR(){
   const id = document.getElementById('pr-edit-id').value;
+  const isCoach = currentProfile?.role === 'coach';
   const data = {
     athlete_id: currentUser.id,
     category: document.getElementById('pr-category').value,
@@ -1666,13 +1775,33 @@ async function savePR(){
     unit: document.getElementById('pr-unit').value.trim(),
   };
   if(!data.name || !data.value) return;
+
   if(id){
     await sb.from('prs').update(data).eq('id', id);
   } else {
     await sb.from('prs').upsert(data, {onConflict:'athlete_id,name'});
   }
+
+  // Log to pr_history for stats
+  await sb.from('pr_history').insert({
+    athlete_id: currentUser.id,
+    pr_name: data.name,
+    value: parseFloat(data.value),
+    unit: data.unit
+  });
+
+  // Update cache
+  localStorage.setItem('z_pr_' + currentUser.id + '_' + data.name, parseFloat(data.value));
+
+  // Restore hidden fields for coach
+  const catField = document.getElementById('pr-category')?.closest('.be-field');
+  const nameField = document.getElementById('pr-name')?.closest('.be-field');
+  if(catField) catField.style.display = '';
+  if(nameField) nameField.style.display = '';
+
   closePREditor();
   renderPRs();
+  loadPRsToCache();
 }
 
 async function deletePR(){
@@ -2407,8 +2536,24 @@ function renderAutoWeight(b){
   const isCoach = currentProfile?.role === 'coach';
   // Try to get PR for this movement
   const uid = currentUser?.id || '';
-  const prKey = 'z_pr_' + uid + '_' + b.base_movement;
-  const prVal = parseFloat(localStorage.getItem(prKey));
+  // Try exact match first
+  let prVal = parseFloat(localStorage.getItem('z_pr_' + uid + '_' + b.base_movement));
+  // Try normalized match (partial)
+  if(isNaN(prVal) && b.base_movement){
+    const normTarget = b.base_movement.toLowerCase().replace(/\s+/g,'');
+    // Check all stored keys for partial match
+    for(let i = 0; i < localStorage.length; i++){
+      const key = localStorage.key(i);
+      if(key && key.startsWith('z_pr_' + uid + '_norm_')){
+        const normKey = key.replace('z_pr_' + uid + '_norm_', '');
+        // Match if either contains the other
+        if(normTarget.includes(normKey) || normKey.includes(normTarget)){
+          prVal = parseFloat(localStorage.getItem(key));
+          if(!isNaN(prVal)) break;
+        }
+      }
+    }
+  }
   
   if(!prVal || isNaN(prVal)){
     return `<div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:2px;border-left:2px solid var(--border2)">
@@ -2431,7 +2576,10 @@ async function loadPRsToCache(){
   data.forEach(pr => {
     const num = parseFloat(pr.value);
     if(!isNaN(num)){
+      // Store with original name
       localStorage.setItem('z_pr_' + uid + '_' + pr.name, num);
+      // Also store normalized (lowercase, no spaces)
+      localStorage.setItem('z_pr_' + uid + '_norm_' + pr.name.toLowerCase().replace(/\s+/g,''), num);
     }
   });
 }
