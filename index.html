@@ -558,7 +558,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="coach-overlay" id="coach-overlay">
   <div class="co-header">
     <div class="co-title">COACH VIEW</div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px" id="coach-action-btns">
       <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Atleta</button>
       <button onclick="openNotifyPanel()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✉ Notificar</button>
       <button class="co-close" onclick="closeCoach()">✕</button>
@@ -1085,10 +1085,35 @@ async function switchScreen(name){
 
 // COACH
 async function openCoach(){
-  const {data} = await sb.from('profiles').select('*').eq('role','athlete');
-  athletes = data || [];
+  // Load athletes - if not main coach, filter out hidden profiles
+  const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
+  let query = sb.from('profiles').select('*').eq('role','athlete');
+  const {data} = await query;
+  
+  // Also load other coaches if main coach (to see sub-coaches)
+  let coachData = [];
+  if(isMainCoach){
+    // Main coach sees everyone
+    athletes = data || [];
+  } else {
+    // Sub-coach filters out hidden profiles
+    athletes = (data || []).filter(a => !a.hidden_from_coaches);
+  }
+  
   renderAthList();
-  renderWeekControls();
+  // Only main coach can control week numbers and see admin buttons
+  const actionBtns = document.getElementById('coach-action-btns');
+  if(isMainCoach){
+    renderWeekControls();
+    if(actionBtns) actionBtns.style.display = 'flex';
+  } else {
+    const wc = document.getElementById('week-controls');
+    if(wc) wc.innerHTML = '';
+    if(actionBtns){
+      // Sub-coach only sees close button
+      actionBtns.innerHTML = `<button class="co-close" onclick="closeCoach()">✕ Cerrar</button>`;
+    }
+  }
   document.getElementById('coach-overlay').classList.add('open');
   document.getElementById('ath-detail').classList.remove('open');
 }
