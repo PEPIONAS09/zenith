@@ -933,6 +933,17 @@ function openUserMenu(){
 
 
 // RENDER BLOCKS
+
+function buildScoreSection(b, isCoach){
+  if(isCoach) return '';
+  return '<div class="score-sec">' +
+    '<div class="score-lbl">Score</div>' +
+    '<div class="scores-list" id="sclist-' + b.id + '"></div>' +
+    '<button onclick="openScoreLogger(\'' + b.id + '\',\'' + b.name.replace(/'/g,"") + '\',\'' + (b.score_format||'text') + '\',event)" ' +
+    'style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">' +
+    '+ Registrar score</button></div>';
+}
+
 function renderBlock(b){
   const scale = currentScale[b.id] || 'rx';
   const scaleVal = scale==='rx' ? b.scaling_rx : scale==='sc' ? b.scaling_sc : b.scaling_beg;
@@ -958,7 +969,7 @@ function renderBlock(b){
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? `<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">${b.coach_note}</div></div>` : ''}
-      ${isCoach ? '' : '<div class="score-sec"><div class="score-lbl">Score</div><div class="scores-list" id="sclist-' + b.id + '"></div><button onclick="openScoreLogger('' + b.id + '','' + b.name.replace(/'/g,"\'") + '','' + (b.score_format||'text') + '',event)" style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">+ Registrar score</button></div>'}
+      ${buildScoreSection(b, isCoach)}
       ${editBtn}
       ${isCoach ? `
         <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
