@@ -298,7 +298,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="topbar">
     <div class="logo">ZENITH</div>
     <div class="topbar-r">
-      <div class="avatar" id="user-avatar" onclick="onAvatarClick()">—</div>
+      <div class="avatar" id="user-avatar" onclick="onAvatarClick()" style="overflow:hidden;padding:0">—</div>
     </div>
   </div>
 
@@ -882,7 +882,12 @@ function setupUI(){
   const name = currentProfile?.full_name || 'Atleta';
   const initials = currentProfile?.initials || name.substring(0,2).toUpperCase();
 
-  document.getElementById('user-avatar').textContent = initials;
+  const avatarEl = document.getElementById('user-avatar');
+  if(currentProfile?.avatar_url){
+    avatarEl.innerHTML = `<img src="${currentProfile.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  } else {
+    avatarEl.textContent = initials;
+  }
   document.getElementById('hero-name').textContent = name.toUpperCase();
   const prog = currentProfile?.program || 'compete';
   const progLabel = prog === 'olympus' ? '◈ Olympus' : '⚡ Compete';
@@ -919,6 +924,7 @@ function openUserMenu(){
     <div style="padding:10px 16px;font-family:var(--font-m);font-size:10px;color:var(--text3);border-bottom:1px solid var(--border)">${currentProfile?.full_name||'Mi cuenta'} · ${isCoach?'Coach':'Atleta'}</div>
     ${coachBtn}
     <button onclick="document.getElementById('user-menu').remove();openPWEditor()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🔑 Cambiar contraseña</button>
+    <label style="width:100%;padding:13px 16px;background:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;display:block;letter-spacing:0.05em">📷 Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadAvatar(this)"></label>
     <button onclick="doLogout()" style="width:100%;padding:13px 16px;background:none;border:none;font-family:var(--font-m);font-size:11px;color:#ff4444;cursor:pointer;text-align:left;letter-spacing:0.05em">⎋ Cerrar sesión</button>
   `;
   document.body.appendChild(menu);
@@ -952,11 +958,7 @@ function renderBlock(b){
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? `<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">${b.coach_note}</div></div>` : ''}
-      <div class="score-sec">
-        <div class="score-lbl">Score</div>
-        <div class="scores-list" id="sclist-${b.id}"></div>
-        <button onclick="openScoreLogger('${b.id}','${b.name}','${b.score_format||'text'}',event)" style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">+ Registrar score</button>
-      </div>
+      ${isCoach ? '' : '<div class="score-sec"><div class="score-lbl">Score</div><div class="scores-list" id="sclist-' + b.id + '"></div><button onclick="openScoreLogger('' + b.id + '','' + b.name.replace(/'/g,"\'") + '','' + (b.score_format||'text') + '',event)" style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">+ Registrar score</button></div>'}
       ${editBtn}
       ${isCoach ? `
         <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
@@ -1034,7 +1036,8 @@ function initHome(){
     c.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?renderAddBlockBtn(todayDow,prog):'');
   } else {
     c.innerHTML = blocks.map(b=>renderBlock(b)).join('')+(isCoach?renderAddBlockBtn(todayDow,prog):'');
-    blocks.forEach(b=>loadBlockScores(b.id));
+    // Scores only load in coach view now
+    if(currentProfile?.role === 'coach') blocks.forEach(b=>loadBlockScores(b.id));
   }
 }
 
@@ -1092,7 +1095,8 @@ function initWeek(){
       div.innerHTML=`<div class="blocks">${blocks.map(b=>renderBlock(b)).join('')}${isCoach?renderAddBlockBtn(dow,prog):''}</div>`;
     }
     content.appendChild(div);
-    blocks.forEach(b=>loadBlockScores(b.id));
+    // Scores only load in coach view now
+    if(currentProfile?.role === 'coach') blocks.forEach(b=>loadBlockScores(b.id));
   });
   // Show replace buttons if block is copied
   setTimeout(updateReplaceBtns, 50);
@@ -1204,7 +1208,9 @@ function renderAthList(){
     const isC = a.program==='compete';
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     return `<div class="ath-row" onclick="openAthDetail('${a.id}')">
-      <div class="ath-ini" style="background:${isC?'var(--accent)':'var(--purple)'};color:${isC?'#000':'#fff'}">${ini}</div>
+      <div class="ath-ini" style="background:${isC?'var(--accent)':'var(--purple)'};color:${isC?'#000':'#fff'};overflow:hidden;padding:${a.avatar_url?'0':''}">
+        ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover">` : ini}
+      </div>
       <div class="ath-info"><div class="ath-name">${a.full_name||'Sin nombre'}</div><div class="ath-sub">${a.goal||''}</div></div>
       <span class="prog-badge ${isC?'pb-compete':'pb-olympus'}">${isC?'Compete':'Olympus'}</span>
       <span class="ath-arr">›</span>
@@ -2177,8 +2183,8 @@ function renderBlockCoachView(b, index, total){
       </div>
       ${b.coach_note ? `<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">${b.coach_note}</div></div>` : ''}
       <div class="score-sec">
-        <div class="score-lbl">Scores del atleta</div>
-        <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div></div>
+        <div class="score-lbl">Último score</div>
+        <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin scores.</div></div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
         <button onclick="openBlockEditorAth('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏</button>
@@ -2416,6 +2422,42 @@ async function refreshApp(){
 
 
 
+
+
+// ── AVATAR UPLOAD ─────────────────────────────────────
+async function uploadAvatar(input){
+  const file = input.files[0];
+  if(!file) return;
+  
+  const menu = document.getElementById('user-menu');
+  if(menu) menu.remove();
+
+  showToast('Subiendo foto...');
+
+  const ext = file.name.split('.').pop();
+  const path = `${currentUser.id}.${ext}`;
+
+  const {error: uploadError} = await sb.storage
+    .from('avatars')
+    .upload(path, file, {upsert: true});
+
+  if(uploadError){
+    showToast('Error al subir foto', true);
+    return;
+  }
+
+  const {data: urlData} = sb.storage.from('avatars').getPublicUrl(path);
+  const url = urlData.publicUrl + '?t=' + Date.now();
+
+  await sb.from('profiles').update({avatar_url: url}).eq('id', currentUser.id);
+  currentProfile.avatar_url = url;
+
+  // Update avatar display
+  const avatarEl = document.getElementById('user-avatar');
+  avatarEl.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+
+  showToast('✓ Foto actualizada');
+}
 
 // ── NOTIFICATIONS ─────────────────────────────────────
 function openNotifyPanel(){ document.getElementById('notify-panel').classList.add('open'); }
