@@ -644,7 +644,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
     <button onclick="changeAthWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
-    <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+      <button onclick="openCopyAthWeek()" style="background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
+    </div>
     <button onclick="changeAthWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
   </div>
   <div class="day-tabs" id="ath-day-tabs" style="flex-shrink:0;background:var(--bg)"></div>
@@ -2475,6 +2478,25 @@ async function sendNotifications(){
 }
 
 
+
+function openCopyAthWeek(){
+  const a = currentAthWeekProfile;
+  if(!a) return;
+  const prog = athleteProgs[a.id] || a.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const srcWeek = Math.max(1, baseWeek + athWeekOffset);
+
+  document.getElementById('copy-week-origin').textContent = 'Semana ' + srcWeek;
+  document.getElementById('copy-week-origin-prog').textContent = prog.toUpperCase() + ' · ' + a.full_name;
+  document.getElementById('copy-week-dest').value = '';
+  document.getElementById('copy-week-prog').value = prog;
+  document.getElementById('copy-week-msg').textContent = '';
+
+  // Override executeCopyWeek to use ath context
+  window._copyWeekAthMode = { prog, srcWeek };
+  document.getElementById('copy-week-editor').classList.add('open');
+}
+
 // ── COPY WEEK ─────────────────────────────────────────
 function openCopyWeek(){
   const prog = currentProfile?.program || 'compete';
@@ -2490,13 +2512,15 @@ function openCopyWeek(){
 }
 
 function closeCopyWeek(){
+  window._copyWeekAthMode = null;
   document.getElementById('copy-week-editor').classList.remove('open');
 }
 
 async function executeCopyWeek(){
-  const prog = currentProfile?.program || 'compete';
-  const baseWeek = programWeeks[prog] || 1;
-  const srcWeek = Math.max(1, baseWeek + weekOffset);
+  const athMode = window._copyWeekAthMode;
+  const prog = athMode ? athMode.prog : (currentProfile?.program || 'compete');
+  const baseWeek = athMode ? 0 : (programWeeks[prog] || 1);
+  const srcWeek = athMode ? athMode.srcWeek : Math.max(1, baseWeek + weekOffset);
   const destWeek = parseInt(document.getElementById('copy-week-dest').value);
   const destProg = document.getElementById('copy-week-prog').value;
   const msg = document.getElementById('copy-week-msg');
@@ -2565,9 +2589,13 @@ async function executeCopyWeek(){
   msg.style.color = 'var(--accent)';
 
   setTimeout(async ()=>{
+    window._copyWeekAthMode = null;
     closeCopyWeek();
-    // Reload if same program
-    if(destProg === prog){
+    // Reload ath view if in ath mode, else main view
+    if(window._copyWeekAthMode === null && currentAthWeekProfile){
+      await loadAthWeekBlocks(currentAthWeekProfile);
+      renderAthWeek(currentAthWeekProfile);
+    } else if(destProg === prog){
       await loadBlocks(prog, srcWeek);
       initWeek();
     }
