@@ -329,7 +329,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="screen screen-week" id="screen-week">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
         <button onclick="changeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
-        <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+          <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+          <button id="copy-week-btn" onclick="openCopyWeek()" style="display:none;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
+        </div>
         <button onclick="changeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
       </div>
       <div class="day-tabs" id="day-tabs"></div>
@@ -495,6 +498,37 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <button class="be-save" onclick="createAthlete()">Crear atleta</button>
     <div id="ath-create-msg" style="margin-top:12px;font-family:var(--font-m);font-size:11px;text-align:center;min-height:16px"></div>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- COPY WEEK -->
+<div class="block-editor" id="copy-week-editor" style="z-index:250">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeCopyWeek()">← Volver</button>
+    <div class="be-title">Copiar semana</div>
+  </div>
+  <div class="be-scroll">
+    <div style="margin-bottom:20px;padding:12px 14px;background:var(--bg2);border-radius:4px;border-left:2px solid var(--accent)">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Semana origen</div>
+      <div style="font-family:var(--font-d);font-size:24px;color:var(--text)" id="copy-week-origin">Semana 1</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:2px" id="copy-week-origin-prog"></div>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Copiar a semana #</label>
+      <input class="be-input" id="copy-week-dest" type="number" min="1" max="12" placeholder="Ej: 2">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:4px">El contenido de la semana destino será reemplazado</div>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Programa</label>
+      <select class="be-select" id="copy-week-prog">
+        <option value="games">Games</option>
+        <option value="compete">Compete</option>
+        <option value="olympus">Olympus</option>
+      </select>
+    </div>
+    <button class="be-save" onclick="executeCopyWeek()">⎘ Copiar semana</button>
+    <div id="copy-week-msg" style="margin-top:12px;font-family:var(--font-m);font-size:11px;text-align:center;min-height:16px"></div>
     <div style="height:24px"></div>
   </div>
 </div>
@@ -1035,6 +1069,9 @@ function initWeek(){
   const baseWeek = programWeeks[prog] || 1;
   const weekNum = Math.max(1, baseWeek + weekOffset);
   if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
+  // Show copy week button for coaches
+  const copyBtn = document.getElementById('copy-week-btn');
+  if(copyBtn) copyBtn.style.display = (currentProfile?.role === 'coach') ? 'block' : 'none';
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
@@ -2435,6 +2472,107 @@ async function sendNotifications(){
     msg.textContent = errors.length ? 'Error al enviar' : 'Sin atletas en los programas seleccionados';
     msg.style.color = '#ff4444';
   }
+}
+
+
+// ── COPY WEEK ─────────────────────────────────────────
+function openCopyWeek(){
+  const prog = currentProfile?.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const weekNum = Math.max(1, baseWeek + weekOffset);
+  
+  document.getElementById('copy-week-origin').textContent = 'Semana ' + weekNum;
+  document.getElementById('copy-week-origin-prog').textContent = prog.toUpperCase();
+  document.getElementById('copy-week-dest').value = '';
+  document.getElementById('copy-week-prog').value = prog;
+  document.getElementById('copy-week-msg').textContent = '';
+  document.getElementById('copy-week-editor').classList.add('open');
+}
+
+function closeCopyWeek(){
+  document.getElementById('copy-week-editor').classList.remove('open');
+}
+
+async function executeCopyWeek(){
+  const prog = currentProfile?.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const srcWeek = Math.max(1, baseWeek + weekOffset);
+  const destWeek = parseInt(document.getElementById('copy-week-dest').value);
+  const destProg = document.getElementById('copy-week-prog').value;
+  const msg = document.getElementById('copy-week-msg');
+
+  if(!destWeek || destWeek < 1 || destWeek > 12){
+    msg.textContent = 'Elige una semana destino válida (1-12)';
+    msg.style.color = '#ff4444';
+    return;
+  }
+  if(destWeek === srcWeek && destProg === prog){
+    msg.textContent = 'La semana destino debe ser diferente a la origen';
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  msg.textContent = 'Copiando...';
+  msg.style.color = 'var(--text3)';
+
+  // Get source blocks
+  const {data: srcBlocks, error: srcError} = await sb.from('blocks')
+    .select('*')
+    .eq('program_slug', prog)
+    .eq('week_number', srcWeek);
+
+  if(srcError || !srcBlocks?.length){
+    msg.textContent = 'No hay bloques en la semana origen';
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  // Delete destination blocks
+  await sb.from('blocks')
+    .delete()
+    .eq('program_slug', destProg)
+    .eq('week_number', destWeek);
+
+  // Insert copied blocks
+  const newBlocks = srcBlocks.map(b => ({
+    program_slug: destProg,
+    day_of_week: b.day_of_week,
+    week_number: destWeek,
+    order_index: b.order_index,
+    name: b.name,
+    meta: b.meta,
+    color: b.color,
+    content: b.content,
+    coach_note: b.coach_note,
+    score_type: b.score_type,
+    score_format: b.score_format,
+    base_movement: b.base_movement,
+    percentage: b.percentage,
+    scaling_rx: b.scaling_rx,
+    scaling_sc: b.scaling_sc,
+    scaling_beg: b.scaling_beg,
+  }));
+
+  const {error: insertError} = await sb.from('blocks').insert(newBlocks);
+
+  if(insertError){
+    msg.textContent = 'Error: ' + insertError.message;
+    msg.style.color = '#ff4444';
+    return;
+  }
+
+  msg.textContent = `✓ Semana ${srcWeek} copiada a semana ${destWeek} de ${destProg.toUpperCase()}`;
+  msg.style.color = 'var(--accent)';
+
+  setTimeout(async ()=>{
+    closeCopyWeek();
+    // Reload if same program
+    if(destProg === prog){
+      await loadBlocks(prog, srcWeek);
+      initWeek();
+    }
+    showToast(`✓ Semana ${srcWeek} → Semana ${destWeek} copiada`);
+  }, 1500);
 }
 
 // ── COPY / PASTE / DELETE BLOCKS ─────────────────────
