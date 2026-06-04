@@ -951,13 +951,7 @@ function buildCoachActions(b, isCoach, completedBlocks){
 }
 
 function buildScoreSection(b, isCoach){
-  if(isCoach) return '';
-  return '<div class="score-sec">' +
-    '<div class="score-lbl">Score</div>' +
-    '<div class="scores-list" id="sclist-' + b.id + '"></div>' +
-    '<button onclick="openScoreLogger(\'' + b.id + '\',\'' + b.name.replace(/'/g,"") + '\',\'' + (b.score_format||'text') + '\',event)" ' +
-    'style="margin-top:8px;width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;text-align:center">' +
-    '+ Registrar score</button></div>';
+  return ''; // Scores removed - only tracking PRs and completed blocks
 }
 
 function renderBlock(b){
@@ -1055,8 +1049,7 @@ function initHome(){
     c.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?renderAddBlockBtn(todayDow,prog):'');
   } else {
     c.innerHTML = blocks.map(b=>renderBlock(b)).join('')+(isCoach?renderAddBlockBtn(todayDow,prog):'');
-    // Scores only load in coach view now
-    if(currentProfile?.role === 'coach') blocks.forEach(b=>loadBlockScores(b.id));
+    // Scores removed - only tracking PRs now
   }
 }
 
@@ -1114,8 +1107,7 @@ function initWeek(){
       div.innerHTML=`<div class="blocks">${blocks.map(b=>renderBlock(b)).join('')}${isCoach?renderAddBlockBtn(dow,prog):''}</div>`;
     }
     content.appendChild(div);
-    // Scores only load in coach view now
-    if(currentProfile?.role === 'coach') blocks.forEach(b=>loadBlockScores(b.id));
+    // Scores removed - only tracking PRs now
   });
   // Show replace buttons if block is copied
   setTimeout(updateReplaceBtns, 50);
