@@ -224,6 +224,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .add-block-btn{display:flex;align-items:center;gap:8px;padding:14px 16px;border:1px dashed var(--border2);border-radius:4px;cursor:pointer;background:none;width:100%;font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
 .add-block-btn:active{background:var(--bg2)}
 
+/* TIMER */
+.timer-fab{position:fixed;bottom:80px;right:16px;width:52px;height:52px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:150;box-shadow:0 4px 12px rgba(0,0,0,0.4);border:none;font-size:20px;transition:transform 0.2s}
+.timer-fab:active{transform:scale(0.92)}
+.timer-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
+.timer-overlay.open{display:flex}
+.timer-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.timer-title{font-family:var(--font-d);font-size:22px;letter-spacing:0.1em}
+.timer-close{font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;padding:6px 12px;border:1px solid var(--border2);border-radius:2px;background:none}
+.timer-modes{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);flex-shrink:0}
+.timer-modes::-webkit-scrollbar{display:none}
+.timer-mode-btn{flex:0 0 auto;padding:10px 16px;font-family:var(--font-m);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;background:none;border-left:none;border-right:none;border-top:none;white-space:nowrap;transition:all 0.15s}
+.timer-mode-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.timer-display{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.timer-time{font-family:var(--font-d);font-size:96px;letter-spacing:0.05em;color:var(--text);line-height:1;text-align:center}
+.timer-time.warning{color:#ff8800}
+.timer-time.done{color:var(--accent)}
+.timer-sub{font-family:var(--font-m);font-size:12px;color:var(--text3);margin-top:8px;letter-spacing:0.1em;text-transform:uppercase;text-align:center}
+.timer-round{font-family:var(--font-d);font-size:36px;color:var(--text2);margin-top:4px}
+.timer-config{padding:0 20px 20px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.timer-config-row{display:flex;align-items:center;gap:12px}
+.timer-config-label{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;width:80px;flex-shrink:0}
+.timer-config-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:8px 12px;font-family:var(--font-m);font-size:13px;color:var(--text);outline:none;text-align:center}
+.timer-config-input:focus{border-color:var(--accent)}
+.timer-controls{display:flex;gap:10px;padding:0 20px 20px;flex-shrink:0}
+.timer-btn{flex:1;padding:14px;border-radius:2px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:none;transition:opacity 0.15s}
+.timer-btn:active{opacity:0.8}
+.timer-btn-start{background:var(--accent);color:#000}
+.timer-btn-stop{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.timer-btn-reset{background:none;color:var(--text3);border:1px solid var(--border2);flex:0 0 auto;padding:14px 18px}
+
 /* SCORE LOGGER */
 .sl-field{margin-bottom:14px}
 .sl-label{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;display:block}
@@ -449,6 +479,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <button class="be-save" onclick="saveComp()">Guardar</button>
     <button class="be-delete" id="comp-delete-btn" onclick="deleteComp()" style="display:none">Eliminar</button>
     <div style="height:24px"></div>
+  </div>
+</div>
+
+<!-- TIMER FAB -->
+<button class="timer-fab" onclick="openTimer()" id="timer-fab" title="Timer">⏱</button>
+
+<!-- TIMER OVERLAY -->
+<div class="timer-overlay" id="timer-overlay">
+  <div class="timer-header">
+    <div class="timer-title">TIMER</div>
+    <button class="timer-close" onclick="closeTimer()">✕ Cerrar</button>
+  </div>
+  <div class="timer-modes">
+    <button class="timer-mode-btn active" onclick="setTimerMode('amrap')">AMRAP</button>
+    <button class="timer-mode-btn" onclick="setTimerMode('fortime')">For Time</button>
+    <button class="timer-mode-btn" onclick="setTimerMode('emom')">EMOM</button>
+    <button class="timer-mode-btn" onclick="setTimerMode('tabata')">Tabata</button>
+    <button class="timer-mode-btn" onclick="setTimerMode('countdown')">Countdown</button>
+  </div>
+  <div class="timer-display">
+    <div class="timer-time" id="timer-display">00:00</div>
+    <div class="timer-sub" id="timer-sub">Configura y presiona START</div>
+    <div class="timer-round" id="timer-round"></div>
+  </div>
+  <div class="timer-config" id="timer-config"></div>
+  <div class="timer-controls">
+    <button class="timer-btn timer-btn-reset" onclick="resetTimer()">↺</button>
+    <button class="timer-btn timer-btn-start" id="timer-start-btn" onclick="toggleTimer()">START</button>
   </div>
 </div>
 
@@ -2568,6 +2626,273 @@ function openCopyAthWeek(){
   // Override executeCopyWeek to use ath context
   window._copyWeekAthMode = { prog, srcWeek };
   document.getElementById('copy-week-editor').classList.add('open');
+}
+
+
+// ── TIMER ─────────────────────────────────────────────
+let timerState = {
+  mode: 'amrap',
+  running: false,
+  interval: null,
+  elapsed: 0,       // seconds elapsed
+  remaining: 0,     // seconds remaining
+  round: 1,
+  phase: 'work',    // work | rest
+  config: {
+    minutes: 10, seconds: 0,
+    rounds: 8,
+    workMin: 0, workSec: 20,
+    restMin: 0, restSec: 10,
+    emomMin: 1, emomSec: 0,
+  }
+};
+
+const TIMER_MODES = {
+  amrap: {
+    label: 'AMRAP',
+    sub: 'As Many Rounds As Possible',
+    fields: [
+      {key:'minutes', label:'Minutos', default:10},
+      {key:'seconds', label:'Segundos', default:0},
+    ]
+  },
+  fortime: {
+    label: 'For Time',
+    sub: 'Tiempo corriendo — presiona STOP al terminar',
+    fields: [
+      {key:'minutes', label:'Cap (min)', default:20},
+      {key:'seconds', label:'Cap (seg)', default:0},
+    ]
+  },
+  emom: {
+    label: 'EMOM',
+    sub: 'Every Minute On the Minute',
+    fields: [
+      {key:'rounds', label:'Rondas', default:10},
+      {key:'emomMin', label:'Intervalo min', default:1},
+      {key:'emomSec', label:'Intervalo seg', default:0},
+    ]
+  },
+  tabata: {
+    label: 'Tabata',
+    sub: 'Work / Rest intervals',
+    fields: [
+      {key:'rounds', label:'Rondas', default:8},
+      {key:'workMin', label:'Work min', default:0},
+      {key:'workSec', label:'Work seg', default:20},
+      {key:'restMin', label:'Rest min', default:0},
+      {key:'restSec', label:'Rest seg', default:10},
+    ]
+  },
+  countdown: {
+    label: 'Countdown',
+    sub: 'Cuenta regresiva personalizada',
+    fields: [
+      {key:'minutes', label:'Minutos', default:5},
+      {key:'seconds', label:'Segundos', default:0},
+    ]
+  }
+};
+
+function openTimer(){
+  document.getElementById('timer-overlay').classList.add('open');
+  setTimerMode(timerState.mode);
+}
+
+function closeTimer(){
+  document.getElementById('timer-overlay').classList.remove('open');
+}
+
+function setTimerMode(mode){
+  timerState.mode = mode;
+  if(timerState.running) resetTimer();
+
+  // Update mode buttons
+  document.querySelectorAll('.timer-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().replace(' ','') === mode);
+  });
+
+  // Build config fields
+  const cfg = TIMER_MODES[mode];
+  document.getElementById('timer-sub').textContent = cfg.sub;
+  const configEl = document.getElementById('timer-config');
+  configEl.innerHTML = cfg.fields.map(f => `
+    <div class="timer-config-row">
+      <div class="timer-config-label">${f.label}</div>
+      <input class="timer-config-input" id="tcfg-${f.key}" type="number" min="0" max="99"
+        value="${timerState.config[f.key] !== undefined ? timerState.config[f.key] : f.default}"
+        onchange="timerState.config['${f.key}']=parseInt(this.value)||0">
+    </div>`).join('');
+
+  resetTimer();
+}
+
+function getTimerTotal(){
+  const c = timerState.config;
+  const m = timerState.mode;
+  if(m === 'amrap' || m === 'countdown' || m === 'fortime'){
+    return (c.minutes||0)*60 + (c.seconds||0);
+  }
+  if(m === 'emom') return ((c.emomMin||0)*60 + (c.emomSec||0));
+  if(m === 'tabata') return (c.workMin||0)*60 + (c.workSec||0);
+  return 0;
+}
+
+function formatTime(secs){
+  const m = Math.floor(Math.abs(secs)/60);
+  const s = Math.abs(secs)%60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function updateTimerDisplay(){
+  const disp = document.getElementById('timer-display');
+  const sub = document.getElementById('timer-sub');
+  const roundEl = document.getElementById('timer-round');
+  const m = timerState.mode;
+  const c = timerState.config;
+
+  if(m === 'amrap'){
+    const remaining = getTimerTotal() - timerState.elapsed;
+    disp.textContent = formatTime(Math.max(0, remaining));
+    disp.className = 'timer-time' + (remaining <= 10 ? ' warning' : '') + (remaining <= 0 ? ' done' : '');
+    sub.textContent = 'Tiempo restante';
+    roundEl.textContent = '';
+  } else if(m === 'fortime'){
+    disp.textContent = formatTime(timerState.elapsed);
+    disp.className = 'timer-time';
+    const cap = getTimerTotal();
+    if(cap > 0){
+      const remaining = cap - timerState.elapsed;
+      sub.textContent = remaining > 0 ? 'Cap: ' + formatTime(remaining) : '¡TIEMPO!';
+      disp.className = 'timer-time' + (remaining <= 0 ? ' warning' : '');
+    } else {
+      sub.textContent = 'Tiempo corriendo';
+    }
+    roundEl.textContent = '';
+  } else if(m === 'countdown'){
+    const remaining = getTimerTotal() - timerState.elapsed;
+    disp.textContent = formatTime(Math.max(0, remaining));
+    disp.className = 'timer-time' + (remaining <= 10 ? ' warning' : '') + (remaining <= 0 ? ' done' : '');
+    sub.textContent = 'Cuenta regresiva';
+    roundEl.textContent = '';
+  } else if(m === 'emom'){
+    const interval = (c.emomMin||0)*60 + (c.emomSec||0);
+    const withinRound = timerState.elapsed % (interval || 60);
+    const remaining = interval - withinRound;
+    disp.textContent = formatTime(remaining);
+    disp.className = 'timer-time' + (remaining <= 5 ? ' warning' : '');
+    sub.textContent = 'EMOM · Ronda';
+    roundEl.textContent = timerState.round + ' / ' + (c.rounds||10);
+  } else if(m === 'tabata'){
+    const work = (c.workMin||0)*60 + (c.workSec||0);
+    const rest = (c.restMin||0)*60 + (c.restSec||0);
+    const interval = work + rest;
+    const withinRound = timerState.elapsed % (interval || 1);
+    const isWork = withinRound < work;
+    const remaining = isWork ? work - withinRound : interval - withinRound;
+    timerState.phase = isWork ? 'work' : 'rest';
+    disp.textContent = formatTime(remaining);
+    disp.className = 'timer-time' + (remaining <= 3 ? ' warning' : '');
+    sub.textContent = isWork ? '🔥 TRABAJO' : '💤 DESCANSO';
+    roundEl.textContent = 'Ronda ' + timerState.round + ' / ' + (c.rounds||8);
+  }
+}
+
+function toggleTimer(){
+  if(timerState.running){
+    clearInterval(timerState.interval);
+    timerState.running = false;
+    document.getElementById('timer-start-btn').textContent = 'RESUME';
+    document.getElementById('timer-start-btn').style.background = 'var(--bg3)';
+    document.getElementById('timer-start-btn').style.color = 'var(--text2)';
+    document.getElementById('timer-start-btn').style.border = '1px solid var(--border2)';
+  } else {
+    timerState.running = true;
+    document.getElementById('timer-start-btn').textContent = 'PAUSE';
+    document.getElementById('timer-start-btn').style.background = '#ff4444';
+    document.getElementById('timer-start-btn').style.color = '#fff';
+    document.getElementById('timer-start-btn').style.border = 'none';
+
+    timerState.interval = setInterval(()=>{
+      timerState.elapsed++;
+
+      const m = timerState.mode;
+      const c = timerState.config;
+
+      // Check if done
+      if(m === 'amrap' || m === 'countdown'){
+        if(timerState.elapsed >= getTimerTotal()){
+          clearInterval(timerState.interval);
+          timerState.running = false;
+          timerState.elapsed = getTimerTotal();
+          document.getElementById('timer-start-btn').textContent = 'START';
+          document.getElementById('timer-start-btn').style.background = 'var(--accent)';
+          document.getElementById('timer-start-btn').style.color = '#000';
+          document.getElementById('timer-start-btn').style.border = 'none';
+          // Beep
+          playBeep(880, 0.5);
+        }
+      } else if(m === 'emom'){
+        const interval = (c.emomMin||0)*60 + (c.emomSec||0);
+        if(interval > 0 && timerState.elapsed % interval === 0){
+          timerState.round++;
+          playBeep(660, 0.3);
+          if(timerState.round > (c.rounds||10)){
+            clearInterval(timerState.interval);
+            timerState.running = false;
+            playBeep(880, 0.5);
+          }
+        }
+      } else if(m === 'tabata'){
+        const work = (c.workMin||0)*60 + (c.workSec||0);
+        const rest = (c.restMin||0)*60 + (c.restSec||0);
+        const interval = work + rest;
+        if(interval > 0 && timerState.elapsed % interval === 0){
+          timerState.round++;
+          playBeep(660, 0.3);
+          if(timerState.round > (c.rounds||8)){
+            clearInterval(timerState.interval);
+            timerState.running = false;
+            playBeep(880, 0.5);
+          }
+        }
+        // Beep on phase change
+        const withinRound = timerState.elapsed % interval;
+        if(withinRound === work) playBeep(440, 0.2);
+      }
+
+      updateTimerDisplay();
+    }, 1000);
+  }
+}
+
+function resetTimer(){
+  clearInterval(timerState.interval);
+  timerState.running = false;
+  timerState.elapsed = 0;
+  timerState.round = 1;
+  timerState.phase = 'work';
+  document.getElementById('timer-start-btn').textContent = 'START';
+  document.getElementById('timer-start-btn').style.background = 'var(--accent)';
+  document.getElementById('timer-start-btn').style.color = '#000';
+  document.getElementById('timer-start-btn').style.border = 'none';
+  updateTimerDisplay();
+}
+
+function playBeep(freq, duration){
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + duration);
+  } catch(e){}
 }
 
 // ── COPY WEEK ─────────────────────────────────────────
