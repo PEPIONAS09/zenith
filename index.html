@@ -2989,6 +2989,11 @@ let chatSubscription = null;
 
 async function openChatList(){
   document.getElementById('chat-list-overlay').classList.add('open');
+  // Load athletes if not already loaded
+  if(!athletes.length){
+    const {data} = await sb.from('profiles').select('*').eq('role','athlete');
+    athletes = data || [];
+  }
   await loadConversations();
 }
 
@@ -3015,7 +3020,7 @@ async function loadConversations(){
       .eq('role','athlete')
       .not('hidden_from_coaches','eq', currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5' ? false : true);
 
-    const allAthletes = athletes.length ? athletes : (athleteList || []);
+    const allAthletes = athleteList || athletes || [];
 
     // Get last message for each
     const rows = await Promise.all(allAthletes.map(async a => {
