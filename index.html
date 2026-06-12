@@ -3162,6 +3162,20 @@ async function sendMessage(){
   });
 
   await loadMessages(currentChatPartnerId);
+
+  // Send email notification
+  try {
+    const senderName = currentProfile?.full_name || 'Tu coach';
+    await fetch(`${SUPABASE_URL}/functions/v1/notify-message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({
+        receiver_id: currentChatPartnerId,
+        sender_name: senderName,
+        message_preview: text.length > 100 ? text.substring(0, 100) + '...' : text
+      })
+    });
+  } catch(e){ console.log('Notification skipped:', e.message); }
 }
 
 async function sendMedia(input){
