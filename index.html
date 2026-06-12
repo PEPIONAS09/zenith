@@ -3017,10 +3017,9 @@ async function loadConversations(){
   if(isCoach){
     // Coach sees all athletes
     const {data: athleteList} = await sb.from('profiles').select('*')
-      .eq('role','athlete')
-      .not('hidden_from_coaches','eq', currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5' ? false : true);
+      .eq('role','athlete');
 
-    const allAthletes = athleteList || athletes || [];
+    const allAthletes = athleteList || [];
 
     // Get last message for each
     const rows = await Promise.all(allAthletes.map(async a => {
