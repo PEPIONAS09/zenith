@@ -3162,13 +3162,18 @@ async function initDesktop(){
 }
 
 function renderDsProgTabs(){
+  const isLight = localStorage.getItem('z_theme') === 'light';
   const progs = [
-    {slug:'games', label:'Games', color:'var(--accent)'},
-    {slug:'compete', label:'Compete', color:'var(--accent)'},
+    {slug:'games', label:'Games', color: isLight ? '#0055dd' : '#e8ff00'},
+    {slug:'compete', label:'Compete', color: isLight ? '#0055dd' : '#e8ff00'},
     {slug:'olympus', label:'Olympus', color:'#8b5cf6'},
   ];
-  document.getElementById('ds-prog-tabs').innerHTML = progs.map(p => `
-    <div class="ds-nav-item ${dsCurrentProg===p.slug?'active':''}" onclick="setDsProg('${p.slug}')">
+  const tabsEl = document.getElementById('ds-prog-tabs');
+  if(!tabsEl) return;
+  tabsEl.innerHTML = progs.map(p => `
+    <div class="ds-nav-item ${dsCurrentProg===p.slug?'active':''}" 
+      onclick="setDsProg('${p.slug}')"
+      style="${dsCurrentProg===p.slug ? (isLight?'background:#e8eeff;color:#0055dd':'background:#1a1a1a;color:#e8ff00') : ''}">
       <span style="color:${p.color};font-size:8px">●</span> ${p.label}
     </div>`).join('');
 }
@@ -3221,6 +3226,9 @@ async function loadDsWeek(){
   } else {
     renderDsDayContent(byDay[dsCurrentDay] || [], dsCurrentDay);
   }
+  // Re-apply theme after render
+  const savedTheme = localStorage.getItem('z_theme') || 'dark';
+  if(savedTheme === 'light') setTimeout(()=>applyTheme('light'), 50);
 }
 
 function selectDsDay(dow){
