@@ -412,7 +412,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 }
 
 /* EXERCISE LIBRARY */
-.ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
+.ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column}
 .ex-overlay.open{display:flex}
 .ex-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ex-search{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:8px 12px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none}
@@ -430,7 +430,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ex-info{flex:1;min-width:0}
 .ex-name{font-size:13px;font-weight:500;color:var(--text)}
 .ex-cat-tag{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px}
-.ex-detail{position:fixed;inset:0;background:var(--bg);z-index:401;display:none;flex-direction:column;max-width:430px;margin:0 auto}
+.ex-detail{position:fixed;inset:0;background:var(--bg);z-index:401;display:none;flex-direction:column}
 .ex-detail.open{display:flex}
 .ex-video-wrap{position:relative;width:100%;padding-top:56.25%;background:#000;flex-shrink:0}
 .ex-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
@@ -847,10 +847,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 /* Exercise library desktop — fix layout */
 @media (min-width: 768px) {
-  .ex-overlay .ex-cats { flex-wrap: wrap; gap: 6px; padding: 10px 16px }
-  .ex-cat-btn { font-size: 9px; padding: 4px 10px }
-  .ex-row { padding: 10px 16px }
-  .ex-thumb { width: 48px; height: 36px }
+  .ex-overlay {
+    display: none;
+    flex-direction: row !important;
+  }
+  .ex-overlay.open { display: flex !important }
+  .ex-overlay-left {
+    width: 320px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .ex-overlay-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .ex-header { flex-shrink: 0 }
+  .ex-cats { flex-wrap: wrap }
+  .ex-list { overflow-y: auto }
+  .ex-detail {
+    position: relative !important;
+    display: flex !important;
+    flex: 1;
+    z-index: auto !important;
+  }
+  .ex-video-wrap { padding-top: 40% }
 }
 </style>
 </head>
@@ -1112,30 +1138,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 <!-- EXERCISE LIBRARY -->
 <div class="ex-overlay" id="ex-overlay">
-  <div class="ex-header">
-    <button class="chat-back" onclick="closeExLibrary()">← Volver</button>
-    <input class="ex-search" id="ex-search" placeholder="Buscar ejercicio..." oninput="filterExercises()">
-    <button id="ex-add-new-btn" style="display:none;background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap" onclick="openAddExercise()">+ Agregar</button>
+  <!-- LEFT PANEL: list -->
+  <div class="ex-overlay-left">
+    <div class="ex-header">
+      <button class="chat-back" onclick="closeExLibrary()">← Volver</button>
+      <input class="ex-search" id="ex-search" placeholder="Buscar ejercicio..." oninput="filterExercises()">
+      <button id="ex-add-new-btn" style="display:none;background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap" onclick="openAddExercise()">+ Agregar</button>
+    </div>
+    <div class="ex-cats" id="ex-cats"></div>
+    <div class="ex-list" id="ex-list"></div>
   </div>
-  <div class="ex-cats" id="ex-cats"></div>
-  <div class="ex-list" id="ex-list"></div>
-</div>
 
-<!-- EXERCISE DETAIL -->
-<div class="ex-detail" id="ex-detail">
-  <div class="ex-header" style="padding:10px 16px">
-    <button class="chat-back" onclick="closeExDetail()">← Librería</button>
-    <div style="flex:1"></div>
-    <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
-  </div>
-  <div class="ex-video-wrap" id="ex-video-wrap"></div>
-  <div class="ex-detail-body">
-    <div class="ex-detail-name" id="ex-detail-name"></div>
-    <div class="ex-detail-cat" id="ex-detail-cat"></div>
-    <div class="ex-detail-section">Descripción</div>
-    <div class="ex-detail-text" id="ex-detail-desc"></div>
-    <div class="ex-detail-section" id="ex-kp-label">Puntos clave</div>
-    <div class="ex-detail-text" id="ex-detail-kp"></div>
+  <!-- RIGHT PANEL: detail (desktop) -->
+  <div class="ex-overlay-right">
+    <div class="ex-detail" id="ex-detail" style="display:flex;flex-direction:column;flex:1">
+      <div class="ex-header" style="padding:10px 16px">
+        <button class="chat-back" id="ex-back-btn" onclick="closeExDetail()" style="display:none">← Lista</button>
+        <div style="flex:1" id="ex-detail-header-title" style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un ejercicio</div>
+        <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
+      </div>
+      <div class="ex-video-wrap" id="ex-video-wrap" style="display:none"></div>
+      <div class="ex-detail-body" id="ex-detail-body">
+        <div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un ejercicio de la lista</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3044,6 +3070,30 @@ async function moveAthBlock(blockId, dir, e){
   if(currentAthDay !== null) showAthDay(currentAthDay);
 }
 
+
+async function confirmDeleteAthlete(athId, athName, e){
+  e.stopPropagation();
+  if(!confirm('¿Eliminar a ' + athName + '? Esta acción no se puede deshacer.')) return;
+  
+  // Delete from Supabase Auth
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
+      body: JSON.stringify({ athlete_id: athId })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+  } catch(err) {
+    // If edge function doesn't exist, just delete profile
+    await sb.from('profiles').delete().eq('id', athId);
+  }
+  
+  athletes = athletes.filter(a => a.id !== athId);
+  renderAthList();
+  showToast('✓ Atleta eliminado');
+}
+
 async function confirmDeleteAthBlock(blockId, blockName, e){
   e.stopPropagation();
   const blk = document.getElementById('athblk-'+blockId);
@@ -3692,28 +3742,49 @@ function openExDetail(exId){
   currentExercise = ex;
 
   const isCoach = currentProfile?.role === 'coach';
-  document.getElementById('ex-edit-btn').style.display = isCoach ? 'block' : 'none';
-  document.getElementById('ex-detail-name').textContent = ex.name;
-  document.getElementById('ex-detail-cat').textContent = ex.category;
-  document.getElementById('ex-detail-desc').textContent = ex.description || 'Sin descripción.';
-  document.getElementById('ex-detail-kp').textContent = ex.key_points || '';
+  const isDesktopView = window.innerWidth >= 768;
 
-  const kpLabel = document.getElementById('ex-kp-label');
-  if(kpLabel) kpLabel.style.display = ex.key_points ? 'block' : 'none';
+  document.getElementById('ex-edit-btn').style.display = isCoach ? 'block' : 'none';
 
   const videoWrap = document.getElementById('ex-video-wrap');
   const embedUrl = getYouTubeEmbed(ex.youtube_url);
+  videoWrap.style.display = 'block';
   videoWrap.innerHTML = embedUrl
     ? `<iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`
-    : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:10px;color:#555">Sin video</div>';
+    : '';
 
-  document.getElementById('ex-detail').classList.add('open');
+  const body = document.getElementById('ex-detail-body');
+  body.innerHTML = `
+    <div class="ex-detail-name">${ex.name}</div>
+    <div class="ex-detail-cat">${ex.category}</div>
+    ${ex.description ? `<div class="ex-detail-section">Descripción</div><div class="ex-detail-text">${ex.description}</div>` : ''}
+    ${ex.key_points ? `<div class="ex-detail-section">Puntos clave</div><div class="ex-detail-text">${ex.key_points}</div>` : ''}
+  `;
+
+  // On mobile, show back button and make detail fullscreen
+  const backBtn = document.getElementById('ex-back-btn');
+  if(backBtn) backBtn.style.display = isDesktopView ? 'none' : 'block';
+
+  if(!isDesktopView){
+    document.getElementById('ex-detail').style.position = 'fixed';
+    document.getElementById('ex-detail').style.inset = '0';
+    document.getElementById('ex-detail').style.zIndex = '450';
+    document.getElementById('ex-detail').style.background = 'var(--bg)';
+  }
 }
 
 function closeExDetail(){
-  document.getElementById('ex-detail').classList.remove('open');
   const videoWrap = document.getElementById('ex-video-wrap');
-  if(videoWrap) videoWrap.innerHTML = ''; // Stop video
+  if(videoWrap){ videoWrap.innerHTML = ''; videoWrap.style.display = 'none'; }
+  const body = document.getElementById('ex-detail-body');
+  if(body) body.innerHTML = '<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un ejercicio de la lista</div>';
+  currentExercise = null;
+  document.getElementById('ex-edit-btn').style.display = 'none';
+  const backBtn = document.getElementById('ex-back-btn');
+  if(backBtn) backBtn.style.display = 'none';
+  // Reset mobile fullscreen
+  const detail = document.getElementById('ex-detail');
+  if(detail){ detail.style.position = ''; detail.style.inset = ''; detail.style.zIndex = ''; }
 }
 
 function openAddExercise(){
