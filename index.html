@@ -1284,6 +1284,7 @@ async function doLogout(){
 
 // INIT
 async function init(){
+  initTheme();
   const {data:{session}} = await sb.auth.getSession();
   if(!session){
     document.getElementById('loading').classList.add('hidden');
@@ -1379,10 +1380,13 @@ function openUserMenu(){
   const menu = document.createElement('div');
   menu.id = 'user-menu';
   menu.style.cssText = 'position:fixed;top:60px;right:16px;background:var(--bg2);border:1px solid var(--border2);border-radius:4px;z-index:300;min-width:180px;overflow:hidden;max-width:calc(100vw - 32px)';
+  const isDark = (localStorage.getItem('z_theme')||'dark') === 'dark';
+  const themeLabel = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
   const coachBtn = isCoach ? `<button onclick="document.getElementById('user-menu').remove();openCoach()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">◎ Coach View</button>` : '';
   menu.innerHTML = `
     <div style="padding:10px 16px;font-family:var(--font-m);font-size:10px;color:var(--text3);border-bottom:1px solid var(--border)">${currentProfile?.full_name||'Mi cuenta'} · ${isCoach?'Coach':'Atleta'}</div>
     ${coachBtn}
+    <button onclick="document.getElementById('user-menu').remove();toggleTheme()" id="theme-toggle-btn" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">${themeLabel}</button>
     <button onclick="document.getElementById('user-menu').remove();openPWEditor()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🔑 Cambiar contraseña</button>
     <button onclick="document.getElementById('user-menu').remove();openExLibrary()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🏋️ Librería de ejercicios</button>
     <label style="width:100%;padding:13px 16px;background:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;display:block;letter-spacing:0.05em">📷 Cambiar foto<input type="file" accept="image/*" style="display:none" onchange="uploadAvatar(this)"></label>
@@ -3034,6 +3038,27 @@ function openCopyAthWeek(){
 
 
 
+
+
+// ── THEME ─────────────────────────────────────────────
+function initTheme(){
+  const saved = localStorage.getItem('z_theme') || 'dark';
+  applyTheme(saved);
+}
+
+function applyTheme(theme){
+  if(theme === 'light'){
+    document.documentElement.setAttribute('data-theme','light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('z_theme', theme);
+}
+
+function toggleTheme(){
+  const current = localStorage.getItem('z_theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
 
 // ── DESKTOP LAYOUT ───────────────────────────────────
 let dsWeekOffset = 0;
