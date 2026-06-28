@@ -3047,21 +3047,59 @@ function initTheme(){
 }
 
 function applyTheme(theme){
-  if(theme === 'light'){
+  const isLight = theme === 'light';
+  if(isLight){
     document.documentElement.setAttribute('data-theme','light');
-    document.body.style.background = '#ffffff';
-    document.body.style.color = '#0a0a0a';
   } else {
     document.documentElement.removeAttribute('data-theme');
-    document.body.style.background = '#0a0a0a';
-    document.body.style.color = '#f0f0f0';
   }
   localStorage.setItem('z_theme', theme);
-  // Force re-render
-  const app = document.querySelector('.app');
-  if(app){
-    app.style.background = theme === 'light' ? '#ffffff' : '#0a0a0a';
-  }
+
+  // Force colors on all major containers
+  const bg    = isLight ? '#ffffff' : '#0a0a0a';
+  const bg2   = isLight ? '#f7f7f7' : '#111111';
+  const bg3   = isLight ? '#eeeeee' : '#1a1a1a';
+  const text  = isLight ? '#0a0a0a' : '#f0f0f0';
+  const text2 = isLight ? '#333333' : '#aaaaaa';
+  const text3 = isLight ? '#888888' : '#555555';
+  const border= isLight ? '#e2e2e2' : '#1e1e1e';
+  const accent= isLight ? '#0066ff' : '#e8ff00';
+
+  document.body.style.cssText = `background:${bg};color:${text}`;
+
+  // Update all blocks, screens, panels
+  const selectors = [
+    '.app','.screen','.topbar','.bottom-nav',
+    '.desktop-sidebar','.desktop-main','.desktop-right',
+    '.block','.block-body','.bm-card',
+    '.ds-block','.ds-block-body',
+    '.hero','.comp-card',
+    '.ath-detail','.coach-overlay',
+    '.block-editor','.be-scroll',
+    '.chat-overlay','.ex-overlay','.ex-detail',
+    '.timer-overlay','.score-logger',
+  ];
+
+  selectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      el.style.background = bg;
+      el.style.color = text;
+      el.style.borderColor = border;
+    });
+  });
+
+  // bg2 elements
+  ['.ds-block','.bm-card','.comp-card','.hero','.desktop-sidebar','.desktop-right','.bg2'].forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => el.style.background = bg2);
+  });
+
+  // Text colors
+  document.querySelectorAll('.block-meta,.bm-sec-ttl,.hero-tag,.hero-meta,.ds-ath-prog,.ds-section-title,.text3,.nav-btn,.day-tab').forEach(el => el.style.color = text3);
+  document.querySelectorAll('.block-name,.bm-name,.hero-name,.ds-block-name,.ds-ath-name').forEach(el => el.style.color = text);
+  document.querySelectorAll('.bm-val,.hstat-val,.comp-days-num').forEach(el => el.style.color = accent);
+
+  // Avatar
+  document.querySelectorAll('.avatar').forEach(el => { el.style.background = accent; el.style.color = isLight ? '#fff' : '#000'; });
 }
 
 function toggleTheme(){
