@@ -224,6 +224,193 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .add-block-btn{display:flex;align-items:center;gap:8px;padding:14px 16px;border:1px dashed var(--border2);border-radius:4px;cursor:pointer;background:none;width:100%;font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
 .add-block-btn:active{background:var(--bg2)}
 
+/* DESKTOP LAYOUT */
+@media (min-width: 768px) {
+  body { background: #060606 }
+  
+  .app {
+    max-width: 100% !important;
+    display: grid;
+    grid-template-columns: 220px 1fr 300px;
+    grid-template-rows: 60px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Top bar spans full width */
+  .topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+  }
+
+  /* Left sidebar */
+  .desktop-sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .desktop-sidebar::-webkit-scrollbar { width: 0 }
+
+  /* Main content */
+  .desktop-main {
+    grid-column: 2;
+    grid-row: 2;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  .desktop-main::-webkit-scrollbar { width: 4px }
+  .desktop-main::-webkit-scrollbar-thumb { background: var(--border2) }
+
+  /* Right panel */
+  .desktop-right {
+    grid-column: 3;
+    grid-row: 2;
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    background: var(--bg2);
+  }
+  .desktop-right::-webkit-scrollbar { width: 0 }
+
+  /* Hide mobile nav */
+  .bottom-nav { display: none !important }
+
+  /* Hide mobile screens */
+  .screen { display: none !important }
+
+  /* Hide mobile overlays that are open */
+  .ath-detail:not(#ath-week-view) { display: none !important }
+
+  /* Desktop sidebar nav items */
+  .ds-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-family: var(--font-m);
+    font-size: 10px;
+    color: var(--text3);
+    cursor: pointer;
+    border-radius: 2px;
+    margin: 2px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.15s;
+  }
+  .ds-nav-item:hover { background: var(--bg2); color: var(--text2) }
+  .ds-nav-item.active { background: var(--bg3); color: var(--accent) }
+  .ds-nav-icon { font-size: 14px; width: 20px; text-align: center }
+
+  .ds-section-title {
+    font-family: var(--font-m);
+    font-size: 8px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 16px 16px 6px;
+    opacity: 0.5;
+  }
+
+  .ds-day-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    font-family: var(--font-m);
+    font-size: 10px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ds-day-item:hover { color: var(--text2); background: var(--bg2) }
+  .ds-day-item.active { color: var(--accent) }
+  .ds-day-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2) }
+  .ds-day-dot.active { background: var(--accent) }
+
+  .ds-athlete-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ds-athlete-item:hover { background: var(--bg2) }
+  .ds-athlete-item.active { background: var(--bg3) }
+  .ds-ath-ini {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-m); font-size: 9px; font-weight: 500;
+    background: var(--accent); color: #000; flex-shrink: 0; overflow: hidden;
+  }
+  .ds-ath-name { font-family: var(--font-m); font-size: 10px; color: var(--text2) }
+  .ds-ath-prog { font-family: var(--font-m); font-size: 8px; color: var(--text3); text-transform: uppercase }
+
+  /* Desktop week view */
+  .ds-week-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ds-week-title { font-family: var(--font-d); font-size: 20px; letter-spacing: 0.1em }
+  .ds-week-nav { display: flex; align-items: center; gap: 8px }
+  .ds-week-nav button {
+    background: none; border: 1px solid var(--border2); border-radius: 2px;
+    padding: 4px 10px; font-family: var(--font-m); font-size: 9px; color: var(--text2); cursor: pointer;
+  }
+
+  /* Desktop blocks */
+  .ds-blocks { padding: 16px }
+  .ds-block {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--bg2);
+  }
+  .ds-block-hdr {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; cursor: pointer;
+  }
+  .ds-block-hdr:hover { background: var(--bg3) }
+  .ds-block-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
+  .ds-block-name { font-family: var(--font-m); font-size: 11px; font-weight: 500; color: var(--text); flex: 1 }
+  .ds-block-meta { font-family: var(--font-m); font-size: 9px; color: var(--text3) }
+  .ds-block-actions { display: flex; gap: 6px }
+  .ds-block-btn {
+    background: none; border: 1px solid var(--border2); border-radius: 2px;
+    padding: 4px 8px; font-family: var(--font-m); font-size: 9px; color: var(--text3);
+    cursor: pointer; white-space: nowrap;
+  }
+  .ds-block-btn:hover { color: var(--text2); border-color: var(--text3) }
+  .ds-block-btn.danger { border-color: #ff444455; color: #ff4444 }
+  .ds-block-body { padding: 12px 16px; border-top: 1px solid var(--border); display: none }
+  .ds-block-body.open { display: block }
+  .ds-block-content { font-size: 13px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; margin-bottom: 10px }
+  .ds-coach-note { background: var(--bg3); border-left: 2px solid var(--accent); padding: 8px 12px; margin-bottom: 10px; font-size: 12px; color: var(--text3) }
+
+  /* Desktop right panel */
+  .ds-right-section { padding: 16px }
+  .ds-right-title { font-family: var(--font-d); font-size: 16px; letter-spacing: 0.1em; margin-bottom: 12px }
+  .ds-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border) }
+  .ds-stat-name { font-family: var(--font-m); font-size: 10px; color: var(--text3) }
+  .ds-stat-val { font-family: var(--font-m); font-size: 13px; color: var(--text); font-weight: 500 }
+
+  /* FABs hidden on desktop */
+  .timer-fab, .chat-fab { bottom: 20px !important }
+}
+
+@media (max-width: 767px) {
+  .desktop-sidebar, .desktop-main, .desktop-right { display: none !important }
+}
+
 /* EXERCISE LIBRARY */
 .ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
 .ex-overlay.open{display:flex}
@@ -1137,6 +1324,7 @@ function setupUI(){
   renderHomeComps();
   loadPRsToCache();
   initChat();
+  if(isDesktop()) initDesktop();
 }
 
 function onAvatarClick(){
@@ -2804,6 +2992,237 @@ function openCopyAthWeek(){
 
 
 
+
+
+// ── DESKTOP LAYOUT ───────────────────────────────────
+let dsWeekOffset = 0;
+let dsCurrentDay = null;
+let dsCurrentAthlete = null;
+let dsCurrentProg = null;
+
+const DS_DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DS_DAY_ORDER = [1,2,3,4,5,6,0];
+
+function isDesktop(){ return window.innerWidth >= 768; }
+
+async function initDesktop(){
+  if(!isDesktop()) return;
+  dsCurrentProg = currentProfile?.program || 'compete';
+
+  // Program tabs
+  renderDsProgTabs();
+
+  // Load athletes
+  const {data} = await sb.from('profiles').select('*').eq('role','athlete');
+  athletes = data || [];
+  renderDsAthletes();
+
+  // Load week
+  await loadDsWeek();
+}
+
+function renderDsProgTabs(){
+  const progs = [
+    {slug:'games', label:'Games', color:'var(--accent)'},
+    {slug:'compete', label:'Compete', color:'var(--accent)'},
+    {slug:'olympus', label:'Olympus', color:'#8b5cf6'},
+  ];
+  document.getElementById('ds-prog-tabs').innerHTML = progs.map(p => `
+    <div class="ds-nav-item ${dsCurrentProg===p.slug?'active':''}" onclick="setDsProg('${p.slug}')">
+      <span style="color:${p.color};font-size:8px">●</span> ${p.label}
+    </div>`).join('');
+}
+
+async function setDsProg(prog){
+  dsCurrentProg = prog;
+  dsWeekOffset = 0;
+  dsCurrentDay = null;
+  renderDsProgTabs();
+  await loadDsWeek();
+  document.getElementById('ds-content').innerHTML = '<div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un día</div>';
+}
+
+async function dsChangeWeek(dir){
+  dsWeekOffset += dir;
+  dsCurrentDay = null;
+  await loadDsWeek();
+}
+
+async function loadDsWeek(){
+  const baseWeek = programWeeks[dsCurrentProg] || 1;
+  const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+
+  document.getElementById('ds-week-label').textContent = 'Sem ' + weekNum + (dsWeekOffset===0?' (actual)':'');
+
+  const {data} = await sb.from('blocks').select('*')
+    .eq('program_slug', dsCurrentProg)
+    .eq('week_number', weekNum)
+    .order('day_of_week').order('order_index');
+
+  // Group by day
+  const byDay = {};
+  if(data) data.forEach(b => { if(!byDay[b.day_of_week]) byDay[b.day_of_week]=[]; byDay[b.day_of_week].push(b); });
+
+  // Render day list
+  const activeDow = dsCurrentDay !== null ? dsCurrentDay : todayDow;
+  document.getElementById('ds-days').innerHTML = DS_DAY_ORDER.map(dow => {
+    const blocks = byDay[dow] || [];
+    const hasContent = blocks.some(b => b.content && b.content !== 'Por programar' && !b.content.startsWith('Contenido pendiente'));
+    return `<div class="ds-day-item ${dow===activeDow?'active':''}" onclick="selectDsDay(${dow})">
+      <span>${DS_DAYS[dow]}</span>
+      <div class="ds-day-dot ${hasContent?'active':''}"></div>
+    </div>`;
+  }).join('');
+
+  // Auto select today
+  if(dsCurrentDay === null){
+    dsCurrentDay = todayDow;
+    renderDsDayContent(byDay[todayDow] || [], todayDow);
+  } else {
+    renderDsDayContent(byDay[dsCurrentDay] || [], dsCurrentDay);
+  }
+}
+
+function selectDsDay(dow){
+  dsCurrentDay = dow;
+  dsCurrentAthlete = null;
+  document.querySelectorAll('.ds-day-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ds-day-item').forEach(el => {
+    if(el.textContent.trim().startsWith(DS_DAYS[dow])) el.classList.add('active');
+  });
+  // Reload with current blocks
+  loadDsWeek();
+}
+
+function renderDsDayContent(blocks, dow){
+  const main = document.getElementById('ds-content');
+  const baseWeek = programWeeks[dsCurrentProg] || 1;
+  const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+
+  if(!blocks.length){
+    main.innerHTML = `
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:var(--font-d);font-size:18px">${DS_DAYS[dow].toUpperCase()} · DESCANSO</div>
+        <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Bloque</button>
+      </div>
+      <div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Día de descanso</div>`;
+    return;
+  }
+
+  const blocksHtml = blocks.map(b => {
+    const hasContent = b.content && !b.content.startsWith('Contenido pendiente') && b.content !== 'Por programar';
+    return `<div class="ds-block" id="dsblk-${b.id}">
+      <div class="ds-block-hdr" onclick="toggleDsBlock('${b.id}')">
+        <div class="ds-block-dot" style="background:${b.color}"></div>
+        <div style="flex:1">
+          <div class="ds-block-name">${b.name}</div>
+          <div class="ds-block-meta">${b.meta||''}</div>
+        </div>
+        ${b.base_movement && b.percentage ? `<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);margin-right:8px">${b.percentage}% ${b.base_movement}</div>` : ''}
+        <div class="ds-block-actions">
+          <button class="ds-block-btn" onclick="event.stopPropagation();openBlockEditorDs('${b.id}')">✏ Editar</button>
+          <button class="ds-block-btn" onclick="event.stopPropagation();copyBlock('${b.id}',event)">⎘</button>
+          <button class="ds-block-btn danger" onclick="event.stopPropagation();confirmDeleteBlock('${b.id}','${b.name.replace(/'/g,'')}',event)">✕</button>
+        </div>
+        <span style="font-size:10px;color:var(--text3);margin-left:4px">${hasContent?'●':'○'}</span>
+      </div>
+      <div class="ds-block-body" id="dsbody-${b.id}">
+        <div class="ds-block-content">${b.content||''}</div>
+        ${b.coach_note ? `<div class="ds-coach-note">Coach: ${b.coach_note}</div>` : ''}
+        ${b.base_movement && b.percentage ? `<div style="background:#0d1f1a;border-left:2px solid var(--accent);padding:8px 12px;margin-bottom:8px;font-family:var(--font-m);font-size:10px;color:var(--accent)">${b.base_movement} @ ${b.percentage}% — usa el PR del atleta para calcular el peso</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  main.innerHTML = `
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--font-d);font-size:18px">${DS_DAYS[dow].toUpperCase()} · ${dsCurrentProg.toUpperCase()}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Semana ${weekNum} · ${blocks.length} bloques</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar semana</button>
+        <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Bloque</button>
+      </div>
+    </div>
+    <div class="ds-blocks">${blocksHtml}${copiedBlock?`<button onclick="pasteBlock(${dow},'${dsCurrentProg}')" style="width:100%;background:none;border:1px dashed var(--accent);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase">⎘ Pegar "${copiedBlock.name}"</button>`:''}</div>`;
+}
+
+function toggleDsBlock(id){
+  const body = document.getElementById('dsbody-'+id);
+  if(body) body.classList.toggle('open');
+}
+
+function openBlockEditorDs(blockId){
+  const allB = Object.values(allBlocks).flat();
+  // Also search in ds blocks
+  openBlockEditor(blockId, {stopPropagation:()=>{}});
+}
+
+function renderDsAthletes(){
+  const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
+  const visible = isMainCoach ? athletes : athletes.filter(a=>!a.hidden_from_coaches);
+  document.getElementById('ds-athletes').innerHTML = visible.map(a => {
+    const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
+    const progColor = a.program==='games'?'var(--accent)':a.program==='olympus'?'#8b5cf6':'var(--accent)';
+    return `<div class="ds-athlete-item ${dsCurrentAthlete?.id===a.id?'active':''}" onclick="selectDsAthlete('${a.id}')">
+      <div class="ds-ath-ini" style="background:${progColor}">
+        ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : ini}
+      </div>
+      <div>
+        <div class="ds-ath-name">${a.full_name?.split(' ')[0]||ini}</div>
+        <div class="ds-ath-prog">${a.program||'compete'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function selectDsAthlete(athId){
+  const a = athletes.find(x=>x.id===athId);
+  if(!a) return;
+  dsCurrentAthlete = a;
+  renderDsAthletes();
+
+  // Load athlete PRs for right panel
+  const {data: prs} = await sb.from('prs').select('*').eq('athlete_id', athId).order('category').order('name');
+
+  // Right panel — athlete PRs
+  const prsHtml = prs?.length ? prs.map(p => `
+    <div class="ds-stat-row">
+      <span class="ds-stat-name">${p.name}</span>
+      <span class="ds-stat-val">${p.value} ${p.unit||''}</span>
+    </div>`).join('') : '<div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin PRs registrados</div>';
+
+  document.getElementById('ds-right-content').innerHTML = `
+    <div class="ds-right-section">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="ds-ath-ini" style="width:40px;height:40px;font-size:14px">
+          ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (a.initials||'??')}
+        </div>
+        <div>
+          <div style="font-family:var(--font-d);font-size:18px">${a.full_name}</div>
+          <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase">${a.program||'compete'} · ${a.goal||''}</div>
+        </div>
+      </div>
+      <div class="ds-right-title">PRs</div>
+      ${prsHtml}
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="openChat('${a.id}','${a.full_name}','${a.avatar_url||''}','${a.initials||'??'}')" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:8px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase">💬 Mensaje</button>
+      </div>
+    </div>`;
+}
+
+function openDsCopyWeek(){
+  const baseWeek = programWeeks[dsCurrentProg] || 1;
+  const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+  document.getElementById('copy-week-origin').textContent = 'Semana ' + weekNum;
+  document.getElementById('copy-week-origin-prog').textContent = dsCurrentProg.toUpperCase();
+  document.getElementById('copy-week-dest').value = '';
+  document.getElementById('copy-week-prog').value = dsCurrentProg;
+  document.getElementById('copy-week-msg').textContent = '';
+  window._copyWeekAthMode = { prog: dsCurrentProg, srcWeek: weekNum };
+  document.getElementById('copy-week-editor').classList.add('open');
+}
 
 // ── EXERCISE LIBRARY ──────────────────────────────────
 let allExercises = [];
