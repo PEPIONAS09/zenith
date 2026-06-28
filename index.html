@@ -3100,6 +3100,33 @@ function applyTheme(theme){
 
   // Avatar
   document.querySelectorAll('.avatar').forEach(el => { el.style.background = accent; el.style.color = isLight ? '#fff' : '#000'; });
+
+  // Active day items
+  document.querySelectorAll('.ds-day-item.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; });
+  document.querySelectorAll('.ds-day-item:not(.active)').forEach(el => { el.style.color = isLight ? '#777' : '#555'; });
+
+  // Day dots
+  document.querySelectorAll('.ds-day-dot.active').forEach(el => { el.style.background = isLight ? '#0055dd' : accent; });
+  document.querySelectorAll('.ds-day-dot:not(.active)').forEach(el => { el.style.background = isLight ? '#ccc' : '#2a2a2a'; });
+
+  // Chat FAB
+  const chatFab = document.querySelector('.chat-fab');
+  if(chatFab){ chatFab.style.background = isLight ? '#f4f4f4' : '#111'; chatFab.style.borderColor = isLight ? '#ddd' : '#2a2a2a'; chatFab.style.color = isLight ? '#0a0a0a' : '#f0f0f0'; }
+
+  // Timer FAB
+  const timerFab = document.querySelector('.timer-fab');
+  if(timerFab){ timerFab.style.background = isLight ? '#0055dd' : accent; timerFab.style.color = isLight ? '#fff' : '#000'; }
+
+  // Nav buttons
+  document.querySelectorAll('.nav-btn').forEach(el => { el.style.color = isLight ? '#777' : '#555'; });
+  document.querySelectorAll('.nav-btn.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; });
+
+  // Day tabs
+  document.querySelectorAll('.day-tab').forEach(el => { el.style.color = isLight ? '#777' : '#555'; el.style.borderColor = 'transparent'; });
+  document.querySelectorAll('.day-tab.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; el.style.borderColor = isLight ? '#0055dd' : accent; });
+
+  // ds-nav-item active
+  document.querySelectorAll('.ds-nav-item.active').forEach(el => { el.style.background = isLight ? '#e8eeff' : '#1a1a1a'; el.style.color = isLight ? '#0055dd' : accent; });
 }
 
 function toggleTheme(){
