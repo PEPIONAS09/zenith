@@ -549,6 +549,309 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .loading-overlay.hidden{display:none}
 .loading-logo{font-family:var(--font-d);font-size:48px;letter-spacing:0.2em;color:var(--text)}
 .loading-txt{font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase}
+
+/* ═══════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg2: #f5f5f5;
+  --bg3: #ebebeb;
+  --bg4: #e0e0e0;
+  --border: #e0e0e0;
+  --border2: #cccccc;
+  --text: #0a0a0a;
+  --text2: #444444;
+  --text3: #888888;
+  --accent: #0055dd;
+  --purple: #7c3aed;
+}
+
+/* Base */
+[data-theme="light"] html,
+[data-theme="light"] body { background: #ffffff; color: #0a0a0a }
+[data-theme="light"] .app { background: #ffffff }
+
+/* Login */
+[data-theme="light"] .login-screen { background: #ffffff }
+[data-theme="light"] .login-input { background: #f5f5f5; border-color: #ddd; color: #0a0a0a }
+[data-theme="light"] .login-input::placeholder { color: #aaa }
+[data-theme="light"] .login-btn { background: #0055dd; color: #fff }
+[data-theme="light"] .login-logo { color: #0a0a0a }
+[data-theme="light"] .login-sub { color: #888 }
+
+/* Topbar */
+[data-theme="light"] .topbar { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .logo { color: #0a0a0a }
+[data-theme="light"] .avatar { background: #0055dd; color: #fff }
+
+/* Nav */
+[data-theme="light"] .bottom-nav { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .nav-btn { color: #888 }
+[data-theme="light"] .nav-btn.active { color: #0055dd }
+[data-theme="light"] .nav-icon { color: inherit }
+
+/* Screens */
+[data-theme="light"] .screen { background: #ffffff }
+[data-theme="light"] .sec-title { background: #ffffff }
+[data-theme="light"] .sec-title h1 { color: #0a0a0a }
+[data-theme="light"] .sec-title p { color: #888 }
+
+/* Hero */
+[data-theme="light"] .hero { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .hero-tag { color: #888 }
+[data-theme="light"] .hero-name { color: #0a0a0a }
+[data-theme="light"] .hero-meta { color: #888 }
+[data-theme="light"] .hero-stats { background: #e0e0e0; border-color: #e0e0e0 }
+[data-theme="light"] .hero-stat { background: #ffffff }
+[data-theme="light"] .hstat-val { color: #0055dd }
+[data-theme="light"] .hstat-lbl { color: #888 }
+
+/* Blocks */
+[data-theme="light"] .block { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .block.open { background: #ffffff }
+[data-theme="light"] .block.completed { background: #f0fff4; border-color: #2a9d2a }
+[data-theme="light"] .block-hdr:hover { background: #ebebeb }
+[data-theme="light"] .block-dot { border: none }
+[data-theme="light"] .block-name { color: #0a0a0a }
+[data-theme="light"] .block-meta { color: #888 }
+[data-theme="light"] .block-chev { color: #888 }
+[data-theme="light"] .block-body { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .block-text { color: #333 }
+[data-theme="light"] .pct-grid { background: #e0e0e0 }
+[data-theme="light"] .pct-cell { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .pct-lbl { color: #888 }
+[data-theme="light"] .pct-val { color: #0a0a0a }
+[data-theme="light"] .coach-note { background: #fffbe6; border-color: #e0c000 }
+[data-theme="light"] .cn-lbl { color: #b38600 }
+[data-theme="light"] .cn-text { color: #555 }
+[data-theme="light"] .score-sec { border-color: #e0e0e0 }
+[data-theme="light"] .score-lbl { color: #888 }
+[data-theme="light"] .score-entry { background: #f5f5f5 }
+[data-theme="light"] .seval { color: #0a0a0a }
+[data-theme="light"] .semeta { color: #888 }
+
+/* Complete button */
+[data-theme="light"] .complete-btn { border-color: #ccc; color: #555; background: #fff }
+[data-theme="light"] .complete-btn.done { background: #f0fff4; border-color: #2a9d2a; color: #2a9d2a }
+[data-theme="light"] .done-banner { background: #f0fff4; border-color: #2a9d2a }
+[data-theme="light"] .done-banner-text { color: #2a9d2a }
+
+/* Day tabs */
+[data-theme="light"] .day-tabs { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .day-tab { color: #888; border-color: transparent }
+[data-theme="light"] .day-tab.active { color: #0055dd; border-color: #0055dd }
+
+/* Week scroll */
+[data-theme="light"] .week-scroll { background: #ffffff }
+[data-theme="light"] .rest-view { background: #ffffff }
+[data-theme="light"] .rest-txt { color: #ccc }
+[data-theme="light"] .rest-line { background: #e0e0e0 }
+[data-theme="light"] .add-block-btn { border-color: #ccc; color: #888; background: transparent }
+
+/* PRs */
+[data-theme="light"] .bm-sec-ttl { color: #888 }
+[data-theme="light"] .bm-card { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .bm-row { border-color: #e0e0e0 }
+[data-theme="light"] .bm-name { color: #0a0a0a }
+[data-theme="light"] .bm-val { color: #0055dd }
+[data-theme="light"] .bm-sec { background: #ffffff }
+
+/* Competitions */
+[data-theme="light"] .comp-card { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .comp-name { color: #0a0a0a }
+[data-theme="light"] .comp-date { color: #888 }
+[data-theme="light"] .comp-goal { color: #555 }
+[data-theme="light"] .comp-days-num { color: #0055dd }
+[data-theme="light"] .comp-days-lbl { color: #888 }
+[data-theme="light"] .goal-tag.gt-primary { background: #0055dd; color: #fff }
+[data-theme="light"] .goal-tag.gt-secondary { background: #e0e0e0; color: #555 }
+
+/* All inputs */
+[data-theme="light"] input:not([type="checkbox"]):not([type="file"]),
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: #f5f5f5 !important;
+  color: #0a0a0a !important;
+  border-color: #ccc !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #aaa !important }
+
+/* Block editor */
+[data-theme="light"] .block-editor { background: #ffffff }
+[data-theme="light"] .be-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .be-title { color: #0a0a0a }
+[data-theme="light"] .be-scroll { background: #ffffff }
+[data-theme="light"] .be-label { color: #666 }
+[data-theme="light"] .be-field { border-color: #e0e0e0 }
+[data-theme="light"] .be-save { background: #0055dd; color: #fff }
+[data-theme="light"] .be-delete { background: #fff; color: #ff4444; border-color: #ffcccc }
+[data-theme="light"] .ad-back,
+[data-theme="light"] .co-close { background: #f0f0f0; color: #333; border-color: #ddd }
+[data-theme="light"] .color-swatch { border-color: #ddd }
+
+/* Coach overlay */
+[data-theme="light"] .coach-overlay { background: #ffffff }
+[data-theme="light"] .co-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .co-title { color: #0a0a0a }
+[data-theme="light"] .ath-list { background: #ffffff }
+[data-theme="light"] .ath-row { border-color: #e0e0e0 }
+[data-theme="light"] .ath-row:hover { background: #f5f5f5 }
+[data-theme="light"] .ath-name { color: #0a0a0a }
+[data-theme="light"] .ath-goal { color: #888 }
+
+/* Ath detail */
+[data-theme="light"] .ath-detail { background: #ffffff }
+[data-theme="light"] .ad-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .ad-name { color: #0a0a0a }
+[data-theme="light"] .ad-scroll { background: #ffffff }
+[data-theme="light"] .ad-sec-ttl { color: #888 }
+[data-theme="light"] .ad-note { background: #f5f5f5; color: #0a0a0a; border-color: #ccc }
+[data-theme="light"] .note-save-btn { background: #f5f5f5; color: #0a0a0a; border-color: #ccc }
+
+/* Score history */
+[data-theme="light"] .score-history-overlay { background: #ffffff }
+[data-theme="light"] .sh-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .sh-title { color: #0a0a0a }
+[data-theme="light"] .sh-content { background: #ffffff }
+[data-theme="light"] .score-hist-row { border-color: #e0e0e0 }
+[data-theme="light"] .shr-val { color: #0a0a0a }
+[data-theme="light"] .shr-date { color: #888 }
+
+/* Chat */
+[data-theme="light"] .chat-overlay { background: #ffffff }
+[data-theme="light"] .chat-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .chat-title { color: #0a0a0a }
+[data-theme="light"] .chat-back { background: #f0f0f0; color: #333; border-color: #ddd }
+[data-theme="light"] .chat-list { background: #ffffff }
+[data-theme="light"] .chat-row { border-color: #e0e0e0 }
+[data-theme="light"] .chat-row:hover { background: #f5f5f5 }
+[data-theme="light"] .chat-row-name { color: #0a0a0a }
+[data-theme="light"] .chat-row-preview { color: #888 }
+[data-theme="light"] .chat-messages { background: #ffffff }
+[data-theme="light"] .msg-bubble.sent { background: #0055dd; color: #fff }
+[data-theme="light"] .msg-bubble.recv { background: #ebebeb; color: #0a0a0a }
+[data-theme="light"] .chat-input-bar { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .chat-input { background: #ffffff; color: #0a0a0a; border-color: #ccc }
+[data-theme="light"] .chat-send-btn { background: #0055dd }
+[data-theme="light"] .chat-media-btn { border-color: #ccc; color: #555 }
+[data-theme="light"] .chat-date-divider { color: #aaa }
+[data-theme="light"] .chat-fab { background: #f5f5f5; border-color: #ddd; color: #0a0a0a }
+
+/* Timer */
+[data-theme="light"] .timer-overlay { background: #ffffff }
+[data-theme="light"] .timer-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .timer-title { color: #0a0a0a }
+[data-theme="light"] .timer-close { background: #f0f0f0; color: #333; border-color: #ddd }
+[data-theme="light"] .timer-modes { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .timer-mode-btn { color: #888 }
+[data-theme="light"] .timer-mode-btn.active { color: #0055dd; border-color: #0055dd }
+[data-theme="light"] .timer-display { background: #ffffff }
+[data-theme="light"] .timer-time { color: #0a0a0a }
+[data-theme="light"] .timer-time.warning { color: #e07000 }
+[data-theme="light"] .timer-time.done { color: #0055dd }
+[data-theme="light"] .timer-sub { color: #888 }
+[data-theme="light"] .timer-round { color: #555 }
+[data-theme="light"] .timer-config { background: #ffffff }
+[data-theme="light"] .timer-config-label { color: #666 }
+[data-theme="light"] .timer-config-input { background: #f5f5f5; color: #0a0a0a; border-color: #ccc }
+[data-theme="light"] .timer-controls { background: #ffffff }
+[data-theme="light"] .timer-btn-start { background: #0055dd; color: #fff }
+[data-theme="light"] .timer-btn-stop { background: #f5f5f5; color: #333; border-color: #ccc }
+[data-theme="light"] .timer-btn-reset { color: #555; border-color: #ccc }
+[data-theme="light"] .timer-fab { background: #0055dd; color: #fff; border: none }
+
+/* Score logger */
+[data-theme="light"] .block-editor#score-logger { background: #ffffff }
+[data-theme="light"] .sl-label { color: #666 }
+[data-theme="light"] .sl-input { background: #f5f5f5; color: #0a0a0a; border-color: #ccc }
+[data-theme="light"] .sl-unit { color: #888 }
+[data-theme="light"] .sl-save { background: #0055dd; color: #fff }
+[data-theme="light"] .sl-history { border-color: #e0e0e0 }
+[data-theme="light"] .sl-history-title { color: #888 }
+[data-theme="light"] .sl-entry { border-color: #e0e0e0 }
+[data-theme="light"] .sl-entry-val { color: #0a0a0a }
+[data-theme="light"] .sl-entry-note { color: #888 }
+[data-theme="light"] .sl-entry-date { color: #aaa }
+
+/* Exercise library */
+[data-theme="light"] .ex-overlay { background: #ffffff }
+[data-theme="light"] .ex-header { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .ex-search { background: #ffffff; color: #0a0a0a; border-color: #ccc }
+[data-theme="light"] .ex-cats { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .ex-cat-btn { border-color: #ddd; color: #666; background: #fff }
+[data-theme="light"] .ex-cat-btn.active { background: #0055dd; color: #fff; border-color: #0055dd }
+[data-theme="light"] .ex-list { background: #ffffff }
+[data-theme="light"] .ex-row { border-color: #e0e0e0 }
+[data-theme="light"] .ex-row:hover { background: #f5f5f5 }
+[data-theme="light"] .ex-thumb { background: #f5f5f5 }
+[data-theme="light"] .ex-name { color: #0a0a0a }
+[data-theme="light"] .ex-cat-tag { color: #888 }
+[data-theme="light"] .ex-detail { background: #ffffff }
+[data-theme="light"] .ex-detail-body { background: #ffffff }
+[data-theme="light"] .ex-detail-name { color: #0a0a0a }
+[data-theme="light"] .ex-detail-cat { color: #888 }
+[data-theme="light"] .ex-detail-section { color: #0055dd }
+[data-theme="light"] .ex-detail-text { color: #333 }
+
+/* Desktop */
+[data-theme="light"] .desktop-sidebar { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .desktop-main { background: #ffffff }
+[data-theme="light"] .desktop-right { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .ds-section-title { color: #aaa }
+[data-theme="light"] .ds-nav-item { color: #555 }
+[data-theme="light"] .ds-nav-item:hover { background: #ebebeb; color: #333 }
+[data-theme="light"] .ds-nav-item.active { background: #e0e8ff; color: #0055dd }
+[data-theme="light"] .ds-day-item { color: #666 }
+[data-theme="light"] .ds-day-item:hover { background: #ebebeb; color: #333 }
+[data-theme="light"] .ds-day-item.active { color: #0055dd }
+[data-theme="light"] .ds-day-dot { background: #ccc }
+[data-theme="light"] .ds-day-dot.active { background: #0055dd }
+[data-theme="light"] .ds-athlete-item:hover { background: #ebebeb }
+[data-theme="light"] .ds-athlete-item.active { background: #e0e8ff }
+[data-theme="light"] .ds-ath-name { color: #0a0a0a }
+[data-theme="light"] .ds-ath-prog { color: #888 }
+[data-theme="light"] .ds-week-title { color: #0a0a0a }
+[data-theme="light"] .ds-block { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .ds-block-hdr:hover { background: #ebebeb }
+[data-theme="light"] .ds-block-name { color: #0a0a0a }
+[data-theme="light"] .ds-block-meta { color: #888 }
+[data-theme="light"] .ds-block-body { background: #ffffff; border-color: #e0e0e0 }
+[data-theme="light"] .ds-block-content { color: #333 }
+[data-theme="light"] .ds-coach-note { background: #fffbe6; border-color: #e0c000; color: #666 }
+[data-theme="light"] .ds-block-btn { color: #555; border-color: #ccc; background: #fff }
+[data-theme="light"] .ds-block-btn:hover { background: #f0f0f0 }
+[data-theme="light"] .ds-block-btn.danger { color: #ff4444; border-color: #ffcccc }
+[data-theme="light"] .ds-right-title { color: #0a0a0a }
+[data-theme="light"] .ds-stat-name { color: #888 }
+[data-theme="light"] .ds-stat-val { color: #0a0a0a }
+[data-theme="light"] .ds-stat-row { border-color: #e0e0e0 }
+[data-theme="light"] .ds-week-nav button { color: #555; border-color: #ccc; background: #fff }
+
+/* Week nav bar */
+[data-theme="light"] #main-week-label,
+[data-theme="light"] #ath-week-label,
+[data-theme="light"] #ds-week-label { color: #666 }
+[data-theme="light"] #copy-week-btn { color: #0055dd }
+
+/* ptr */
+[data-theme="light"] .ptr-indicator { background: #f5f5f5 }
+[data-theme="light"] .ptr-spinner { border-color: #ddd; border-top-color: #0055dd }
+
+/* User menu */
+[data-theme="light"] #user-menu { background: #ffffff; border-color: #e0e0e0; box-shadow: 0 8px 24px rgba(0,0,0,0.1) }
+
+/* Toasts */
+[data-theme="light"] #toast { box-shadow: 0 4px 12px rgba(0,0,0,0.15) }
+
+/* Exercise library desktop — fix layout */
+@media (min-width: 768px) {
+  .ex-overlay .ex-cats { flex-wrap: wrap; gap: 6px; padding: 10px 16px }
+  .ex-cat-btn { font-size: 9px; padding: 4px 10px }
+  .ex-row { padding: 10px 16px }
+  .ex-thumb { width: 48px; height: 36px }
+}
 </style>
 </head>
 <body>
@@ -3047,86 +3350,12 @@ function initTheme(){
 }
 
 function applyTheme(theme){
-  const isLight = theme === 'light';
-  if(isLight){
+  if(theme === 'light'){
     document.documentElement.setAttribute('data-theme','light');
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
   localStorage.setItem('z_theme', theme);
-
-  // Force colors on all major containers
-  const bg    = isLight ? '#ffffff' : '#0a0a0a';
-  const bg2   = isLight ? '#f7f7f7' : '#111111';
-  const bg3   = isLight ? '#eeeeee' : '#1a1a1a';
-  const text  = isLight ? '#0a0a0a' : '#f0f0f0';
-  const text2 = isLight ? '#333333' : '#aaaaaa';
-  const text3 = isLight ? '#888888' : '#555555';
-  const border= isLight ? '#e2e2e2' : '#1e1e1e';
-  const accent= isLight ? '#0066ff' : '#e8ff00';
-
-  document.body.style.cssText = `background:${bg};color:${text}`;
-
-  // Update all blocks, screens, panels
-  const selectors = [
-    '.app','.screen','.topbar','.bottom-nav',
-    '.desktop-sidebar','.desktop-main','.desktop-right',
-    '.block','.block-body','.bm-card',
-    '.ds-block','.ds-block-body',
-    '.hero','.comp-card',
-    '.ath-detail','.coach-overlay',
-    '.block-editor','.be-scroll',
-    '.chat-overlay','.ex-overlay','.ex-detail',
-    '.timer-overlay','.score-logger',
-  ];
-
-  selectors.forEach(sel => {
-    document.querySelectorAll(sel).forEach(el => {
-      el.style.background = bg;
-      el.style.color = text;
-      el.style.borderColor = border;
-    });
-  });
-
-  // bg2 elements
-  ['.ds-block','.bm-card','.comp-card','.hero','.desktop-sidebar','.desktop-right','.bg2'].forEach(sel => {
-    document.querySelectorAll(sel).forEach(el => el.style.background = bg2);
-  });
-
-  // Text colors
-  document.querySelectorAll('.block-meta,.bm-sec-ttl,.hero-tag,.hero-meta,.ds-ath-prog,.ds-section-title,.text3,.nav-btn,.day-tab').forEach(el => el.style.color = text3);
-  document.querySelectorAll('.block-name,.bm-name,.hero-name,.ds-block-name,.ds-ath-name').forEach(el => el.style.color = text);
-  document.querySelectorAll('.bm-val,.hstat-val,.comp-days-num').forEach(el => el.style.color = accent);
-
-  // Avatar
-  document.querySelectorAll('.avatar').forEach(el => { el.style.background = accent; el.style.color = isLight ? '#fff' : '#000'; });
-
-  // Active day items
-  document.querySelectorAll('.ds-day-item.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; });
-  document.querySelectorAll('.ds-day-item:not(.active)').forEach(el => { el.style.color = isLight ? '#777' : '#555'; });
-
-  // Day dots
-  document.querySelectorAll('.ds-day-dot.active').forEach(el => { el.style.background = isLight ? '#0055dd' : accent; });
-  document.querySelectorAll('.ds-day-dot:not(.active)').forEach(el => { el.style.background = isLight ? '#ccc' : '#2a2a2a'; });
-
-  // Chat FAB
-  const chatFab = document.querySelector('.chat-fab');
-  if(chatFab){ chatFab.style.background = isLight ? '#f4f4f4' : '#111'; chatFab.style.borderColor = isLight ? '#ddd' : '#2a2a2a'; chatFab.style.color = isLight ? '#0a0a0a' : '#f0f0f0'; }
-
-  // Timer FAB
-  const timerFab = document.querySelector('.timer-fab');
-  if(timerFab){ timerFab.style.background = isLight ? '#0055dd' : accent; timerFab.style.color = isLight ? '#fff' : '#000'; }
-
-  // Nav buttons
-  document.querySelectorAll('.nav-btn').forEach(el => { el.style.color = isLight ? '#777' : '#555'; });
-  document.querySelectorAll('.nav-btn.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; });
-
-  // Day tabs
-  document.querySelectorAll('.day-tab').forEach(el => { el.style.color = isLight ? '#777' : '#555'; el.style.borderColor = 'transparent'; });
-  document.querySelectorAll('.day-tab.active').forEach(el => { el.style.color = isLight ? '#0055dd' : accent; el.style.borderColor = isLight ? '#0055dd' : accent; });
-
-  // ds-nav-item active
-  document.querySelectorAll('.ds-nav-item.active').forEach(el => { el.style.background = isLight ? '#e8eeff' : '#1a1a1a'; el.style.color = isLight ? '#0055dd' : accent; });
 }
 
 function toggleTheme(){
