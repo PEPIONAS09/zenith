@@ -583,6 +583,47 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
   </div>
 
+  <!-- DESKTOP LAYOUT (768px+) -->
+  <div class="desktop-sidebar" id="desktop-sidebar">
+    <div style="padding:12px 8px 4px">
+      <div class="ds-section-title">Programa</div>
+      <div id="ds-prog-tabs" style="display:flex;flex-direction:column;gap:2px"></div>
+    </div>
+    <div style="padding:4px 8px">
+      <div class="ds-section-title">Semana</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 8px">
+        <button onclick="dsChangeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:3px 8px;font-size:10px;color:var(--text3);cursor:pointer">←</button>
+        <div id="ds-week-label" style="flex:1;text-align:center;font-family:var(--font-m);font-size:9px;color:var(--text3)">Sem 1</div>
+        <button onclick="dsChangeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:3px 8px;font-size:10px;color:var(--text3);cursor:pointer">→</button>
+      </div>
+      <div id="ds-days" style="display:flex;flex-direction:column;gap:2px;margin-top:4px"></div>
+    </div>
+    <div style="padding:4px 8px;border-top:1px solid var(--border);margin-top:8px">
+      <div class="ds-section-title">Atletas</div>
+      <div id="ds-athletes" style="display:flex;flex-direction:column"></div>
+    </div>
+    <div style="padding:8px;border-top:1px solid var(--border);margin-top:auto">
+      <button onclick="openExLibrary()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">🏋️ Libreria</button>
+      <button onclick="openNotifyPanel()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">✉ Notificar</button>
+      <button onclick="openAddAthlete()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">+ Atleta</button>
+    </div>
+  </div>
+
+  <div class="desktop-main" id="desktop-main">
+    <div id="ds-content">
+      <div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un dia para ver la programacion</div>
+    </div>
+  </div>
+
+  <div class="desktop-right" id="desktop-right">
+    <div id="ds-right-content">
+      <div style="padding:16px">
+        <div class="ds-right-title">ZENITH</div>
+        <div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un atleta para ver sus PRs</div>
+      </div>
+    </div>
+  </div>
+
   <div class="screens">
     <!-- HOME -->
     <div class="ptr-indicator" id="ptr-home"><div class="ptr-spinner"></div></div>
