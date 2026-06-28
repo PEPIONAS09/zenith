@@ -3049,10 +3049,19 @@ function initTheme(){
 function applyTheme(theme){
   if(theme === 'light'){
     document.documentElement.setAttribute('data-theme','light');
+    document.body.style.background = '#ffffff';
+    document.body.style.color = '#0a0a0a';
   } else {
     document.documentElement.removeAttribute('data-theme');
+    document.body.style.background = '#0a0a0a';
+    document.body.style.color = '#f0f0f0';
   }
   localStorage.setItem('z_theme', theme);
+  // Force re-render
+  const app = document.querySelector('.app');
+  if(app){
+    app.style.background = theme === 'light' ? '#ffffff' : '#0a0a0a';
+  }
 }
 
 function toggleTheme(){
