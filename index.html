@@ -3133,18 +3133,18 @@ async function confirmDeleteAthlete(athId, athName, e){
   e.stopPropagation();
   if(!confirm('¿Eliminar a ' + athName + '? Esta acción no se puede deshacer.')) return;
   
-  // Delete from Supabase Auth
+  // Delete profile first (cascades related data)
+  await sb.from('profiles').delete().eq('id', athId);
+  
+  // Delete from Auth via Edge Function
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete`, {
+    await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
       body: JSON.stringify({ athlete_id: athId })
     });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error);
   } catch(err) {
-    // If edge function doesn't exist, just delete profile
-    await sb.from('profiles').delete().eq('id', athId);
+    console.log('Auth delete skipped:', err.message);
   }
   
   athletes = athletes.filter(a => a.id !== athId);
