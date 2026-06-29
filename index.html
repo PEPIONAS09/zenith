@@ -1190,7 +1190,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="ex-header" style="padding:10px 16px">
       <button class="chat-back" id="ex-back-btn" onclick="closeExDetail()">← Librería</button>
       <div style="flex:1"></div>
-      <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
+      <div style="display:flex;gap:6px">
+        <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
+        <button id="ex-delete-inline-btn" style="display:none;background:none;border:1px solid #ff444455;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer" onclick="deleteExerciseInline()">✕ Eliminar</button>
+      </div>
     </div>
     <div class="ex-video-wrap" id="ex-video-wrap"></div>
     <div class="ex-detail-body">
@@ -3670,17 +3673,21 @@ async function openBlockEditorDs(blockId){
 function renderDsAthletes(){
   const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
   const visible = isMainCoach ? athletes : athletes.filter(a=>!a.hidden_from_coaches);
+  const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
   document.getElementById('ds-athletes').innerHTML = visible.map(a => {
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     const progColor = a.program==='games'?'var(--accent)':a.program==='olympus'?'#8b5cf6':'var(--accent)';
-    return `<div class="ds-athlete-item ${dsCurrentAthlete?.id===a.id?'active':''}" onclick="selectDsAthlete('${a.id}')">
-      <div class="ds-ath-ini" style="background:${progColor}">
-        ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : ini}
+    return `<div class="ds-athlete-item ${dsCurrentAthlete?.id===a.id?'active':''}" style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="selectDsAthlete('${a.id}')">
+        <div class="ds-ath-ini" style="background:${progColor}">
+          ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : ini}
+        </div>
+        <div>
+          <div class="ds-ath-name">${a.full_name?.split(' ')[0]||ini}</div>
+          <div class="ds-ath-prog">${a.program||'compete'}</div>
+        </div>
       </div>
-      <div>
-        <div class="ds-ath-name">${a.full_name?.split(' ')[0]||ini}</div>
-        <div class="ds-ath-prog">${a.program||'compete'}</div>
-      </div>
+      ${isMainCoach ? `<button onclick="event.stopPropagation();confirmDeleteAthlete('${a.id}','${a.full_name.replace(/'/g,'')}',event)" style="background:none;border:none;color:#ff4444;cursor:pointer;padding:4px 6px;font-size:13px;opacity:0.5;flex-shrink:0" title="Eliminar">✕</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -3868,6 +3875,8 @@ function openExDetail(exId){
   const desktop = window.innerWidth >= 768;
 
   document.getElementById('ex-edit-btn').style.display = isCoach ? 'block' : 'none';
+  const delInline = document.getElementById('ex-delete-inline-btn');
+  if(delInline) delInline.style.display = isCoach ? 'block' : 'none';
   document.getElementById('ex-detail-name').textContent = ex.name;
   document.getElementById('ex-detail-cat').textContent = ex.category;
   document.getElementById('ex-detail-desc').textContent = ex.description || '';
@@ -3904,6 +3913,8 @@ function closeExDetail(){
   if(videoWrap){ videoWrap.innerHTML = ''; videoWrap.style.display = 'none'; }
   currentExercise = null;
   document.getElementById('ex-edit-btn').style.display = 'none';
+  const delBtn = document.getElementById('ex-delete-inline-btn');
+  if(delBtn) delBtn.style.display = 'none';
   document.getElementById('ex-detail-name').textContent = '';
   document.getElementById('ex-detail-cat').textContent = '';
   document.getElementById('ex-detail-desc').textContent = '';
@@ -3961,6 +3972,16 @@ async function saveExercise(){
   showToast('✓ Ejercicio guardado');
   await loadExercises();
   if(id) closeExDetail();
+}
+
+
+async function deleteExerciseInline(){
+  if(!currentExercise) return;
+  if(!confirm('¿Eliminar "' + currentExercise.name + '"? No se puede deshacer.')) return;
+  await sb.from('exercises').delete().eq('id', currentExercise.id);
+  showToast('Ejercicio eliminado');
+  closeExDetail();
+  await loadExercises();
 }
 
 async function deleteExercise(){
