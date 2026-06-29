@@ -3149,6 +3149,11 @@ async function confirmDeleteAthlete(athId, athName, e){
   
   athletes = athletes.filter(a => a.id !== athId);
   renderAthList();
+  if(isDesktop()) renderDsAthletes();
+  if(dsCurrentAthlete?.id === athId){
+    dsCurrentAthlete = null;
+    document.getElementById('ds-right-content').innerHTML = '<div style="padding:16px"><div class="ds-right-title">ZENITH</div><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un atleta para ver sus PRs</div></div>';
+  }
   showToast('✓ Atleta eliminado');
 }
 
