@@ -3138,7 +3138,7 @@ async function confirmDeleteAthlete(athId, athName, e){
   
   // Delete from Auth via Edge Function
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete`, {
+    await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete-v2`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
       body: JSON.stringify({ athlete_id: athId })
