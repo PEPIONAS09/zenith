@@ -3673,7 +3673,6 @@ async function openBlockEditorDs(blockId){
 function renderDsAthletes(){
   const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
   const visible = isMainCoach ? athletes : athletes.filter(a=>!a.hidden_from_coaches);
-  const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
   document.getElementById('ds-athletes').innerHTML = visible.map(a => {
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     const progColor = a.program==='games'?'var(--accent)':a.program==='olympus'?'#8b5cf6':'var(--accent)';
