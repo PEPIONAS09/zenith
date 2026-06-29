@@ -415,35 +415,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
 .ex-overlay.open{display:flex}
 @media(min-width:768px){
+  .ex-overlay{max-width:100%!important}
   .ex-overlay.open{
     display:grid!important;
     grid-template-columns:340px 1fr;
     grid-template-rows:auto auto 1fr;
-    max-width:100%!important;
     height:100vh;
+    max-width:100%!important;
   }
-  .ex-overlay.open>.ex-header{grid-column:1;grid-row:1;border-bottom:1px solid var(--border)}
-  .ex-overlay.open>.ex-cats{grid-column:1;grid-row:2;border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .ex-overlay.open>.ex-list{grid-column:1;grid-row:3;overflow-y:auto;border-right:1px solid var(--border)}
-  .ex-overlay.open>.ex-detail{
+  .ex-overlay>.ex-header{grid-column:1;grid-row:1}
+  .ex-overlay>.ex-cats{grid-column:1;grid-row:2;flex-wrap:wrap}
+  .ex-overlay>.ex-list{grid-column:1;grid-row:3;overflow-y:auto}
+  .ex-overlay>.ex-detail{
     grid-column:2;
     grid-row:1/4;
-    display:flex!important;
-    flex-direction:column;
-    position:relative!important;
-    max-width:none!important;
-    inset:auto!important;
-    z-index:auto!important;
-    background:var(--bg)!important;
-    overflow-y:auto;
   }
-  .ex-overlay.open>.ex-detail .ex-video-wrap{
+  .ex-detail .ex-video-wrap{
     position:relative!important;
     width:100%;
     padding-top:50%;
+    display:block;
   }
-  .ex-overlay.open>.ex-detail .ex-video-wrap iframe{
-    position:absolute;
+  .ex-detail .ex-video-wrap iframe{
+    position:absolute!important;
     inset:0;
     width:100%;
     height:100%;
@@ -466,8 +460,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ex-info{flex:1;min-width:0}
 .ex-name{font-size:13px;font-weight:500;color:var(--text)}
 .ex-cat-tag{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px}
-.ex-detail{position:fixed;inset:0;background:var(--bg);z-index:401;display:none;flex-direction:column;max-width:430px;margin:0 auto}
+/* Mobile: ex-detail covers full screen */
+.ex-detail{position:fixed;inset:0;background:var(--bg);z-index:401;display:none;flex-direction:column}
 .ex-detail.open{display:flex}
+@media(min-width:768px){
+  .ex-detail{position:static!important;display:flex!important;flex-direction:column;background:var(--bg);border-left:1px solid var(--border);overflow-y:auto}
+}
 .ex-video-wrap{position:relative;width:100%;padding-top:56.25%;background:#000;flex-shrink:0}
 .ex-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
 .ex-detail-body{flex:1;overflow-y:auto;padding:20px}
@@ -1178,6 +1176,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 <!-- EXERCISE LIBRARY -->
 <div class="ex-overlay" id="ex-overlay">
+  <!-- LEFT: list -->
   <div class="ex-header">
     <button class="chat-back" onclick="closeExLibrary()">← Volver</button>
     <input class="ex-search" id="ex-search" placeholder="Buscar ejercicio..." oninput="filterExercises()">
@@ -1185,23 +1184,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
   <div class="ex-cats" id="ex-cats"></div>
   <div class="ex-list" id="ex-list"></div>
-</div>
 
-<!-- EXERCISE DETAIL -->
-<div class="ex-detail" id="ex-detail">
-  <div class="ex-header" style="padding:10px 16px">
-    <button class="chat-back" onclick="closeExDetail()">← Librería</button>
-    <div style="flex:1"></div>
-    <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
-  </div>
-  <div class="ex-video-wrap" id="ex-video-wrap"></div>
-  <div class="ex-detail-body">
-    <div class="ex-detail-name" id="ex-detail-name"></div>
-    <div class="ex-detail-cat" id="ex-detail-cat"></div>
-    <div class="ex-detail-section" id="ex-desc-label">Descripción</div>
-    <div class="ex-detail-text" id="ex-detail-desc"></div>
-    <div class="ex-detail-section" id="ex-kp-label">Puntos clave</div>
-    <div class="ex-detail-text" id="ex-detail-kp"></div>
+  <!-- RIGHT: detail (inside overlay for desktop grid) -->
+  <div class="ex-detail" id="ex-detail">
+    <div class="ex-header" style="padding:10px 16px">
+      <button class="chat-back" id="ex-back-btn" onclick="closeExDetail()">← Librería</button>
+      <div style="flex:1"></div>
+      <button id="ex-edit-btn" style="display:none;background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer" onclick="openEditExercise()">✏ Editar</button>
+    </div>
+    <div class="ex-video-wrap" id="ex-video-wrap"></div>
+    <div class="ex-detail-body">
+      <div class="ex-detail-name" id="ex-detail-name"></div>
+      <div class="ex-detail-cat" id="ex-detail-cat"></div>
+      <div class="ex-detail-section" id="ex-desc-label" style="display:none">Descripción</div>
+      <div class="ex-detail-text" id="ex-detail-desc"></div>
+      <div class="ex-detail-section" id="ex-kp-label" style="display:none">Puntos clave</div>
+      <div class="ex-detail-text" id="ex-detail-kp"></div>
+    </div>
   </div>
 </div>
 
@@ -3636,10 +3635,36 @@ function toggleDsBlock(id){
   if(body) body.classList.toggle('open');
 }
 
-function openBlockEditorDs(blockId){
-  const allB = Object.values(allBlocks).flat();
-  // Also search in ds blocks
-  openBlockEditor(blockId, {stopPropagation:()=>{}});
+async function openBlockEditorDs(blockId){
+  // Fetch block directly from Supabase since desktop uses its own data
+  const {data: b, error} = await sb.from('blocks').select('*').eq('id', blockId).single();
+  if(!b || error){ showToast('Error al cargar bloque', true); return; }
+  
+  document.getElementById('be-block-id').value = b.id;
+  document.getElementById('be-name').value = b.name||'';
+  document.getElementById('be-meta').value = b.meta||'';
+  document.getElementById('be-program').value = b.program_slug||'compete';
+  document.getElementById('be-week-num').value = b.week_number||1;
+  document.getElementById('be-day').value = b.day_of_week;
+  currentWeekNumber = b.week_number || 1;
+  document.getElementById('be-content').value = b.content||'';
+  document.getElementById('be-coach-note').value = b.coach_note||'';
+  document.getElementById('be-score-format').value = b.score_format||'text';
+  document.getElementById('be-score-type').value = b.score_type||'';
+  document.getElementById('be-base-movement').value = b.base_movement||'';
+  document.getElementById('be-percentage').value = b.percentage||'';
+  toggleStrengthFields();
+  await loadExercisesForEditor(b.exercise_id||'');
+
+  // Set color
+  selectedColor = b.color || '#1D9E75';
+  document.querySelectorAll('.color-swatch').forEach(s => {
+    s.style.outline = s.dataset.color === selectedColor ? '2px solid var(--text)' : 'none';
+  });
+
+  document.getElementById('be-delete-btn').style.display = 'block';
+  document.getElementById('be-title').textContent = 'Editar bloque';
+  document.getElementById('block-editor').classList.add('open');
 }
 
 function renderDsAthletes(){
@@ -3840,10 +3865,12 @@ function openExDetail(exId){
   currentExercise = ex;
 
   const isCoach = currentProfile?.role === 'coach';
+  const desktop = window.innerWidth >= 768;
+
   document.getElementById('ex-edit-btn').style.display = isCoach ? 'block' : 'none';
   document.getElementById('ex-detail-name').textContent = ex.name;
   document.getElementById('ex-detail-cat').textContent = ex.category;
-  document.getElementById('ex-detail-desc').textContent = ex.description || 'Sin descripción.';
+  document.getElementById('ex-detail-desc').textContent = ex.description || '';
   document.getElementById('ex-detail-kp').textContent = ex.key_points || '';
 
   const kpLabel = document.getElementById('ex-kp-label');
@@ -3851,19 +3878,36 @@ function openExDetail(exId){
   const descLabel = document.getElementById('ex-desc-label');
   if(descLabel) descLabel.style.display = ex.description ? 'block' : 'none';
 
+  const backBtn = document.getElementById('ex-back-btn');
+  if(backBtn) backBtn.style.display = desktop ? 'none' : 'block';
+
   const videoWrap = document.getElementById('ex-video-wrap');
   const embedUrl = getYouTubeEmbed(ex.youtube_url);
-  videoWrap.innerHTML = embedUrl
-    ? `<iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`
-    : '';
+  if(embedUrl){
+    videoWrap.style.display = 'block';
+    videoWrap.innerHTML = `<iframe src="${embedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+  } else {
+    videoWrap.style.display = 'none';
+    videoWrap.innerHTML = '';
+  }
 
-  document.getElementById('ex-detail').classList.add('open');
+  // On mobile, show as overlay
+  if(!desktop){
+    document.getElementById('ex-detail').classList.add('open');
+  }
+  // On desktop it's always visible, just update content
 }
 
 function closeExDetail(){
   document.getElementById('ex-detail').classList.remove('open');
   const videoWrap = document.getElementById('ex-video-wrap');
-  if(videoWrap) videoWrap.innerHTML = '';
+  if(videoWrap){ videoWrap.innerHTML = ''; videoWrap.style.display = 'none'; }
+  currentExercise = null;
+  document.getElementById('ex-edit-btn').style.display = 'none';
+  document.getElementById('ex-detail-name').textContent = '';
+  document.getElementById('ex-detail-cat').textContent = '';
+  document.getElementById('ex-detail-desc').textContent = '';
+  document.getElementById('ex-detail-kp').textContent = '';
 }
 
 function openAddExercise(){
