@@ -1417,6 +1417,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div>
 
+<!-- BLOCK OVERRIDE EDITOR -->
+<div class="block-editor" id="override-editor" style="z-index:260">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeOverrideEditor()">← Volver</button>
+    <div class="be-title" id="override-editor-title">Personalizar bloque</div>
+  </div>
+  <div class="be-scroll">
+    <input type="hidden" id="ov-block-id">
+    <input type="hidden" id="ov-athlete-id">
+    <div style="padding:10px 14px;background:var(--bg2);border-radius:4px;border-left:2px solid var(--accent);margin-bottom:16px;font-family:var(--font-m);font-size:10px;color:var(--text3)">
+      Este override es <strong style="color:var(--accent)">solo para este atleta</strong>. El programa maestro no cambia.
+    </div>
+    <div class="be-field">
+      <label class="be-label">Contenido personalizado</label>
+      <textarea class="be-input" id="ov-content" style="min-height:120px" placeholder="Deja vacío para usar el programa maestro..."></textarea>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Nota del coach (privada)</label>
+      <textarea class="be-input" id="ov-coach-note" style="min-height:60px" placeholder="Nota específica para este atleta..."></textarea>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Meta / Descripción corta</label>
+      <input class="be-input" id="ov-meta" type="text" placeholder="Ej: Versión modificada por lesión...">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Movimiento base (% automático)</label>
+      <select class="be-select" id="ov-base-movement">
+        <option value="">— Usar el del programa —</option>
+        <option value="Deadlift">Deadlift</option>
+        <option value="Back Squat">Back Squat</option>
+        <option value="Front Squat">Front Squat</option>
+        <option value="Bench Press">Bench Press</option>
+        <option value="Strict Press">Strict Press</option>
+        <option value="Clean & Jerk">Clean & Jerk</option>
+        <option value="Snatch">Snatch</option>
+        <option value="Power Clean">Power Clean</option>
+        <option value="Power Snatch">Power Snatch</option>
+      </select>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Porcentaje (%)</label>
+      <input class="be-input" id="ov-percentage" type="number" min="1" max="110" placeholder="Ej: 75">
+    </div>
+    <button class="be-save" onclick="saveOverride()">Guardar override</button>
+    <button class="be-delete" id="ov-delete-btn" onclick="deleteOverride()" style="display:none">Eliminar override (usar programa maestro)</button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
 <!-- COACH OVERLAY -->
 <div class="coach-overlay" id="coach-overlay">
   <div class="co-header">
@@ -1481,6 +1530,57 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
   <div class="day-tabs" id="ath-day-tabs" style="flex-shrink:0;background:var(--bg)"></div>
   <div class="week-scroll"><div id="ath-week-content"></div></div>
+</div>
+
+<!-- BLOCK OVERRIDE EDITOR -->
+<div class="block-editor" id="override-editor" style="z-index:260">
+  <div class="be-header">
+    <button class="ad-back" onclick="closeOverrideEditor()">← Volver</button>
+    <div class="be-title" id="override-title">Personalizar bloque</div>
+  </div>
+  <div class="be-scroll">
+    <input type="hidden" id="override-block-id">
+    <input type="hidden" id="override-athlete-id">
+    <div style="margin-bottom:14px;padding:10px 14px;background:var(--bg2);border-radius:4px;border-left:2px solid var(--accent)">
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Override individual</div>
+      <div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Este cambio solo afecta a este atleta. El programa maestro no se modifica.</div>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Contenido personalizado</label>
+      <textarea class="be-input" id="override-content" style="min-height:120px" placeholder="Deja vacío para usar el contenido del programa maestro..."></textarea>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Nota del coach (privada)</label>
+      <textarea class="be-input" id="override-coach-note" style="min-height:60px" placeholder="Nota específica para este atleta..."></textarea>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Meta / descripción</label>
+      <input class="be-input" id="override-meta" type="text" placeholder="Ej: Versión modificada para lesión...">
+    </div>
+    <div class="be-field">
+      <label class="be-label">Movimiento base (para % automático)</label>
+      <select class="be-select" id="override-base-movement">
+        <option value="">— Usar el del programa —</option>
+        <option value="Deadlift">Deadlift</option>
+        <option value="Back Squat">Back Squat</option>
+        <option value="Front Squat">Front Squat</option>
+        <option value="Bench Press">Bench Press</option>
+        <option value="Strict Press">Strict Press</option>
+        <option value="Clean & Jerk">Clean & Jerk</option>
+        <option value="Snatch">Snatch</option>
+        <option value="Power Clean">Power Clean</option>
+        <option value="Power Snatch">Power Snatch</option>
+      </select>
+    </div>
+    <div class="be-field">
+      <label class="be-label">Porcentaje (%)</label>
+      <input class="be-input" id="override-percentage" type="number" min="1" max="110" placeholder="Deja vacío para usar el del programa">
+    </div>
+    <button class="be-save" onclick="saveOverride()">Guardar override</button>
+    <button class="be-delete" id="override-delete-btn" onclick="deleteOverride()" style="display:none">Eliminar override</button>
+    <div id="override-msg" style="margin-top:10px;font-family:var(--font-m);font-size:10px;text-align:center;min-height:14px"></div>
+    <div style="height:24px"></div>
+  </div>
 </div>
 
 <!-- BLOCK EDITOR (COACH ONLY) -->
@@ -1748,6 +1848,14 @@ function setupUI(){
   loadPRsToCache();
   initChat();
   if(isDesktop()) initDesktop();
+  // Load own overrides for athletes
+  if(currentProfile?.role === 'athlete'){
+    loadMyOverrides();
+  }
+  // Load personal overrides for athletes
+  if(currentProfile?.role === 'athlete'){
+    loadMyOverrides();
+  }
 }
 
 function onAvatarClick(){
@@ -1813,8 +1921,16 @@ function renderBlock(b){
       <div class="block-chev">▾</div>
     </div>
     <div class="block-body">
-      <div class="block-text">${b.content||''}</div>
-      ${(b.base_movement && b.percentage && b.score_format === 'weight_reps') ? renderAutoWeight(b) : ''}
+      ${(()=>{
+        const ov = currentOverrides[b.id];
+        const content = ov?.content || b.content || '';
+        const bm = ov?.base_movement || b.base_movement;
+        const pct = ov?.percentage || b.percentage;
+        const hasOverride = ov && (ov.content || ov.base_movement);
+        return (hasOverride ? '<div style="font-family:var(--font-m);font-size:8px;color:var(--accent);margin-bottom:4px;letter-spacing:0.05em">★ Personalizado</div>' : '') +
+          '<div class="block-text">' + content + '</div>' +
+          ((bm && pct && b.score_format === 'weight_reps') ? renderAutoWeight({...b, base_movement:bm, percentage:pct}) : '');
+      })()}
       ${b.youtube_url ? '<button onclick="openDemoVideo(\'' + b.youtube_url + '\',event)" style="margin-top:8px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:8px;font-family:var(--font-m);font-size:10px;color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:0.08em">▶ DEMO</button>' : ''}
       <div class="scale-row">
         <button class="scale-pill ${scale==='rx'?'active':''}" onclick="setScale('${b.id}','rx',event)">RX</button>
@@ -3029,7 +3145,10 @@ function renderBlockCoachView(b, index, total){
   return `<div class="block" id="athblk-${b.id}" data-order="${b.order_index}">
     <div class="block-hdr" onclick="toggleAthBlock('${b.id}')">
       <div class="block-dot" style="background:${b.color}"></div>
-      <div class="block-info"><div class="block-name">${b.name}</div><div class="block-meta">${b.meta||''}</div></div>
+      <div class="block-info">
+        <div class="block-name">${b.name} ${athleteOverrides['${b.id}'] ? '<span style="font-size:9px;color:var(--accent);font-family:var(--font-m)">★ override</span>' : ''}</div>
+        <div class="block-meta">${athleteOverrides['${b.id}']?.meta || b.meta||''}</div>
+      </div>
       <div style="display:flex;gap:4px;align-items:center">
         <button onclick="moveAthBlock('${b.id}',-1,event)" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;font-size:12px" ${index===0?'disabled':''}>↑</button>
         <button onclick="moveAthBlock('${b.id}',1,event)" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;font-size:12px" ${index===total-1?'disabled':''}>↓</button>
@@ -3037,20 +3156,32 @@ function renderBlockCoachView(b, index, total){
       </div>
     </div>
     <div class="block-body">
-      <div class="block-text">${b.content||''}</div>
-      ${(b.base_movement && b.percentage && b.score_format === 'weight_reps') ? renderAutoWeight(b) : ''}
+      ${(()=>{
+        const ov = currentOverrides[b.id];
+        const content = ov?.content || b.content || '';
+        const bm = ov?.base_movement || b.base_movement;
+        const pct = ov?.percentage || b.percentage;
+        const hasOverride = ov && (ov.content || ov.base_movement);
+        return (hasOverride ? '<div style="font-family:var(--font-m);font-size:8px;color:var(--accent);margin-bottom:4px;letter-spacing:0.05em">★ Personalizado</div>' : '') +
+          '<div class="block-text">' + content + '</div>' +
+          ((bm && pct && b.score_format === 'weight_reps') ? renderAutoWeight({...b, base_movement:bm, percentage:pct}) : '');
+      })()}
       ${b.youtube_url ? '<button onclick="openDemoVideo(\'' + b.youtube_url + '\',event)" style="margin-top:8px;width:100%;background:none;border:1px solid var(--border2);border-radius:2px;padding:8px;font-family:var(--font-m);font-size:10px;color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:0.08em">▶ DEMO</button>' : ''}
       <div class="pct-grid">
         <div class="pct-cell"><div class="pct-lbl">Scaling RX</div><div class="pct-val" style="font-size:11px">${b.scaling_rx||'—'}</div></div>
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? '<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">' + b.coach_note + '</div></div>' : ''}
+      <div id="override-indicator-${b.id}" style="display:none;margin-bottom:8px;padding:4px 10px;background:#0d1f1a;border-radius:2px;font-family:var(--font-m);font-size:9px;color:var(--accent)">★ Override activo para este atleta</div>
       <div class="score-sec">
         <div class="score-lbl">Último score</div>
         <div class="scores-list" id="athsclist-${b.id}"><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin scores.</div></div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        <button onclick="openBlockEditorAth('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏</button>
+        <button onclick="openBlockEditorAth('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✏ Maestro</button>
+        <button onclick="openOverrideEditor('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--accent);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">★ Personalizar</button>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px">
         <button onclick="copyBlock('${b.id}',event)" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘</button>
         <button onclick="moveAthBlock('${b.id}',-1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-size:11px;color:var(--text3);cursor:pointer">↑</button>
         <button onclick="moveAthBlock('${b.id}',1,event)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:7px 10px;font-size:11px;color:var(--text3);cursor:pointer">↓</button>
@@ -3743,6 +3874,134 @@ function openDsCopyWeek(){
   document.getElementById('copy-week-editor').classList.add('open');
 }
 
+
+
+
+// ── ATHLETE OVERRIDE DISPLAY ──────────────────────────
+let myOverrides = {}; // blockId -> override
+
+async function loadMyOverrides(){
+  const {data} = await sb.from('block_overrides')
+    .select('*')
+    .eq('athlete_id', currentUser.id);
+  myOverrides = {};
+  if(data) data.forEach(o => myOverrides[o.block_id] = o);
+}
+
+function getBlockContent(b){
+  const ov = myOverrides[b.id];
+  if(!ov) return b;
+  // Merge override into block
+  return {
+    ...b,
+    content: ov.content || b.content,
+    coach_note: ov.coach_note || b.coach_note,
+    meta: ov.meta || b.meta,
+    base_movement: ov.base_movement || b.base_movement,
+    percentage: ov.percentage || b.percentage,
+    youtube_url: ov.youtube_url || b.youtube_url,
+    _hasOverride: true
+  };
+}
+
+// ── BLOCK OVERRIDES ───────────────────────────────────
+let currentOverrideBlockId = null;
+let athleteOverrides = {}; // blockId -> override data
+
+async function loadAthOverrides(athleteId){
+  const {data} = await sb.from('block_overrides')
+    .select('*')
+    .eq('athlete_id', athleteId);
+  athleteOverrides = {};
+  if(data) data.forEach(o => athleteOverrides[o.block_id] = o);
+}
+
+async function openOverrideEditor(blockId, e){
+  e.stopPropagation();
+  currentOverrideBlockId = blockId;
+
+  // Find block name
+  const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
+  const b = allB.find(x=>x.id===blockId);
+  document.getElementById('override-title').textContent = 'Override: ' + (b?.name || 'Bloque');
+
+  // Set athlete ID
+  document.getElementById('override-athlete-id').value = currentAthId || '';
+
+  // Load existing override if any
+  const existing = athleteOverrides[blockId];
+  document.getElementById('override-block-id').value = blockId;
+  document.getElementById('override-content').value = existing?.content || '';
+  document.getElementById('override-coach-note').value = existing?.coach_note || '';
+  document.getElementById('override-meta').value = existing?.meta || '';
+  document.getElementById('override-base-movement').value = existing?.base_movement || '';
+  document.getElementById('override-percentage').value = existing?.percentage || '';
+  document.getElementById('override-msg').textContent = '';
+
+  const deleteBtn = document.getElementById('override-delete-btn');
+  deleteBtn.style.display = existing ? 'block' : 'none';
+
+  document.getElementById('override-editor').classList.add('open');
+}
+
+function closeOverrideEditor(){
+  document.getElementById('override-editor').classList.remove('open');
+}
+
+async function saveOverride(){
+  const blockId = document.getElementById('override-block-id').value;
+  const athleteId = document.getElementById('override-athlete-id').value || currentAthId;
+  const msg = document.getElementById('override-msg');
+
+  if(!blockId || !athleteId){ msg.textContent = 'Error: falta información'; msg.style.color='#ff4444'; return; }
+
+  const data = {
+    athlete_id: athleteId,
+    block_id: blockId,
+    content: document.getElementById('override-content').value.trim() || null,
+    coach_note: document.getElementById('override-coach-note').value.trim() || null,
+    meta: document.getElementById('override-meta').value.trim() || null,
+    base_movement: document.getElementById('override-base-movement').value || null,
+    percentage: parseInt(document.getElementById('override-percentage').value) || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const {error} = await sb.from('block_overrides')
+    .upsert(data, {onConflict: 'athlete_id,block_id'});
+
+  if(error){ msg.textContent = 'Error: ' + error.message; msg.style.color='#ff4444'; return; }
+
+  athleteOverrides[blockId] = data;
+  msg.textContent = '✓ Override guardado';
+  msg.style.color = 'var(--accent)';
+
+  setTimeout(()=>{
+    closeOverrideEditor();
+    // Reload ath view to show override indicator
+    if(currentAthWeekProfile){
+      loadAthWeekBlocks(currentAthWeekProfile).then(()=>renderAthWeek(currentAthWeekProfile));
+    }
+  }, 1000);
+}
+
+async function deleteOverride(){
+  const blockId = document.getElementById('override-block-id').value;
+  const athleteId = document.getElementById('override-athlete-id').value || currentAthId;
+  if(!confirm('¿Eliminar el override? El atleta volverá a ver el programa maestro.')) return;
+
+  await sb.from('block_overrides')
+    .delete()
+    .eq('athlete_id', athleteId)
+    .eq('block_id', blockId);
+
+  delete athleteOverrides[blockId];
+  closeOverrideEditor();
+  showToast('Override eliminado');
+  if(currentAthWeekProfile){
+    await loadAthWeekBlocks(currentAthWeekProfile);
+    renderAthWeek(currentAthWeekProfile);
+  }
+}
 
 // ── EXERCISE DEMO VIDEO ───────────────────────────────
 function openDemoVideo(youtubeUrl, e){
@@ -4616,6 +4875,109 @@ async function executeCopyWeek(){
     }
     showToast(`✓ Semana ${srcWeek} → Semana ${destWeek} copiada`);
   }, 1500);
+}
+
+
+
+async function loadMyOverrides(){
+  const {data} = await sb.from('block_overrides')
+    .select('*')
+    .eq('athlete_id', currentUser.id);
+  if(data) data.forEach(ov => { currentOverrides[ov.block_id] = ov; });
+}
+
+─────────────────────────────────
+let currentOverrides = {}; // blockId -> override data
+
+async function loadAthOverrides(athleteId){
+  const {data} = await sb.from('block_overrides')
+    .select('*')
+    .eq('athlete_id', athleteId);
+  currentOverrides = {};
+  if(data) data.forEach(ov => { currentOverrides[ov.block_id] = ov; });
+  // Update indicators
+  Object.keys(currentOverrides).forEach(blockId => {
+    const ind = document.getElementById('override-indicator-' + blockId);
+    if(ind) ind.style.display = 'block';
+  });
+}
+
+async function openOverrideEditor(blockId, e){
+  e.stopPropagation();
+  const athId = currentAthId || currentAthWeekProfile?.id;
+  if(!athId){ showToast('Selecciona un atleta primero', true); return; }
+
+  document.getElementById('ov-block-id').value = blockId;
+  document.getElementById('ov-athlete-id').value = athId;
+
+  // Load existing override if any
+  const existing = currentOverrides[blockId];
+  document.getElementById('ov-content').value = existing?.content || '';
+  document.getElementById('ov-coach-note').value = existing?.coach_note || '';
+  document.getElementById('ov-meta').value = existing?.meta || '';
+  document.getElementById('ov-base-movement').value = existing?.base_movement || '';
+  document.getElementById('ov-percentage').value = existing?.percentage || '';
+  document.getElementById('ov-delete-btn').style.display = existing ? 'block' : 'none';
+
+  // Set title with athlete name
+  const ath = athletes.find(a => a.id === athId);
+  document.getElementById('override-editor-title').textContent = 'Personalizar para ' + (ath?.full_name?.split(' ')[0] || 'atleta');
+
+  document.getElementById('override-editor').classList.add('open');
+}
+
+function closeOverrideEditor(){
+  document.getElementById('override-editor').classList.remove('open');
+}
+
+async function saveOverride(){
+  const blockId = document.getElementById('ov-block-id').value;
+  const athleteId = document.getElementById('ov-athlete-id').value;
+  const content = document.getElementById('ov-content').value.trim();
+  const coachNote = document.getElementById('ov-coach-note').value.trim();
+  const meta = document.getElementById('ov-meta').value.trim();
+  const baseMovement = document.getElementById('ov-base-movement').value;
+  const percentage = parseInt(document.getElementById('ov-percentage').value) || null;
+
+  const data = {
+    athlete_id: athleteId,
+    block_id: blockId,
+    content: content || null,
+    coach_note: coachNote || null,
+    meta: meta || null,
+    base_movement: baseMovement || null,
+    percentage,
+    updated_at: new Date().toISOString()
+  };
+
+  const {error} = await sb.from('block_overrides')
+    .upsert(data, {onConflict: 'athlete_id,block_id'});
+
+  if(error){ showToast('Error: ' + error.message, true); return; }
+
+  currentOverrides[blockId] = data;
+  const ind = document.getElementById('override-indicator-' + blockId);
+  if(ind) ind.style.display = 'block';
+
+  closeOverrideEditor();
+  showToast('✓ Override guardado para este atleta');
+}
+
+async function deleteOverride(){
+  const blockId = document.getElementById('ov-block-id').value;
+  const athleteId = document.getElementById('ov-athlete-id').value;
+
+  await sb.from('block_overrides')
+    .delete()
+    .eq('athlete_id', athleteId)
+    .eq('block_id', blockId);
+
+  delete currentOverrides[blockId];
+  const ind = document.getElementById('override-indicator-' + blockId);
+  if(ind) ind.style.display = 'none';
+
+  closeOverrideEditor();
+  showToast('Override eliminado — usando programa maestro');
 }
 
 // ── COPY / PASTE / DELETE BLOCKS ─────────────────────
