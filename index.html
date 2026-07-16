@@ -4886,8 +4886,7 @@ async function loadMyOverrides(){
   if(data) data.forEach(ov => { currentOverrides[ov.block_id] = ov; });
 }
 
-─────────────────────────────────
-let currentOverrides = {}; // blockId -> override data
+// overrides loaded above
 
 async function loadAthOverrides(athleteId){
   const {data} = await sb.from('block_overrides')
