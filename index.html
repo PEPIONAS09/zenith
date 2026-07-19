@@ -3706,67 +3706,82 @@ async function loadDsWeek(){
 
 function selectDsDay(dow){
   dsCurrentDay = dow;
-  dsCurrentAthlete = null;
   document.querySelectorAll('.ds-day-item').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.ds-day-item').forEach(el => {
     if(el.textContent.trim().startsWith(DS_DAYS[dow])) el.classList.add('active');
   });
-  // Reload with current blocks
-  loadDsWeek();
+  if(dsCurrentAthlete){
+    // In ath mode: show athlete blocks for this day
+    renderDsDayContent(dsAthleteBlocks[dow] || [], dow);
+  } else {
+    loadDsWeek();
+  }
 }
 
 function renderDsDayContent(blocks, dow){
   const main = document.getElementById('ds-content');
   const baseWeek = programWeeks[dsCurrentProg] || 1;
   const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+  const isAthMode = !!dsCurrentAthlete;
+
+  const header = `<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
+    <div>
+      <div style="font-family:var(--font-d);font-size:16px;letter-spacing:0.08em">${DS_DAYS[dow].toUpperCase()} · ${isAthMode ? dsCurrentAthlete.full_name.split(' ')[0].toUpperCase() : dsCurrentProg.toUpperCase()}</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:2px">Sem ${weekNum} · ${blocks.length} bloques${isAthMode?' · <span style="color:var(--accent)">★ modo atleta</span>':''}</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      ${!isAthMode ? `<button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar sem</button>
+      <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Bloque</button>` : ''}
+    </div>
+  </div>`;
 
   if(!blocks.length){
-    main.innerHTML = `
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div style="font-family:var(--font-d);font-size:18px">${DS_DAYS[dow].toUpperCase()} · DESCANSO</div>
-        <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Bloque</button>
-      </div>
-      <div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Día de descanso</div>`;
+    main.innerHTML = header + `<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
+      ${isAthMode ? 'Sin bloques este día' : 'Día de descanso'}
+      ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
+    </div>`;
     return;
   }
 
   const blocksHtml = blocks.map(b => {
+    const ov = isAthMode ? (dsAthleteOverrides[b.id] || null) : null;
     const hasContent = b.content && !b.content.startsWith('Contenido pendiente') && b.content !== 'Por programar';
-    return `<div class="ds-block" id="dsblk-${b.id}">
+    const displayContent = ov?.content || b.content || '';
+    const displayMeta = ov?.meta || b.meta || '';
+
+    return `<div class="ds-block" id="dsblk-${b.id}" style="${ov?'border-color:var(--accent);border-left-width:3px':''}">
       <div class="ds-block-hdr" onclick="toggleDsBlock('${b.id}')">
-        <div class="ds-block-dot" style="background:${b.color}"></div>
-        <div style="flex:1">
-          <div class="ds-block-name">${b.name}</div>
-          <div class="ds-block-meta">${b.meta||''}</div>
+        <div class="ds-block-dot" style="background:${b.color};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div class="ds-block-name" style="display:flex;align-items:center;gap:6px">
+            ${b.name}
+            ${ov ? '<span style="font-family:var(--font-m);font-size:8px;color:var(--accent);background:var(--bg3);padding:1px 5px;border-radius:2px">★ override</span>' : ''}
+          </div>
+          <div class="ds-block-meta">${displayMeta}</div>
         </div>
-        ${b.base_movement && b.percentage ? `<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);margin-right:8px">${b.percentage}% ${b.base_movement}</div>` : ''}
-        <div class="ds-block-actions">
-          <button class="ds-block-btn" onclick="event.stopPropagation();openBlockEditorDs('${b.id}')">✏ Editar</button>
-          <button class="ds-block-btn" onclick="event.stopPropagation();copyBlock('${b.id}',event)">⎘</button>
-          <button class="ds-block-btn danger" onclick="event.stopPropagation();confirmDeleteBlock('${b.id}','${b.name.replace(/'/g,'')}',event)">✕</button>
+        <div class="ds-block-actions" style="gap:4px">
+          ${isAthMode ? `
+            <button class="ds-block-btn" onclick="event.stopPropagation();openDsOverride('${b.id}')" style="color:var(--accent);border-color:var(--accent)">${ov?'✏ Override':'★ Override'}</button>
+            ${ov ? `<button class="ds-block-btn danger" onclick="event.stopPropagation();deleteDsOverride('${b.id}')" title="Eliminar override">✕</button>` : ''}
+          ` : `
+            <button class="ds-block-btn" onclick="event.stopPropagation();openBlockEditorDs('${b.id}')">✏</button>
+            <button class="ds-block-btn" onclick="event.stopPropagation();copyBlock('${b.id}',event)">⎘</button>
+            <button class="ds-block-btn danger" onclick="event.stopPropagation();confirmDeleteBlock('${b.id}','${b.name.replace(/'/g,'')}',event)">✕</button>
+          `}
         </div>
-        <span style="font-size:10px;color:var(--text3);margin-left:4px">${hasContent?'●':'○'}</span>
+        <span style="font-size:8px;color:${hasContent?'var(--accent)':'var(--border2)'};margin-left:4px">●</span>
       </div>
       <div class="ds-block-body" id="dsbody-${b.id}">
-        <div class="ds-block-content">${b.content||''}</div>
-        ${b.coach_note ? `<div class="ds-coach-note">Coach: ${b.coach_note}</div>` : ''}
-        ${b.base_movement && b.percentage ? `<div style="background:#0d1f1a;border-left:2px solid var(--accent);padding:8px 12px;margin-bottom:8px;font-family:var(--font-m);font-size:10px;color:var(--accent)">${b.base_movement} @ ${b.percentage}% — usa el PR del atleta para calcular el peso</div>` : ''}
+        <div class="ds-block-content" style="white-space:pre-wrap">${displayContent}</div>
+        ${(ov?.coach_note || b.coach_note) ? `<div class="ds-coach-note">${ov?.coach_note || b.coach_note}</div>` : ''}
+        ${(b.base_movement && b.percentage) ? `<div style="font-family:var(--font-m);font-size:10px;color:var(--accent);margin-top:8px">${ov?.base_movement||b.base_movement} @ ${ov?.percentage||b.percentage}%</div>` : ''}
       </div>
     </div>`;
   }).join('');
 
-  main.innerHTML = `
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-family:var(--font-d);font-size:18px">${DS_DAYS[dow].toUpperCase()} · ${dsCurrentProg.toUpperCase()}</div>
-        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">Semana ${weekNum} · ${blocks.length} bloques</div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar semana</button>
-        <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Bloque</button>
-      </div>
-    </div>
-    <div class="ds-blocks">${blocksHtml}${copiedBlock?`<button onclick="pasteBlock(${dow},'${dsCurrentProg}')" style="width:100%;background:none;border:1px dashed var(--accent);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase">⎘ Pegar "${copiedBlock.name}"</button>`:''}</div>`;
+  main.innerHTML = header + `<div class="ds-blocks">${blocksHtml}
+    ${copiedBlock && !isAthMode ? `<button onclick="pasteBlock(${dow},'${dsCurrentProg}')" style="width:100%;background:none;border:1px dashed var(--accent);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase;margin-top:4px">⎘ Pegar "${copiedBlock.name}"</button>` : ''}
+  </div>`;
 }
 
 function toggleDsBlock(id){
@@ -3827,6 +3842,9 @@ function renderDsAthletes(){
   }).join('');
 }
 
+let dsAthleteOverrides = {};
+let dsAthleteBlocks = {};
+
 async function selectDsAthlete(athId){
   const a = athletes.find(x=>x.id===athId);
   if(!a) return;
@@ -3836,30 +3854,104 @@ async function selectDsAthlete(athId){
   // Load athlete PRs for right panel
   const {data: prs} = await sb.from('prs').select('*').eq('athlete_id', athId).order('category').order('name');
 
-  // Right panel — athlete PRs
-  const prsHtml = prs?.length ? prs.map(p => `
+  // Load athlete overrides
+  const {data: ovs} = await sb.from('block_overrides').select('*').eq('athlete_id', athId);
+  dsAthleteOverrides = {};
+  if(ovs) ovs.forEach(o => dsAthleteOverrides[o.block_id] = o);
+
+  // Load athlete program blocks
+  const prog = a.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+  const {data: blocks} = await sb.from('blocks').select('*')
+    .eq('program_slug', prog)
+    .eq('week_number', weekNum)
+    .order('day_of_week').order('order_index');
+
+  dsAthleteBlocks = {};
+  if(blocks) blocks.forEach(b => {
+    if(!dsAthleteBlocks[b.day_of_week]) dsAthleteBlocks[b.day_of_week] = [];
+    dsAthleteBlocks[b.day_of_week].push(b);
+  });
+
+  // Show athlete's current day in main panel
+  const activeDow = dsCurrentDay || todayDow;
+  renderDsDayContent(dsAthleteBlocks[activeDow] || [], activeDow);
+
+  // Update day dots
+  document.querySelectorAll('.ds-day-item').forEach(el => {
+    const dow = parseInt(el.dataset?.dow || 0);
+    const hasBlocks = (dsAthleteBlocks[dow] || []).length > 0;
+    const dot = el.querySelector('.ds-day-dot');
+    if(dot) dot.className = 'ds-day-dot' + (hasBlocks ? ' active' : '');
+  });
+
+  // Right panel — PRs + override summary
+  const prsHtml = prs?.length ? prs.filter(p=>parseFloat(p.value)>0).map(p => `
     <div class="ds-stat-row">
       <span class="ds-stat-name">${p.name}</span>
-      <span class="ds-stat-val">${p.value} ${p.unit||''}</span>
+      <span class="ds-stat-val" style="color:var(--accent)">${p.value} ${p.unit||''}</span>
     </div>`).join('') : '<div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin PRs registrados</div>';
+
+  const ovCount = Object.keys(dsAthleteOverrides).length;
 
   document.getElementById('ds-right-content').innerHTML = `
     <div class="ds-right-section">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <div class="ds-ath-ini" style="width:40px;height:40px;font-size:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div class="ds-ath-ini" style="width:36px;height:36px;font-size:12px;flex-shrink:0">
           ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (a.initials||'??')}
         </div>
-        <div>
-          <div style="font-family:var(--font-d);font-size:18px">${a.full_name}</div>
-          <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase">${a.program||'compete'} · ${a.goal||''}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-m);font-size:13px;font-weight:500;color:var(--text)">${a.full_name}</div>
+          <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase">${prog} · sem ${weekNum}</div>
         </div>
+        <button onclick="exitAthMode()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 8px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">✕ Salir</button>
       </div>
-      <div class="ds-right-title">PRs</div>
+      ${ovCount > 0 ? `<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);margin-bottom:12px">★ ${ovCount} override${ovCount>1?'s':''} activo${ovCount>1?'s':''}</div>` : ''}
+      <div style="margin-bottom:12px;display:flex;gap:6px">
+        <button onclick="openChat('${a.id}','${a.full_name}','${a.avatar_url||''}','${a.initials||'??'}')" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase">💬 Chat</button>
+      </div>
+      <div class="ds-right-title" style="font-size:12px">PRs</div>
       ${prsHtml}
-      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="openChat('${a.id}','${a.full_name}','${a.avatar_url||''}','${a.initials||'??'}')" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:8px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase">💬 Mensaje</button>
-      </div>
     </div>`;
+}
+
+function exitAthMode(){
+  dsCurrentAthlete = null;
+  dsAthleteOverrides = {};
+  dsAthleteBlocks = {};
+  renderDsAthletes();
+  loadDsWeek();
+  document.getElementById('ds-right-content').innerHTML = '<div style="padding:16px"><div class="ds-right-title">ZENITH</div><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un atleta para ver sus PRs</div></div>';
+}
+
+async function openDsOverride(blockId){
+  currentOverrideBlockId = blockId;
+  const b = (dsAthleteBlocks[Object.keys(dsAthleteBlocks).find(d => dsAthleteBlocks[d].find(x=>x.id===blockId))] || []).find(x=>x.id===blockId);
+  const ov = dsAthleteOverrides[blockId];
+
+  document.getElementById('override-title').textContent = 'Override: ' + (b?.name || 'Bloque');
+  document.getElementById('override-block-id').value = blockId;
+  document.getElementById('override-athlete-id').value = dsCurrentAthlete?.id || '';
+  document.getElementById('override-content').value = ov?.content || '';
+  document.getElementById('override-coach-note').value = ov?.coach_note || '';
+  document.getElementById('override-meta').value = ov?.meta || '';
+  document.getElementById('override-base-movement').value = ov?.base_movement || '';
+  document.getElementById('override-percentage').value = ov?.percentage || '';
+  document.getElementById('override-msg').textContent = '';
+  document.getElementById('override-delete-btn').style.display = ov ? 'block' : 'none';
+  document.getElementById('override-editor').classList.add('open');
+}
+
+async function deleteDsOverride(blockId){
+  if(!dsCurrentAthlete) return;
+  if(!confirm('¿Eliminar el override? El atleta volverá a ver el programa maestro.')) return;
+  await sb.from('block_overrides').delete()
+    .eq('athlete_id', dsCurrentAthlete.id)
+    .eq('block_id', blockId);
+  delete dsAthleteOverrides[blockId];
+  showToast('Override eliminado');
+  renderDsDayContent(dsAthleteBlocks[dsCurrentDay || todayDow] || [], dsCurrentDay || todayDow);
 }
 
 function openDsCopyWeek(){
@@ -3972,13 +4064,16 @@ async function saveOverride(){
   if(error){ msg.textContent = 'Error: ' + error.message; msg.style.color='#ff4444'; return; }
 
   athleteOverrides[blockId] = data;
+  // Update desktop overrides too
+  if(dsCurrentAthlete) dsAthleteOverrides[blockId] = data;
   msg.textContent = '✓ Override guardado';
   msg.style.color = 'var(--accent)';
 
   setTimeout(()=>{
     closeOverrideEditor();
-    // Reload ath view to show override indicator
-    if(currentAthWeekProfile){
+    if(isDesktop() && dsCurrentAthlete){
+      renderDsDayContent(dsAthleteBlocks[dsCurrentDay || todayDow] || [], dsCurrentDay || todayDow);
+    } else if(currentAthWeekProfile){
       loadAthWeekBlocks(currentAthWeekProfile).then(()=>renderAthWeek(currentAthWeekProfile));
     }
   }, 1000);
