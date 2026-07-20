@@ -231,13 +231,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .app {
     max-width: 100% !important;
     display: grid;
-    grid-template-columns: 220px 1fr 300px;
-    grid-template-rows: 60px 1fr;
+    grid-template-columns: 1fr;
+    grid-template-rows: 60px 48px 1fr;
     height: 100vh;
     overflow: hidden;
   }
 
-  /* Top bar spans full width */
+  /* Top bar */
   .topbar {
     grid-column: 1 / -1;
     grid-row: 1;
@@ -245,37 +245,35 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     padding: 0 24px;
   }
 
-  /* Left sidebar */
+  /* Desktop nav bar */
   .desktop-sidebar {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
-    border-right: 1px solid var(--border);
     display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    background: var(--bg);
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    overflow-x: auto;
+    overflow-y: visible;
+    height: 48px;
+    flex-shrink: 0;
   }
-  .desktop-sidebar::-webkit-scrollbar { width: 0 }
+  .desktop-sidebar::-webkit-scrollbar { display: none }
 
-  /* Main content */
+  /* Main content — full width */
   .desktop-main {
-    grid-column: 2;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 3;
     overflow-y: auto;
     background: var(--bg);
   }
   .desktop-main::-webkit-scrollbar { width: 4px }
   .desktop-main::-webkit-scrollbar-thumb { background: var(--border2) }
 
-  /* Right panel */
-  .desktop-right {
-    grid-column: 3;
-    grid-row: 2;
-    border-left: 1px solid var(--border);
-    overflow-y: auto;
-    background: var(--bg2);
-  }
-  .desktop-right::-webkit-scrollbar { width: 0 }
+  /* Right panel hidden — we use full width now */
+  .desktop-right { display: none !important }
 
   /* Hide mobile nav */
   .bottom-nav { display: none !important }
@@ -283,91 +281,109 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   /* Hide mobile screens */
   .screen { display: none !important }
 
-  /* Hide mobile overlays that are open */
+  /* Hide mobile overlays */
   .ath-detail:not(#ath-week-view) { display: none !important }
 
-  /* Desktop sidebar nav items */
+  /* Desktop top nav tabs */
   .ds-nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
+    gap: 8px;
+    padding: 0 20px;
+    height: 48px;
     font-family: var(--font-m);
     font-size: 10px;
     color: var(--text3);
     cursor: pointer;
-    border-radius: 2px;
-    margin: 2px 8px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
     transition: all 0.15s;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    flex-shrink: 0;
   }
-  .ds-nav-item:hover { background: var(--bg2); color: var(--text2) }
-  .ds-nav-item.active { background: var(--bg3); color: var(--accent) }
-  .ds-nav-icon { font-size: 14px; width: 20px; text-align: center }
+  .ds-nav-item:hover { color: var(--text2) }
+  .ds-nav-item.active { color: var(--accent); border-bottom-color: var(--accent) }
+  .ds-nav-icon { font-size: 14px }
+  .ds-nav-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; margin: 0 4px }
+  .ds-nav-spacer { flex: 1 }
 
+  /* Section title */
   .ds-section-title {
     font-family: var(--font-m);
-    font-size: 8px;
+    font-size: 9px;
     color: var(--text3);
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    padding: 16px 16px 6px;
-    opacity: 0.5;
+    padding: 24px 28px 10px;
+    opacity: 0.6;
   }
 
+  /* Day items — now horizontal chips in top area */
   .ds-day-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
+    gap: 6px;
+    padding: 6px 14px;
     font-family: var(--font-m);
     font-size: 10px;
     color: var(--text3);
     cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 2px;
     transition: all 0.15s;
   }
-  .ds-day-item:hover { color: var(--text2); background: var(--bg2) }
-  .ds-day-item.active { color: var(--accent) }
-  .ds-day-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2) }
+  .ds-day-item:hover { color: var(--text2); border-color: var(--border2) }
+  .ds-day-item.active { color: var(--accent); border-color: var(--accent) }
+  .ds-day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border2) }
   .ds-day-dot.active { background: var(--accent) }
 
+  /* Athlete cards in grid */
   .ds-athlete-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
+    gap: 12px;
+    padding: 16px 20px;
     cursor: pointer;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg2);
     transition: all 0.15s;
   }
-  .ds-athlete-item:hover { background: var(--bg2) }
-  .ds-athlete-item.active { background: var(--bg3) }
+  .ds-athlete-item:hover { background: var(--bg3); border-color: var(--border2) }
+  .ds-athlete-item.active { border-color: var(--accent); background: var(--bg3) }
   .ds-ath-ini {
-    width: 28px; height: 28px; border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-m); font-size: 9px; font-weight: 500;
+    font-family: var(--font-m); font-size: 11px; font-weight: 500;
     background: var(--accent); color: #000; flex-shrink: 0; overflow: hidden;
   }
-  .ds-ath-name { font-family: var(--font-m); font-size: 10px; color: var(--text2) }
-  .ds-ath-prog { font-family: var(--font-m); font-size: 8px; color: var(--text3); text-transform: uppercase }
+  .ds-ath-name { font-family: var(--font-m); font-size: 11px; color: var(--text2); font-weight: 500 }
+  .ds-ath-prog { font-family: var(--font-m); font-size: 9px; color: var(--text3); text-transform: uppercase; margin-top: 2px }
 
   /* Desktop week view */
   .ds-week-header {
-    padding: 16px 20px;
+    padding: 16px 28px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    background: var(--bg2);
   }
-  .ds-week-title { font-family: var(--font-d); font-size: 20px; letter-spacing: 0.1em }
+  .ds-week-title { font-family: var(--font-d); font-size: 22px; letter-spacing: 0.1em }
   .ds-week-nav { display: flex; align-items: center; gap: 8px }
   .ds-week-nav button {
     background: none; border: 1px solid var(--border2); border-radius: 2px;
     padding: 4px 10px; font-family: var(--font-m); font-size: 9px; color: var(--text2); cursor: pointer;
   }
 
-  /* Desktop blocks */
-  .ds-blocks { padding: 16px }
+  /* Desktop blocks — 2 column grid */
+  .ds-blocks { padding: 20px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start }
+  .ds-blocks-single { padding: 20px 28px }
   .ds-block {
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -830,13 +846,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 [data-theme="light"] .ex-detail-text { color: #333 }
 
 /* Desktop */
-[data-theme="light"] .desktop-sidebar { background: #f5f5f5; border-color: #e0e0e0 }
+[data-theme="light"] .desktop-sidebar { background: #f5f5f5; border-color: #e0e0e0; border-bottom-color: #e0e0e0 }
 [data-theme="light"] .desktop-main { background: #ffffff }
 [data-theme="light"] .desktop-right { background: #f5f5f5; border-color: #e0e0e0 }
 [data-theme="light"] .ds-section-title { color: #aaa }
 [data-theme="light"] .ds-nav-item { color: #555 }
-[data-theme="light"] .ds-nav-item:hover { background: #ebebeb; color: #333 }
-[data-theme="light"] .ds-nav-item.active { background: #e0e8ff; color: #0055dd }
+[data-theme="light"] .ds-nav-item:hover { color: #333 }
+[data-theme="light"] .ds-nav-item.active { color: #0055dd; border-bottom-color: #0055dd }
 [data-theme="light"] .ds-day-item { color: #666 }
 [data-theme="light"] .ds-day-item:hover { background: #ebebeb; color: #333 }
 [data-theme="light"] .ds-day-item.active { color: #0055dd }
@@ -939,45 +955,54 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
   </div>
 
-  <!-- DESKTOP LAYOUT (768px+) -->
+  <!-- DESKTOP TOP NAV -->
   <div class="desktop-sidebar" id="desktop-sidebar">
-    <div style="padding:12px 8px 4px">
-      <div class="ds-section-title">Programa</div>
-      <div id="ds-prog-tabs" style="display:flex;flex-direction:column;gap:2px"></div>
-    </div>
-    <div style="padding:4px 8px">
-      <div class="ds-section-title">Semana</div>
-      <div style="display:flex;align-items:center;gap:6px;padding:4px 8px">
-        <button onclick="dsChangeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:3px 8px;font-size:10px;color:var(--text3);cursor:pointer">←</button>
-        <div id="ds-week-label" style="flex:1;text-align:center;font-family:var(--font-m);font-size:9px;color:var(--text3)">Sem 1</div>
-        <button onclick="dsChangeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:3px 8px;font-size:10px;color:var(--text3);cursor:pointer">→</button>
-      </div>
-      <div id="ds-days" style="display:flex;flex-direction:column;gap:2px;margin-top:4px"></div>
-    </div>
-    <div style="padding:4px 8px;border-top:1px solid var(--border);margin-top:8px">
-      <div class="ds-section-title">Atletas</div>
-      <div id="ds-athletes" style="display:flex;flex-direction:column"></div>
-    </div>
-    <div style="padding:8px;border-top:1px solid var(--border);margin-top:auto">
-      <button onclick="openExLibrary()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">🏋️ Libreria</button>
-      <button onclick="openNotifyPanel()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">✉ Notificar</button>
-      <button onclick="openAddAthlete()" class="ds-nav-item" style="width:100%;margin:0;justify-content:flex-start">+ Atleta</button>
-    </div>
+    <!-- Program tabs -->
+    <div id="ds-prog-tabs" style="display:flex;height:100%"></div>
+    <div class="ds-nav-divider"></div>
+    <!-- Week nav -->
+    <button onclick="dsChangeWeek(-1)" style="background:none;border:none;padding:0 10px;height:100%;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">←</button>
+    <div id="ds-week-label" style="font-family:var(--font-m);font-size:9px;color:var(--text3);white-space:nowrap;padding:0 4px">Sem 1</div>
+    <button onclick="dsChangeWeek(1)" style="background:none;border:none;padding:0 10px;height:100%;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">→</button>
+    <div class="ds-nav-divider"></div>
+    <!-- Tab views -->
+    <button class="ds-nav-item active" id="ds-tab-programa" onclick="switchDsTab('programa')">📋 Programa</button>
+    <button class="ds-nav-item" id="ds-tab-atletas" onclick="switchDsTab('atletas')">👥 Atletas</button>
+    <button class="ds-nav-item" id="ds-tab-libreria" onclick="switchDsTab('libreria')">🏋️ Librería</button>
+    <div class="ds-nav-spacer"></div>
+    <div class="ds-nav-divider"></div>
+    <button class="ds-nav-item" onclick="openNotifyPanel()" style="gap:6px">✉ Notificar</button>
+    <button class="ds-nav-item" onclick="openAddAthlete()" style="color:var(--accent)">+ Atleta</button>
   </div>
 
   <div class="desktop-main" id="desktop-main">
-    <div id="ds-content">
-      <div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un dia para ver la programacion</div>
+    <!-- PROGRAMA TAB -->
+    <div id="ds-panel-programa">
+      <!-- Day chips row -->
+      <div style="padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--bg2)">
+        <div id="ds-days" style="display:flex;gap:8px;flex-wrap:wrap;flex:1"></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar sem</button>
+          <button id="ds-add-block-btn" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Bloque</button>
+        </div>
+      </div>
+      <div id="ds-content" style="padding:20px 28px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start"></div>
+    </div>
+
+    <!-- ATLETAS TAB -->
+    <div id="ds-panel-atletas" style="display:none">
+      <div id="ds-ath-panel">
+        <!-- Athlete list or athlete detail shown here -->
+      </div>
+    </div>
+
+    <!-- LIBRERIA TAB -->
+    <div id="ds-panel-libreria" style="display:none">
     </div>
   </div>
 
-  <div class="desktop-right" id="desktop-right">
-    <div id="ds-right-content">
-      <div style="padding:16px">
-        <div class="ds-right-title">ZENITH</div>
-        <div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un atleta para ver sus PRs</div>
-      </div>
-    </div>
+  <div class="desktop-right" id="desktop-right" style="display:none">
+    <div id="ds-right-content"></div>
   </div>
 
   <div class="screens">
@@ -3622,33 +3647,127 @@ async function initDesktop(){
   if(!isDesktop()) return;
   dsCurrentProg = currentProfile?.program || 'compete';
 
-  // Program tabs
-  renderDsProgTabs();
-
   // Load athletes
   const {data} = await sb.from('profiles').select('*').eq('role','athlete');
   athletes = data || [];
-  renderDsAthletes();
+
+  // Program tabs
+  renderDsProgTabs();
 
   // Load week
   await loadDsWeek();
 }
 
+function switchDsTab(tab){
+  ['programa','atletas','libreria'].forEach(t => {
+    document.getElementById('ds-panel-' + t).style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById('ds-tab-' + t);
+    if(btn) btn.classList.toggle('active', t === tab);
+  });
+  if(tab === 'atletas') renderDsAthleteList();
+  if(tab === 'libreria') openExLibraryDesktop();
+}
+
+function openExLibraryDesktop(){
+  const panel = document.getElementById('ds-panel-libreria');
+  panel.innerHTML = '';
+  // Mount exercise library inline
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;height:calc(100vh - 108px)';
+  wrap.innerHTML = `
+    <div style="width:340px;border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+        <input id="ds-ex-search" class="ex-search" placeholder="Buscar ejercicio..." oninput="filterDsExercises()" style="flex:1">
+        ${currentProfile?.role==='coach'?'<button onclick="openAddExercise()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap">+ Agregar</button>':''}
+      </div>
+      <div id="ds-ex-cats" style="display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border)"></div>
+      <div id="ds-ex-list" style="flex:1;overflow-y:auto"></div>
+    </div>
+    <div id="ds-ex-detail" style="flex:1;display:flex;flex-direction:column;overflow-y:auto">
+      <div style="padding:60px 40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un ejercicio</div>
+    </div>`;
+  panel.appendChild(wrap);
+  loadExercisesForDesktop();
+}
+
+async function loadExercisesForDesktop(){
+  if(!allExercises.length){
+    const {data} = await sb.from('exercises').select('*').order('name');
+    allExercises = data || [];
+  }
+  renderDsExCategories();
+  filterDsExercises();
+}
+
+function renderDsExCategories(){
+  const container = document.getElementById('ds-ex-cats');
+  if(!container) return;
+  const cats = ['Todos',...new Set(allExercises.map(e=>e.category))];
+  container.innerHTML = cats.map(cat =>
+    `<button class="ex-cat-btn ${cat===currentExCategory?'active':''}" onclick="setDsExCategory('${cat}')">${cat}</button>`
+  ).join('');
+}
+
+function setDsExCategory(cat){
+  currentExCategory = cat;
+  renderDsExCategories();
+  filterDsExercises();
+}
+
+function filterDsExercises(){
+  const searchEl = document.getElementById('ds-ex-search') || document.getElementById('ex-search');
+  const search = searchEl?.value.toLowerCase() || '';
+  const filtered = allExercises.filter(ex => {
+    const matchCat = currentExCategory === 'Todos' || ex.category === currentExCategory;
+    const matchSearch = !search || ex.name.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  const container = document.getElementById('ds-ex-list');
+  if(!container) return;
+  container.innerHTML = filtered.map(ex => {
+    const thumb = getYouTubeThumbnail(ex.youtube_url);
+    return `<div class="ex-row" onclick="showDsExDetail('${ex.id}')">
+      <div class="ex-thumb">${thumb?`<img src="${thumb}" style="width:100%;height:100%;object-fit:cover">`:''}</div>
+      <div class="ex-info"><div class="ex-name">${ex.name}</div><div class="ex-cat-tag">${ex.category}</div></div>
+      ${ex.youtube_url?'<span style="font-size:14px;color:var(--text3)">▶</span>':''}
+    </div>`;
+  }).join('') || '<div style="padding:20px;font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin ejercicios.</div>';
+}
+
+function showDsExDetail(exId){
+  const ex = allExercises.find(e=>e.id===exId);
+  if(!ex) return;
+  currentExercise = ex;
+  const isCoach = currentProfile?.role==='coach';
+  const detail = document.getElementById('ds-ex-detail');
+  if(!detail) return;
+  const embed = getYouTubeEmbed(ex.youtube_url);
+  detail.innerHTML = `
+    <div style="border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:8px;background:var(--bg2)">
+      <div style="flex:1;font-family:var(--font-m);font-size:11px;color:var(--text)">${ex.name}</div>
+      ${isCoach?`<button onclick="openEditExercise()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer">✏ Editar</button>`:''}
+      ${isCoach?`<button onclick="deleteExerciseInline()" style="background:none;border:1px solid #ff444455;border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;color:#ff4444;cursor:pointer">✕</button>`:''}
+    </div>
+    ${embed?`<div style="position:relative;width:100%;padding-top:50%;background:#000"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:none" src="${embed}" allowfullscreen allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"></iframe></div>`:''}
+    <div style="padding:24px">
+      <div style="font-family:var(--font-d);font-size:28px;color:var(--text);margin-bottom:4px">${ex.name}</div>
+      <div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px">${ex.category}</div>
+      ${ex.description?`<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Descripción</div><div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:16px">${ex.description}</div>`:''}
+      ${ex.key_points?`<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Puntos clave</div><div style="font-size:13px;color:var(--text2);line-height:1.6">${ex.key_points}</div>`:''}
+    </div>`;
+}
+
 function renderDsProgTabs(){
-  const isLight = localStorage.getItem('z_theme') === 'light';
   const progs = [
-    {slug:'games', label:'Games', color: isLight ? '#0055dd' : '#e8ff00'},
-    {slug:'compete', label:'Compete', color: isLight ? '#0055dd' : '#e8ff00'},
-    {slug:'olympus', label:'Olympus', color:'#8b5cf6'},
+    {slug:'compete', label:'Compete'},
+    {slug:'olympus', label:'Olympus'},
+    {slug:'games', label:'Games'},
   ];
   const tabsEl = document.getElementById('ds-prog-tabs');
   if(!tabsEl) return;
   tabsEl.innerHTML = progs.map(p => `
-    <div class="ds-nav-item ${dsCurrentProg===p.slug?'active':''}" 
-      onclick="setDsProg('${p.slug}')"
-      style="${dsCurrentProg===p.slug ? (isLight?'background:#e8eeff;color:#0055dd':'background:#1a1a1a;color:#e8ff00') : ''}">
-      <span style="color:${p.color};font-size:8px">●</span> ${p.label}
-    </div>`).join('');
+    <button class="ds-nav-item ${dsCurrentProg===p.slug?'active':''}" onclick="setDsProg('${p.slug}')">${p.label}</button>
+  `).join('');
 }
 
 async function setDsProg(prog){
@@ -3683,13 +3802,14 @@ async function loadDsWeek(){
 
   // Render day list
   const activeDow = dsCurrentDay !== null ? dsCurrentDay : todayDow;
-  document.getElementById('ds-days').innerHTML = DS_DAY_ORDER.map(dow => {
+  const daysEl = document.getElementById('ds-days');
+  if(daysEl) daysEl.innerHTML = DS_DAY_ORDER.map(dow => {
     const blocks = byDay[dow] || [];
     const hasContent = blocks.some(b => b.content && b.content !== 'Por programar' && !b.content.startsWith('Contenido pendiente'));
-    return `<div class="ds-day-item ${dow===activeDow?'active':''}" onclick="selectDsDay(${dow})">
-      <span>${DS_DAYS[dow]}</span>
+    return `<button class="ds-day-item ${dow===activeDow?'active':''}" onclick="selectDsDay(${dow})" data-dow="${dow}">
+      ${DS_DAYS[dow]}
       <div class="ds-day-dot ${hasContent?'active':''}"></div>
-    </div>`;
+    </button>`;
   }).join('');
 
   // Auto select today
@@ -3720,23 +3840,22 @@ function selectDsDay(dow){
 
 function renderDsDayContent(blocks, dow){
   const main = document.getElementById('ds-content');
+  if(!main) return;
   const baseWeek = programWeeks[dsCurrentProg] || 1;
   const weekNum = Math.max(1, baseWeek + dsWeekOffset);
   const isAthMode = !!dsCurrentAthlete;
 
-  const header = `<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
-    <div>
-      <div style="font-family:var(--font-d);font-size:16px;letter-spacing:0.08em">${DS_DAYS[dow].toUpperCase()} · ${isAthMode ? dsCurrentAthlete.full_name.split(' ')[0].toUpperCase() : dsCurrentProg.toUpperCase()}</div>
-      <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:2px">Sem ${weekNum} · ${blocks.length} bloques${isAthMode?' · <span style="color:var(--accent)">★ modo atleta</span>':''}</div>
-    </div>
-    <div style="display:flex;gap:6px">
-      ${!isAthMode ? `<button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar sem</button>
-      <button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Bloque</button>` : ''}
-    </div>
-  </div>`;
+  // Update add block button
+  const addBtn = document.getElementById('ds-add-block-btn');
+  if(addBtn){
+    addBtn.style.display = isAthMode ? 'none' : 'block';
+    addBtn.onclick = () => openNewBlock(dow, dsCurrentProg);
+  }
+
+  const header = '';
 
   if(!blocks.length){
-    main.innerHTML = header + `<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
+    main.innerHTML = `<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
       ${isAthMode ? 'Sin bloques este día' : 'Día de descanso'}
       ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
     </div>`;
@@ -3779,8 +3898,8 @@ function renderDsDayContent(blocks, dow){
     </div>`;
   }).join('');
 
-  main.innerHTML = header + `<div class="ds-blocks">${blocksHtml}
-    ${copiedBlock && !isAthMode ? `<button onclick="pasteBlock(${dow},'${dsCurrentProg}')" style="width:100%;background:none;border:1px dashed var(--accent);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase;margin-top:4px">⎘ Pegar "${copiedBlock.name}"</button>` : ''}
+  main.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">${blocksHtml}
+    ${copiedBlock && !isAthMode ? `<div style="grid-column:1/-1"><button onclick="pasteBlock(${dow},'${dsCurrentProg}')" style="width:100%;background:none;border:1px dashed var(--accent);border-radius:2px;padding:10px;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;text-transform:uppercase;margin-top:4px">⎘ Pegar "${copiedBlock.name}"</button></div>` : ''}
   </div>`;
 }
 
@@ -3822,9 +3941,27 @@ async function openBlockEditorDs(blockId){
 }
 
 function renderDsAthletes(){
+  // Kept for compatibility
+}
+
+function renderDsAthleteList(){
   const isMainCoach = currentUser.id === '6005d37d-659f-4a32-9767-f1ad809297e5';
   const visible = isMainCoach ? athletes : athletes.filter(a=>!a.hidden_from_coaches);
-  document.getElementById('ds-athletes').innerHTML = visible.map(a => {
+  const panel = document.getElementById('ds-ath-panel');
+  if(!panel) return;
+
+  if(dsCurrentAthlete){
+    renderDsAthletePage(dsCurrentAthlete);
+    return;
+  }
+
+  panel.innerHTML = `
+    <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
+      <div style="font-family:var(--font-d);font-size:22px;letter-spacing:0.1em">ATLETAS</div>
+      <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Nuevo atleta</button>
+    </div>
+    <div style="padding:20px 28px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+      ${visible.map(a => {
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     const progColor = a.program==='games'?'var(--accent)':a.program==='olympus'?'#8b5cf6':'var(--accent)';
     return `<div class="ds-athlete-item ${dsCurrentAthlete?.id===a.id?'active':''}" style="display:flex;align-items:center;justify-content:space-between">
@@ -3839,7 +3976,9 @@ function renderDsAthletes(){
       </div>
       ${isMainCoach ? `<button onclick="event.stopPropagation();confirmDeleteAthlete('${a.id}','${a.full_name.replace(/'/g,'')}',event)" style="background:none;border:none;color:#ff4444;cursor:pointer;padding:4px 6px;font-size:13px;opacity:0.5;flex-shrink:0" title="Eliminar">✕</button>` : ''}
     </div>`;
-  }).join('');
+      }).join('')}
+    </div>`;
+}
 }
 
 let dsAthleteOverrides = {};
@@ -3849,7 +3988,7 @@ async function selectDsAthlete(athId){
   const a = athletes.find(x=>x.id===athId);
   if(!a) return;
   dsCurrentAthlete = a;
-  renderDsAthletes();
+  switchDsTab('atletas');
 
   // Load athlete PRs for right panel
   const {data: prs} = await sb.from('prs').select('*').eq('athlete_id', athId).order('category').order('name');
@@ -3895,25 +4034,7 @@ async function selectDsAthlete(athId){
 
   const ovCount = Object.keys(dsAthleteOverrides).length;
 
-  document.getElementById('ds-right-content').innerHTML = `
-    <div class="ds-right-section">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-        <div class="ds-ath-ini" style="width:36px;height:36px;font-size:12px;flex-shrink:0">
-          ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : (a.initials||'??')}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-family:var(--font-m);font-size:13px;font-weight:500;color:var(--text)">${a.full_name}</div>
-          <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase">${prog} · sem ${weekNum}</div>
-        </div>
-        <button onclick="exitAthMode()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:4px 8px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">✕ Salir</button>
-      </div>
-      ${ovCount > 0 ? `<div style="font-family:var(--font-m);font-size:9px;color:var(--accent);margin-bottom:12px">★ ${ovCount} override${ovCount>1?'s':''} activo${ovCount>1?'s':''}</div>` : ''}
-      <div style="margin-bottom:12px;display:flex;gap:6px">
-        <button onclick="openChat('${a.id}','${a.full_name}','${a.avatar_url||''}','${a.initials||'??'}')" style="flex:1;background:none;border:1px solid var(--border2);border-radius:2px;padding:7px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase">💬 Chat</button>
-      </div>
-      <div class="ds-right-title" style="font-size:12px">PRs</div>
-      ${prsHtml}
-    </div>`;
+  renderDsAthletePage(a);
 }
 
 function exitAthMode(){
@@ -4096,6 +4217,145 @@ async function deleteOverride(){
     await loadAthWeekBlocks(currentAthWeekProfile);
     renderAthWeek(currentAthWeekProfile);
   }
+}
+
+
+async function renderDsAthletePage(a){
+  const panel = document.getElementById('ds-ath-panel');
+  if(!panel) return;
+
+  const prog = a.program || 'compete';
+  const baseWeek = programWeeks[prog] || 1;
+  const weekNum = Math.max(1, baseWeek + dsWeekOffset);
+
+  // Load PRs
+  const {data: prs} = await sb.from('prs').select('*').eq('athlete_id', a.id).order('category').order('name');
+  const {data: ovs} = await sb.from('block_overrides').select('*').eq('athlete_id', a.id);
+  dsAthleteOverrides = {};
+  if(ovs) ovs.forEach(o => dsAthleteOverrides[o.block_id] = o);
+
+  // Load blocks
+  const {data: blocks} = await sb.from('blocks').select('*')
+    .eq('program_slug', prog).eq('week_number', weekNum)
+    .order('day_of_week').order('order_index');
+  dsAthleteBlocks = {};
+  if(blocks) blocks.forEach(b => {
+    if(!dsAthleteBlocks[b.day_of_week]) dsAthleteBlocks[b.day_of_week] = [];
+    dsAthleteBlocks[b.day_of_week].push(b);
+  });
+
+  const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
+  const ovCount = Object.keys(dsAthleteOverrides).length;
+  const prsFilled = prs?.filter(p=>parseFloat(p.value)>0) || [];
+
+  // PRs by category
+  const prsByCat = {};
+  prs?.forEach(p => { if(!prsByCat[p.category]) prsByCat[p.category]=[]; prsByCat[p.category].push(p); });
+
+  panel.innerHTML = `
+    <div style="padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg2)">
+      <button onclick="exitDsAthletePage()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer">← Atletas</button>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:11px;font-weight:500;color:#000;overflow:hidden;flex-shrink:0">
+        ${a.avatar_url?`<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover">`:''}${!a.avatar_url?ini:''}
+      </div>
+      <div style="flex:1">
+        <div style="font-family:var(--font-d);font-size:20px;letter-spacing:0.08em">${a.full_name}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase">${prog} · Sem ${weekNum} · ${ovCount} override${ovCount!==1?'s':''}</div>
+      </div>
+      <button onclick="openChat('${a.id}','${a.full_name}','${a.avatar_url||''}','${ini}')" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer">💬 Chat</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 156px);overflow:hidden">
+      <!-- LEFT: Week view -->
+      <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${DS_DAY_ORDER.map(dow => {
+            const hasBlocks = (dsAthleteBlocks[dow]||[]).length > 0;
+            const hasOv = (dsAthleteBlocks[dow]||[]).some(b => dsAthleteOverrides[b.id]);
+            return `<button class="ds-day-item ${dow===todayDow?'active':''}" onclick="selectDsAthDay(${dow})" data-dow="${dow}">
+              ${DS_DAYS[dow]}
+              <div class="ds-day-dot ${hasBlocks?'active':''}"></div>
+              ${hasOv?'<span style="color:var(--accent);font-size:8px">★</span>':''}
+            </button>`;
+          }).join('')}
+        </div>
+        <div id="ds-ath-blocks" style="flex:1;overflow-y:auto;padding:16px"></div>
+      </div>
+      <!-- RIGHT: PRs -->
+      <div style="overflow-y:auto;padding:0">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em">PRs · ${prsFilled.length} registrados</div>
+          <button onclick="openAddPrForAthlete('${a.id}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ PR</button>
+        </div>
+        ${Object.entries(prsByCat).map(([cat, items]) => `
+          <div style="padding:10px 20px 4px;font-family:var(--font-m);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em">${PR_CATEGORIES[cat]||cat}</div>
+          <div style="margin:0 12px;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px">
+            ${items.map(p => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer" onclick="openEditPR('${p.id}','${p.category}','${p.name.replace(/'/g,'')}','${p.value}','${p.unit||''}')">
+                <div style="font-family:var(--font-m);font-size:10px;color:var(--text2)">${p.name}</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="font-family:var(--font-m);font-size:12px;color:${parseFloat(p.value)>0?'var(--accent)':'var(--text3)'};font-weight:500">${p.value} ${p.unit||''}</div>
+                  <span style="font-size:9px;color:var(--text3)">✏</span>
+                </div>
+              </div>`).join('')}
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  // Show today's blocks
+  selectDsAthDay(todayDow);
+}
+
+function exitDsAthletePage(){
+  dsCurrentAthlete = null;
+  dsAthleteOverrides = {};
+  dsAthleteBlocks = {};
+  renderDsAthleteList();
+}
+
+function selectDsAthDay(dow){
+  document.querySelectorAll('[data-dow]').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.dow) === dow);
+  });
+  const blocks = dsAthleteBlocks[dow] || [];
+  const container = document.getElementById('ds-ath-blocks');
+  if(!container) return;
+  if(!blocks.length){
+    container.innerHTML = '<div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Día de descanso</div>';
+    return;
+  }
+  container.innerHTML = blocks.map(b => {
+    const ov = dsAthleteOverrides[b.id];
+    const displayContent = ov?.content || b.content || '';
+    return `<div class="ds-block" style="${ov?'border-color:var(--accent);border-left-width:3px':''}; margin-bottom:10px">
+      <div class="ds-block-hdr" onclick="toggleDsBlock('${b.id}')">
+        <div class="ds-block-dot" style="background:${b.color}"></div>
+        <div style="flex:1">
+          <div class="ds-block-name">${b.name} ${ov?'<span style="font-size:8px;color:var(--accent)">★</span>':''}</div>
+          <div class="ds-block-meta">${ov?.meta||b.meta||''}</div>
+        </div>
+        <button class="ds-block-btn" onclick="event.stopPropagation();openDsOverride('${b.id}')" style="color:var(--accent);border-color:var(--accent)">${ov?'✏':'★'} Override</button>
+        ${ov?`<button class="ds-block-btn danger" onclick="event.stopPropagation();deleteDsOverride('${b.id}')">✕</button>`:''}
+      </div>
+      <div class="ds-block-body" id="dsbody-${b.id}">
+        <div class="ds-block-content" style="white-space:pre-wrap">${displayContent}</div>
+        ${ov?.coach_note||b.coach_note?`<div class="ds-coach-note">${ov?.coach_note||b.coach_note}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddPrForAthlete(athId){
+  // Use existing PR editor pointed at athlete
+  document.getElementById('pr-edit-id').value = '';
+  document.getElementById('pr-editor-title').textContent = 'Nuevo PR';
+  document.getElementById('pr-category').value = 'strength';
+  document.getElementById('pr-name').value = '';
+  document.getElementById('pr-value').value = '';
+  document.getElementById('pr-unit').value = 'lbs';
+  document.getElementById('pr-delete-btn').style.display = 'none';
+  // Override save to target this athlete
+  window._prTargetAthleteId = athId;
+  document.getElementById('pr-editor').classList.add('open');
 }
 
 // ── EXERCISE DEMO VIDEO ───────────────────────────────
