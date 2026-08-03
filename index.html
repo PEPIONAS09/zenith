@@ -20,7 +20,7 @@
   --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
   --border:#2a2a2a;--border2:#333;
   --text:#f0f0f0;--text2:#888;--text3:#555;
-  --accent:#e8ff00;--purple:#7c3aed;
+  --accent:#e8ff00;--purple:#7c3aed;--games:#f97316;--hyrox:#06b6d4;
   --font-d:'Bebas Neue',sans-serif;--font-m:'DM Mono',monospace;--font-b:'DM Sans',sans-serif;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden}
@@ -170,6 +170,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .prog-badge{font-family:var(--font-m);font-size:8px;padding:3px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0}
 .pb-compete{background:var(--accent);color:#000}
 .pb-olympus{background:var(--purple);color:#fff}
+.pb-games{background:var(--games);color:#fff}
+.pb-hyrox{background:var(--hyrox);color:#000}
 .ath-arr{color:var(--text3);font-size:18px;margin-left:4px}
 
 /* ATHLETE DETAIL */
@@ -178,10 +180,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ad-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
 .ad-back{font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer;padding:6px 10px;border:1px solid var(--border2);border-radius:2px;background:none}
 .ad-name{font-family:var(--font-d);font-size:22px;letter-spacing:0.08em;flex:1}
-.prog-switch{display:flex;gap:6px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
-.psw-btn{flex:1;padding:8px;font-family:var(--font-m);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;border-radius:2px;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all 0.15s}
+.prog-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.psw-btn{padding:8px;font-family:var(--font-m);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;border-radius:2px;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all 0.15s}
 .psw-btn.ac-compete{background:var(--accent);color:#000;border-color:var(--accent)}
 .psw-btn.ac-olympus{background:var(--purple);color:#fff;border-color:var(--purple)}
+.psw-btn.ac-games{background:var(--games);color:#fff;border-color:var(--games)}
+.psw-btn.ac-hyrox{background:var(--hyrox);color:#000;border-color:var(--hyrox)}
 .ad-scroll{flex:1;overflow-y:auto}
 .ad-scroll::-webkit-scrollbar{width:0}
 .ad-hero{padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border)}
@@ -1346,6 +1350,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="compete">⚡ Compete</option>
         <option value="olympus">◈ Olympus</option>
         <option value="games">🎮 Games</option>
+        <option value="hyrox">▲ Hyrox</option>
       </select>
     </div>
     <div class="be-field">
@@ -1381,6 +1386,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="games">Games</option>
         <option value="compete">Compete</option>
         <option value="olympus">Olympus</option>
+        <option value="hyrox">Hyrox</option>
       </select>
     </div>
     <button class="be-save" onclick="executeCopyWeek()">⎘ Copiar semana</button>
@@ -1414,6 +1420,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
           <input type="checkbox" id="notify-games" style="width:16px;height:16px;accent-color:var(--accent)">
           <span style="font-family:var(--font-m);font-size:11px;color:var(--text)">🎮 Games</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="notify-hyrox" style="width:16px;height:16px;accent-color:var(--accent)">
+          <span style="font-family:var(--font-m);font-size:11px;color:var(--text)">▲ Hyrox</span>
         </label>
       </div>
     </div>
@@ -1520,6 +1530,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="prog-switch">
     <button class="psw-btn" id="psw-compete" onclick="switchProg('compete')">⚡ Compete</button>
     <button class="psw-btn" id="psw-olympus" onclick="switchProg('olympus')">◈ Olympus</button>
+    <button class="psw-btn" id="psw-games" onclick="switchProg('games')">🎮 Games</button>
+    <button class="psw-btn" id="psw-hyrox" onclick="switchProg('hyrox')">▲ Hyrox</button>
   </div>
   <div class="ad-scroll">
     <div class="ad-hero">
@@ -1632,6 +1644,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="games">Games</option>
         <option value="compete">Compete</option>
         <option value="olympus">Olympus</option>
+        <option value="hyrox">Hyrox</option>
       </select>
     </div>
     <div class="be-field">
@@ -1755,6 +1768,16 @@ let selectedColor = '#1D9E75';
 let allBlocks = {};
 let athletes = [];
 let athleteProgs = JSON.parse(localStorage.getItem('z_progs')||'{}');
+// ── Registro central de programas: agregar uno nuevo aqui lo propaga a toda la app
+const PROGRAMS = [
+  {slug:'compete', label:'Compete', icon:'⚡', color:'var(--accent)', fg:'#000'},
+  {slug:'olympus', label:'Olympus', icon:'◈', color:'var(--purple)', fg:'#fff'},
+  {slug:'games',   label:'Games',   icon:'🎮', color:'var(--games)',  fg:'#fff'},
+  {slug:'hyrox',   label:'Hyrox',   icon:'▲', color:'var(--hyrox)',  fg:'#000'},
+];
+const PROG_BY_SLUG = Object.fromEntries(PROGRAMS.map(p=>[p.slug,p]));
+const progMeta = s => PROG_BY_SLUG[s] || PROG_BY_SLUG.compete;
+const progLabelOf = s => { const p=progMeta(s); return p.icon+' '+p.label; };
 
 function daysUntil(y,m,d){ const t=new Date(y,m-1,d); const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((t-n)/86400000); }
 function getWeek(d){ const u=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dy=u.getUTCDay()||7; u.setUTCDate(u.getUTCDate()+4-dy); const ys=new Date(Date.UTC(u.getUTCFullYear(),0,1)); return Math.ceil((((u-ys)/86400000)+1)/7); }
@@ -1857,7 +1880,7 @@ function setupUI(){
   }
   document.getElementById('hero-name').textContent = name.toUpperCase();
   const prog = currentProfile?.program || 'compete';
-  const progLabel = prog === 'olympus' ? '◈ Olympus' : '⚡ Compete';
+  const progLabel = progLabelOf(prog);
   document.getElementById('hero-tag').textContent = isCoach ? 'Coach' : `Atleta · ${progLabel}`;
 
   const dnames=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -2166,11 +2189,7 @@ async function openCoach(){
 function renderWeekControls(){
   const container = document.getElementById('week-controls');
   if(!container) return;
-  const progs = [
-    {slug:'games', label:'Games', color:'var(--accent)'},
-    {slug:'compete', label:'Compete', color:'var(--accent)'},
-    {slug:'olympus', label:'Olympus', color:'var(--purple)'}
-  ];
+  const progs = PROGRAMS;
   container.innerHTML = progs.map(p => {
     const week = programWeeks[p.slug] || 1;
     return `<div style="display:flex;align-items:center;gap:8px">
@@ -2206,14 +2225,14 @@ function renderAthList(){
   const c = document.getElementById('ath-list');
   if(!athletes.length){ c.innerHTML='<div class="empty-note">Sin atletas registrados aún. Invítalos desde Supabase → Authentication → Users.</div>'; return; }
   c.innerHTML = athletes.map(a=>{
-    const isC = a.program==='compete';
+    const pm = progMeta(a.program);
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     return `<div class="ath-row" onclick="openAthDetail('${a.id}')">
-      <div class="ath-ini" style="background:${isC?'var(--accent)':'var(--purple)'};color:${isC?'#000':'#fff'};overflow:hidden;padding:${a.avatar_url?'0':''}">
+      <div class="ath-ini" style="background:${pm.color};color:${pm.fg};overflow:hidden;padding:${a.avatar_url?'0':''}">
         ${a.avatar_url ? `<img src="${a.avatar_url}" style="width:100%;height:100%;object-fit:cover">` : ini}
       </div>
       <div class="ath-info"><div class="ath-name">${a.full_name||'Sin nombre'}</div><div class="ath-sub">${a.goal||''}</div></div>
-      <span class="prog-badge ${isC?'pb-compete':'pb-olympus'}">${isC?'Compete':'Olympus'}</span>
+      <span class="prog-badge pb-${pm.slug}">${pm.label}</span>
       <span class="ath-arr">›</span>
     </div>`;
   }).join('');
@@ -2231,12 +2250,14 @@ async function openAthDetail(id){
   document.getElementById('ath-detail').classList.add('open');
 }
 function updateProgUI(prog){
-  const isC = prog==='compete';
+  const meta = progMeta(prog); prog = meta.slug;
   const badge = document.getElementById('ad-prog-badge');
-  badge.textContent = isC?'⚡ Compete':'◈ Olympus';
-  badge.className = 'prog-badge '+(isC?'pb-compete':'pb-olympus');
-  document.getElementById('psw-compete').className = 'psw-btn'+(isC?' ac-compete':'');
-  document.getElementById('psw-olympus').className = 'psw-btn'+(!isC?' ac-olympus':'');
+  badge.textContent = progLabelOf(prog);
+  badge.className = 'prog-badge pb-'+prog;
+  PROGRAMS.forEach(p=>{
+    const b = document.getElementById('psw-'+p.slug);
+    if(b) b.className = 'psw-btn'+(p.slug===prog?' ac-'+p.slug:'');
+  });
 }
 async function switchProg(prog){
   if(!currentAthId) return;
@@ -2393,10 +2414,11 @@ async function deleteBlock(){
 const PR_HOME_COMPETE = ['Deadlift','Snatch','Clean & Jerk'];
 const PR_HOME_OLYMPUS = ['Bench Press','Back Squat','Strict Press'];
 const PR_HOME_GAMES   = ['Deadlift','Snatch','Clean & Jerk'];
+const PR_HOME_HYROX   = ['Deadlift','Back Squat','Sled Push'];
 
 async function loadHomeStats(){
   const prog = currentProfile?.program || 'compete';
-  const keys = prog === 'olympus' ? PR_HOME_OLYMPUS : prog === 'games' ? PR_HOME_GAMES : PR_HOME_COMPETE;
+  const keys = prog === 'olympus' ? PR_HOME_OLYMPUS : prog === 'games' ? PR_HOME_GAMES : prog === 'hyrox' ? PR_HOME_HYROX : PR_HOME_COMPETE;
   const {data} = await sb.from('prs').select('name,value,unit').eq('athlete_id', currentUser.id).in('name', keys);
   const container = document.getElementById('hero-stats');
   if(!container) return;
@@ -3092,7 +3114,7 @@ async function openAthWeek(){
 }
 
 async function loadAthWeekBlocks(a){
-  const prog = athleteProgs[a?.id] || a?.program || 'compete';
+  const prog = a?.program || athleteProgs[a?.id] || 'compete';
   const baseWeek = programWeeks[prog] || 1;
   const week = Math.max(1, baseWeek + athWeekOffset);
   const {data} = await sb.from('blocks').select('*')
@@ -3120,7 +3142,7 @@ function renderAthWeek(a){
   tabBar.innerHTML = ''; content.innerHTML = '';
 
   const {label} = getWeekDates(athWeekOffset);
-  const athProg = athleteProgs[a?.id] || a?.program || 'compete';
+  const athProg = a?.program || athleteProgs[a?.id] || 'compete';
   const athBaseWeek = programWeeks[athProg] || 1;
   const weekNum = Math.max(1, athBaseWeek + athWeekOffset);
   const weekLbl = document.getElementById('ath-week-label');
@@ -3129,7 +3151,7 @@ function renderAthWeek(a){
   const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const order = [1,2,3,4,5,6,0];
   const activeDow = currentAthDay !== null ? currentAthDay : (athWeekOffset === 0 ? todayDow : 1);
-  const prog = athleteProgs[a?.id] || a?.program || 'compete';
+  const prog = a?.program || athleteProgs[a?.id] || 'compete';
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
@@ -3540,6 +3562,7 @@ async function sendNotifications(){
   if(document.getElementById('notify-compete')?.checked) programs.push('compete');
   if(document.getElementById('notify-olympus')?.checked) programs.push('olympus');
   if(document.getElementById('notify-games')?.checked) programs.push('games');
+  if(document.getElementById('notify-hyrox')?.checked) programs.push('hyrox');
 
   if(!programs.length){
     msg.textContent = 'Selecciona al menos un programa';
@@ -3594,7 +3617,7 @@ async function sendNotifications(){
 function openCopyAthWeek(){
   const a = currentAthWeekProfile;
   if(!a) return;
-  const prog = athleteProgs[a.id] || a.program || 'compete';
+  const prog = a.program || athleteProgs[a.id] || 'compete';
   const baseWeek = programWeeks[prog] || 1;
   const srcWeek = Math.max(1, baseWeek + athWeekOffset);
 
@@ -3760,11 +3783,7 @@ function showDsExDetail(exId){
 }
 
 function renderDsProgTabs(){
-  const progs = [
-    {slug:'compete', label:'Compete'},
-    {slug:'olympus', label:'Olympus'},
-    {slug:'games', label:'Games'},
-  ];
+  const progs = PROGRAMS;
   const tabsEl = document.getElementById('ds-prog-tabs');
   if(!tabsEl) return;
   tabsEl.innerHTML = progs.map(p => `
@@ -3965,7 +3984,7 @@ function renderDsAthleteList(){
     <div style="padding:20px 28px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
       ${visible.map(a => {
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
-    const progColor = a.program==='games'?'var(--accent)':a.program==='olympus'?'#8b5cf6':'var(--accent)';
+    const progColor = progMeta(a.program).color;
     return `<div class="ds-athlete-item ${dsCurrentAthlete?.id===a.id?'active':''}" style="display:flex;align-items:center;justify-content:space-between">
       <div style="display:flex;align-items:center;gap:10px;flex:1;cursor:pointer" onclick="selectDsAthlete('${a.id}')">
         <div class="ds-ath-ini" style="background:${progColor}">
