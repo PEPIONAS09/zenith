@@ -1955,7 +1955,17 @@ function buildCoachActions(b, isCoach, completedBlocks){
 }
 
 function buildScoreSection(b, isCoach){
-  return ''; // Scores removed - only tracking PRs and completed blocks
+  if(isCoach) return ''; // el coach ve los scores desde el detalle del atleta
+  const fmt = SCORE_FORMATS[b.score_format] || SCORE_FORMATS.text;
+  const safeName = (b.name||'Bloque').replace(/'/g,"\\'");
+  return `<div class="score-sec">
+    <div class="score-lbl">Mi score${b.score_type?' · '+b.score_type:''}</div>
+    <button class="score-save" style="width:100%;padding:10px"
+      onclick="openScoreLogger('${b.id}','${safeName}','${b.score_format||'text'}',event)">
+      ✎ Registrar score — ${fmt.label}
+    </button>
+    <div class="scores-list" id="sclist-${b.id}"></div>
+  </div>`;
 }
 
 function renderBlock(b){
@@ -2007,7 +2017,15 @@ function renderAddBlockBtn(dow, prog){
   return `<button class="add-block-btn" onclick="openNewBlock(${dow},'${prog}')">+ Agregar bloque</button>${pasteBtn}`;
 }
 
-function toggleBlock(id){ document.getElementById('blk-'+id).classList.toggle('open'); }
+const _scoresLoaded = new Set();
+function toggleBlock(id){
+  const el = document.getElementById('blk-'+id);
+  el.classList.toggle('open');
+  if(el.classList.contains('open') && !_scoresLoaded.has(id) && document.getElementById('sclist-'+id)){
+    _scoresLoaded.add(id);
+    loadBlockScores(id);
+  }
+}
 
 function setScale(id, scale, e){ e.stopPropagation();
   currentScale[id] = scale;
@@ -2019,14 +2037,6 @@ function setScale(id, scale, e){ e.stopPropagation();
   const allB = Object.values(allBlocks).flat();
   const b = allB.find(x=>x.id===id);
   if(b){ const sv=document.getElementById('scval-'+id); if(sv) sv.textContent=(scale==='rx'?b.scaling_rx:scale==='sc'?b.scaling_sc:b.scaling_beg)||'—'; }
-}
-
-async function saveScore(id, e){ e.stopPropagation();
-  const inp = document.getElementById('inp-'+id);
-  const val = inp.value.trim(); if(!val) return;
-  await sb.from('scores').insert({athlete_id: currentUser.id, block_id: id, value: val});
-  inp.value='';
-  loadBlockScores(id);
 }
 
 async function loadBlockScores(blockId){
@@ -2279,11 +2289,6 @@ async function saveNote(){
   await sb.from('coach_notes').upsert({athlete_id:currentAthId, note, updated_at:new Date()},{onConflict:'athlete_id'});
   const btn = document.querySelector('.note-save-btn');
   btn.textContent='✓ Guardado'; setTimeout(()=>btn.textContent='Guardar nota',1500);
-}
-async function renderAthScores(id){
-  const {data} = await sb.from('scores').select('*, blocks(name)').eq('athlete_id',id).order('logged_at',{ascending:false}).limit(8);
-  const c = document.getElementById('ad-scores');
-  c.innerHTML = data?.length ? data.map(s=>`<div class="score-hist-row"><span class="shr-block">${s.blocks?.name||'—'}</span><div style="text-align:right"><div class="shr-val">${s.value}</div><div class="shr-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div></div></div>`).join('') : '<div class="empty-note">Sin scores registrados aún.</div>';
 }
 function backToList(){
   document.getElementById('ath-detail').classList.remove('open');
@@ -5712,6 +5717,7 @@ async function submitScore(){
   msg.textContent = '✓ Score guardado'; msg.style.color = 'var(--accent)';
   
   // Update score list in block
+  _scoresLoaded.add(currentLoggerBlockId);
   loadBlockScores(currentLoggerBlockId);
   
   setTimeout(()=>closeScoreLogger(), 1200);
