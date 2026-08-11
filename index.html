@@ -38,17 +38,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .app{height:100dvh;display:flex;flex-direction:column;max-width:430px;margin:0 auto;background:var(--bg);position:relative}
 
 /* LOGIN */
-.login-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;max-width:430px;margin:0 auto}
+.login-screen{position:fixed;inset:0;width:100vw;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;padding:40px 24px;overflow-y:auto}
+/* La diagonal del logo, muy tenue, como textura de fondo */
+.login-screen::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(115deg,transparent 0 78px,var(--border) 78px 79px);
+  -webkit-mask-image:radial-gradient(120% 90% at 50% 45%,#000 0%,transparent 72%);
+  mask-image:radial-gradient(120% 90% at 50% 45%,#000 0%,transparent 72%);
+}
+.login-box{position:relative;z-index:1;width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center}
+.login-mark{width:52px;height:52px;border-radius:12px;margin-bottom:22px;display:block}
 .login-screen.hidden{display:none}
 .login-logo{font-family:var(--font-d);font-size:56px;letter-spacing:0.2em;color:var(--text);margin-bottom:8px}
-.login-sub{font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:48px}
-.login-field{width:100%;margin-bottom:12px}
+.login-sub{font-family:var(--font-m);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.26em;text-transform:uppercase;margin-bottom:44px}
+.login-field{width:100%;margin-bottom:14px}
 .login-label{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;display:block}
-.login-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:2px;padding:12px 14px;font-family:var(--font-m);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s}
-.login-input:focus{border-color:var(--accent)}
+.login-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:3px;padding:13px 15px;font-family:var(--font-b);font-size:14px;color:var(--text);outline:none;transition:border-color .15s,box-shadow .15s}
+.login-input:focus{border-color:var(--accent-fill);box-shadow:0 0 0 3px rgba(232,255,0,.12)}
 .login-input::placeholder{color:var(--text3)}
-.login-btn{width:100%;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
-.login-btn:active{opacity:0.8}
+.login-btn{width:100%;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:3px;padding:15px;font-family:var(--font-m);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;margin-top:14px;transition:filter .15s,transform .1s}
+.login-btn:hover{filter:brightness(1.08)}
+.login-btn:active{transform:translateY(1px)}
 .login-btn:disabled{opacity:0.4;cursor:not-allowed}
 .login-error{font-family:var(--font-m);font-size:10px;color:#ff4444;margin-top:10px;text-align:center;min-height:16px}
 .login-loading{font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:10px;text-align:center}
@@ -772,6 +782,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
 /* Login */
 [data-theme="light"] .login-screen { background: #ffffff }
+[data-theme="light"] .login-screen::before { opacity: .85 }
+[data-theme="light"] .login-input:focus { box-shadow: 0 0 0 3px rgba(74,85,0,.14) }
 [data-theme="light"] .login-input { background: #f5f5f5; border-color: #ddd; color: #0a0a0a }
 [data-theme="light"] .login-input::placeholder { color: #aaa }
 [data-theme="light"] .login-btn { background: #0055dd; color: #fff }
@@ -1082,6 +1094,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 
   <!-- LOGIN -->
   <div class="login-screen hidden" id="login-screen">
+    <div class="login-box">
+    <img class="login-mark" src="/icon-512.png" alt="">
     <div class="login-logo">ZENITH</div>
     <div class="login-sub">Athlete Portal</div>
     <div class="login-field">
@@ -1094,6 +1108,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
     <div class="login-error" id="login-error"></div>
+    </div>
   </div>
 
   <div class="topbar">
@@ -5989,4 +6004,3 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
-  
