@@ -581,6 +581,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   letter-spacing:0.002em;
 }
 
+
+/* ═══ TARJETA DE ATRIBUTOS ═══════════════════════════════════════ */
+.attr-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:18px 16px 14px;margin-bottom:14px}
+.attr-loading{padding:28px;text-align:center;font-size:11px;color:var(--text3)}
+.attr-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.attr-ovr{width:64px;height:64px;flex-shrink:0;border:1px solid var(--border2);border-radius:5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg3)}
+.attr-ovr-num{font-family:var(--font-n);font-size:26px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+.attr-ovr-lbl{font-size:8px;font-weight:700;letter-spacing:0.16em;color:var(--text3);margin-top:3px}
+.attr-head-name{font-family:var(--font-d);font-stretch:125%;font-weight:800;font-size:17px;
+  letter-spacing:0.005em;color:var(--text);line-height:1.15}
+.attr-head-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.attr-rows{margin-top:14px;border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:9px}
+.attr-row{display:grid;grid-template-columns:1fr auto;grid-template-areas:"name val" "src val" "bar bar";
+  column-gap:12px;align-items:center}
+.attr-row-name{grid-area:name;font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.02em}
+.attr-row-src{grid-area:src;font-size:9.5px;color:var(--text3);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attr-row-val{grid-area:val;font-family:var(--font-n);font-size:16px;font-weight:500;font-variant-numeric:tabular-nums}
+.attr-row-bar{grid-area:bar;height:3px;background:var(--bg4);border-radius:2px;margin-top:6px;overflow:hidden}
+.attr-row-bar span{display:block;height:100%;border-radius:2px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.attr-gaps{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+  font-size:10px;color:var(--text3);line-height:1.5}
+@media (prefers-reduced-motion:reduce){.attr-row-bar span{transition:none}}
+[data-theme="light"] .attr-ovr{background:#fff}
+
 /* EXERCISE LIBRARY */
 .ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
 .ex-overlay.open{display:flex}
@@ -1221,6 +1247,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <!-- STATS -->
     <div class="screen" id="screen-stats">
       <div class="sec-title"><h1>STATS</h1><p id="stats-subtitle">Tu progreso</p></div>
+      <div id="attr-hex" style="padding:0 16px 4px"></div>
       <div id="stats-content"><div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando estadísticas...</div></div>
     </div>
 
@@ -1705,6 +1732,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <textarea class="note-area" id="ad-note" rows="4" placeholder="Observaciones, ajustes, feedback técnico..."></textarea>
     <button class="note-save-btn" onclick="saveNote()">Guardar nota</button>
     <button onclick="openAthWeek()" style="display:block;margin:8px 20px 0;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:10px 16px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;width:calc(100% - 40px)">▤ Ver programación semanal</button>
+    <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Atributos</div></div>
+    <div id="ad-attr-hex" style="padding:0 20px"></div>
     <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Scores recientes</div></div>
     <div id="ad-scores"></div>
     <div style="height:24px"></div>
@@ -2482,6 +2511,7 @@ async function openAthDetail(id){
   updateProgUI(a.program||'compete');
   await renderAthScores(id);
   markScoresSeen(id);
+  renderAttributes('ad-attr-hex', id, athletes.find(a=>a.id===id)?.full_name);
   await renderAthPRs(id);
   document.getElementById('ath-detail').classList.add('open');
 }
@@ -2887,6 +2917,7 @@ async function createAthlete(){
 // ── STATS ─────────────────────────────────────────────
 async function renderStats(athleteId){
   const uid = athleteId || currentUser.id;
+  renderAttributes('attr-hex', uid, currentProfile?.full_name);
   const container = document.getElementById('stats-content');
   if(!container) return;
 
@@ -5989,6 +6020,314 @@ async function submitScore(){
   
   setTimeout(()=>closeScoreLogger(), 1200);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  PERFIL DE ATRIBUTOS — hexágono estilo EA FC
+//  Seis ejes derivados de los PRs del atleta + su consistencia.
+//
+//  CALIBRACIÓN: cada movimiento tiene [base, elite].
+//    base  → rating ~0   (alguien que apenas empieza)
+//    elite → rating 99   (nivel CrossFit Games)
+//  Un atleta de Quarterfinals cae alrededor de 60–70. Eso es a propósito:
+//  el techo es Games, no "buen atleta de box". Si lo sientes duro o blando,
+//  mueve los números de esta tabla y todo lo demás se recalcula solo.
+//
+//  'w' = más es mejor (peso, reps, metros)
+//  't' = menos es mejor (tiempo; se escribe en segundos)
+// ═══════════════════════════════════════════════════════════════════
+const ATTR_STD = {
+  fue: { label:'Fuerza', short:'FUE', cats:['strength'], mov:{
+    'deadlift':            {t:'w', base:275, elite:550},
+    'back squat':          {t:'w', base:225, elite:500},
+    'front squat':         {t:'w', base:185, elite:425},
+    'bench press':         {t:'w', base:155, elite:350},
+    'strict press':        {t:'w', base:95,  elite:225},
+    'push press':          {t:'w', base:115, elite:275},
+    'overhead squat':      {t:'w', base:115, elite:315},
+  }},
+  oly: { label:'Halterofilia', short:'OLY', cats:['oly'], mov:{
+    'snatch':              {t:'w', base:115, elite:315},
+    'clean & jerk':        {t:'w', base:155, elite:385},
+    'clean and jerk':      {t:'w', base:155, elite:385},
+    'clean':               {t:'w', base:145, elite:355},
+    'power snatch':        {t:'w', base:95,  elite:275},
+    'power clean':         {t:'w', base:135, elite:345},
+    'snatch balance':      {t:'w', base:115, elite:315},
+    'jerk':                {t:'w', base:165, elite:405},
+  }},
+  gym: { label:'Gimnasia', short:'GYM', cats:['gymnastics'], mov:{
+    'strict pull-ups':     {t:'w', base:3,  elite:22},
+    'strict pull ups':     {t:'w', base:3,  elite:22},
+    'pull-ups':            {t:'w', base:8,  elite:60},
+    'c2b':                 {t:'w', base:8,  elite:42},
+    'chest to bar':        {t:'w', base:8,  elite:42},
+    't2b':                 {t:'w', base:10, elite:50},
+    'toes to bar':         {t:'w', base:10, elite:50},
+    'strict hspu':         {t:'w', base:3,  elite:25},
+    'hspu':                {t:'w', base:6,  elite:45},
+    'muscle ups':          {t:'w', base:2,  elite:20},
+    'rmu':                 {t:'w', base:2,  elite:20},
+    'ring muscle ups':     {t:'w', base:2,  elite:20},
+    'bar muscle ups':      {t:'w', base:3,  elite:28},
+    'hs walk':             {t:'w', base:5,  elite:60},
+    'handstand walk':      {t:'w', base:5,  elite:60},
+    'l-sit':               {t:'w', base:10, elite:60},
+    'legless rope climbs': {t:'t', base:900, elite:300},
+  }},
+  aer: { label:'Motor', short:'AER', cats:['cardio'], mov:{
+    '2km row':             {t:'t', base:570,  elite:380},
+    '5km row':             {t:'t', base:1440, elite:1020},
+    '500m row':            {t:'t', base:120,  elite:83},
+    '2km ski':             {t:'t', base:600,  elite:405},
+    '5km run':             {t:'t', base:1800, elite:1050},
+    '1mi run':             {t:'t', base:540,  elite:310},
+    '1 mile':              {t:'t', base:540,  elite:310},
+    '400m run':            {t:'t', base:110,  elite:62},
+    '400m':                {t:'t', base:110,  elite:62},
+    '10min echo bike':     {t:'w', base:100,  elite:230},
+    '20min c2 bike':       {t:'w', base:120,  elite:280},
+    '30min row':           {t:'w', base:5500, elite:8600},
+  }},
+  mtc: { label:'Metcon', short:'MTC', cats:['benchmark'], mov:{
+    'fran':                {t:'t', base:540,  elite:140},
+    'grace':               {t:'t', base:420,  elite:110},
+    'isabel':              {t:'t', base:420,  elite:110},
+    'diane':               {t:'t', base:540,  elite:150},
+    'amanda':              {t:'t', base:960,  elite:300},
+    'helen':               {t:'t', base:840,  elite:400},
+    'murph':               {t:'t', base:5400, elite:2040},
+    'cindy':               {t:'w', base:12,   elite:32},
+    'annie':               {t:'t', base:900,  elite:330},
+    'karen':               {t:'t', base:900,  elite:300},
+    'jackie':              {t:'t', base:900,  elite:330},
+  }},
+  cns: { label:'Consistencia', short:'CNS', cats:[], mov:{} },
+};
+const ATTR_ORDER = ['fue','oly','gym','aer','mtc','cns'];
+
+// Normaliza nombres para emparejar: sin acentos, sin plurales sueltos, minúsculas
+function attrNorm(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[._]/g,' ').replace(/\s+/g,' ').trim();
+}
+
+// "4:50" → 290 · "1:05:30" → 3930 · "455" → 455 · "6:31 min" → 391
+function attrParse(raw){
+  if(raw===null || raw===undefined) return null;
+  const s = String(raw).trim();
+  const time = s.match(/(\d+):(\d{1,2})(?::(\d{1,2}))?/);
+  if(time){
+    const a=+time[1], b=+time[2], c=time[3]!==undefined?+time[3]:null;
+    return c!==null ? a*3600+b*60+c : a*60+b;
+  }
+  const num = s.match(/-?\d+(?:[.,]\d+)?/);
+  return num ? parseFloat(num[0].replace(',','.')) : null;
+}
+
+// Un PR → 0..99 contra su estándar.
+// La unidad importa: "68" con unidad "min" es un Murph de 68 minutos,
+// no de 68 segundos. Sin esto un mal dato se convierte en un 99.
+function attrScore(value, unit, std){
+  let v = attrParse(value);
+  if(v===null || !isFinite(v)) return null;
+  if(std.t==='t'){
+    const hasColon = /:/.test(String(value));
+    const u = attrNorm(unit);
+    if(!hasColon){
+      if(/^(min|mins|minutos?|m)$/.test(u)) v *= 60;
+      else if(/^(h|hr|hrs|horas?)$/.test(u)) v *= 3600;
+      // Sin unidad clara: si el número es absurdo frente al estándar,
+      // casi siempre venía en minutos.
+      else if(v < std.elite/6) v *= 60;
+    }
+  }
+  const pct = std.t==='t'
+    ? (std.base - v) / (std.base - std.elite)   // menos es mejor
+    : (v - std.base) / (std.elite - std.base);  // más es mejor
+  return Math.max(1, Math.min(99, Math.round(pct*99)));
+}
+
+// Busca el estándar de un PR dentro de un eje
+function attrMatch(prName, mov){
+  const n = attrNorm(prName);
+  if(mov[n]) return {key:n, std:mov[n]};
+  // coincidencia parcial: el PR contiene el nombre del estándar o viceversa
+  let best=null;
+  for(const k in mov){
+    if(n.includes(k) || k.includes(n)){
+      if(!best || k.length > best.key.length) best = {key:k, std:mov[k]};
+    }
+  }
+  return best;
+}
+
+// prs: filas de la tabla `prs` · consistency: 0..99 ya calculado
+function computeAttributes(prs, consistency){
+  const out = {};
+  for(const key of ATTR_ORDER){
+    const def = ATTR_STD[key];
+    if(key==='cns'){
+      out.cns = {
+        key, label:def.label, short:def.short,
+        rating: consistency===null ? null : consistency,
+        parts: [], missing: consistency===null ? ['Sin scores registrados'] : []
+      };
+      continue;
+    }
+    const mine = (prs||[]).filter(p => def.cats.includes(p.category));
+    const parts = [];
+    for(const p of mine){
+      const m = attrMatch(p.name, def.mov);
+      if(!m) continue;
+      const sc = attrScore(p.value, p.unit, m.std);
+      if(sc!==null) parts.push({name:p.name, value:p.value, unit:p.unit||'', score:sc});
+    }
+    parts.sort((a,b)=>b.score-a.score);
+    // Los tres mejores mandan: un PR flojo aislado no debe hundir el eje
+    const top = parts.slice(0,3);
+    const rating = top.length
+      ? Math.round(top.reduce((s,x)=>s+x.score,0) / top.length)
+      : null;
+    out[key] = {
+      key, label:def.label, short:def.short, rating, parts,
+      missing: parts.length ? [] : [`Sin PRs de ${def.label.toLowerCase()}`]
+    };
+  }
+  return out;
+}
+
+// OVR: promedio de los ejes que sí tienen datos
+function computeOVR(attrs){
+  const vals = ATTR_ORDER.map(k=>attrs[k]?.rating).filter(v=>typeof v==='number');
+  if(!vals.length) return null;
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+
+// Consistencia: días distintos con score en las últimas 8 semanas
+// contra un objetivo de 5 días por semana.
+async function computeConsistency(athleteId){
+  const since = new Date(Date.now() - 56*24*60*60*1000).toISOString();
+  const {data, error} = await sb.from('scores')
+    .select('logged_at').eq('athlete_id', athleteId).gte('logged_at', since);
+  if(error || !data || !data.length) return null;
+  const days = new Set(data.map(s => s.logged_at.slice(0,10)));
+  return Math.max(1, Math.min(99, Math.round((days.size / 40) * 99)));
+}
+
+// Color por rating, como las cartas del juego
+function attrTone(r){
+  if(r===null) return 'var(--border2)';
+  if(r>=85) return '#e8ff00';
+  if(r>=70) return '#a3e635';
+  if(r>=55) return '#22d3ee';
+  if(r>=40) return '#f59e0b';
+  return '#71717a';
+}
+
+// ── SVG del hexágono ────────────────────────────────────────────────
+function renderHexagon(attrs, opts){
+  const o = opts || {};
+  const size = o.size || 260;
+  const cx = size/2, cy = size/2;
+  const R = size*0.36;
+  const N = 6;
+  // Arranca arriba y gira en sentido horario
+  const ang = i => (Math.PI*2*i/N) - Math.PI/2;
+  const pt = (i, r) => [cx + Math.cos(ang(i))*r, cy + Math.sin(ang(i))*r];
+  const poly = (r) => Array.from({length:N},(_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
+
+  const vals = ATTR_ORDER.map(k => attrs[k]?.rating);
+  const shape = vals.map((v,i) => {
+    const r = R * Math.max(0.08, (v===null?8:v)/99);
+    return pt(i,r).map(x=>x.toFixed(1)).join(',');
+  }).join(' ');
+
+  const rings = [0.25,0.5,0.75,1].map(f =>
+    `<polygon points="${poly(R*f)}" fill="none" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const spokes = Array.from({length:N},(_,i)=>{
+    const [x,y] = pt(i,R);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`;
+  }).join('');
+
+  const labels = ATTR_ORDER.map((k,i)=>{
+    const a = attrs[k];
+    const [x,y] = pt(i, R+26);
+    const tone = attrTone(a?.rating);
+    const anchor = Math.abs(x-cx) < 4 ? 'middle' : (x>cx ? 'start' : 'end');
+    const dx = anchor==='middle' ? 0 : (x>cx ? -6 : 6);
+    return `
+      <text x="${(x+dx).toFixed(1)}" y="${(y-2).toFixed(1)}" text-anchor="${anchor}"
+        font-family="var(--font-m)" font-size="9" font-weight="700"
+        letter-spacing="1.2" fill="var(--text3)">${a.short}</text>
+      <text x="${(x+dx).toFixed(1)}" y="${(y+12).toFixed(1)}" text-anchor="${anchor}"
+        font-family="var(--font-n)" font-size="14" font-weight="500"
+        fill="${tone}">${a.rating===null?'—':a.rating}</text>`;
+  }).join('');
+
+  const dots = vals.map((v,i)=>{
+    if(v===null) return '';
+    const [x,y] = pt(i, R*Math.max(0.08, v/99));
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3"
+      fill="var(--bg)" stroke="var(--accent-fill)" stroke-width="2"/>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px;display:block;margin:0 auto;overflow:visible">
+    ${rings}${spokes}
+    <polygon points="${shape}" fill="var(--accent-fill)" fill-opacity="0.16"
+      stroke="var(--accent-fill)" stroke-width="2" stroke-linejoin="round"/>
+    ${dots}${labels}
+  </svg>`;
+}
+
+// Tarjeta completa: OVR + hexágono + desglose
+function renderAttrCard(attrs, name){
+  const ovr = computeOVR(attrs);
+  const gaps = ATTR_ORDER.flatMap(k => attrs[k].missing);
+  const rows = ATTR_ORDER.map(k=>{
+    const a = attrs[k];
+    const tone = attrTone(a.rating);
+    const src = a.parts.slice(0,3).map(p=>p.name).join(' · ');
+    return `<div class="attr-row">
+      <div class="attr-row-bar"><span style="width:${a.rating===null?0:a.rating}%;background:${tone}"></span></div>
+      <div class="attr-row-name">${a.label}</div>
+      <div class="attr-row-src">${src || (a.key==='cns' ? 'Scores de las últimas 8 semanas' : '—')}</div>
+      <div class="attr-row-val" style="color:${tone}">${a.rating===null?'—':a.rating}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="attr-card">
+    <div class="attr-head">
+      <div class="attr-ovr">
+        <div class="attr-ovr-num" style="color:${attrTone(ovr)}">${ovr===null?'—':ovr}</div>
+        <div class="attr-ovr-lbl">OVR</div>
+      </div>
+      <div class="attr-head-txt">
+        <div class="attr-head-name">${name||'Perfil de atributos'}</div>
+        <div class="attr-head-sub">Calibrado a nivel Games = 99</div>
+      </div>
+    </div>
+    ${renderHexagon(attrs)}
+    <div class="attr-rows">${rows}</div>
+    ${gaps.length ? `<div class="attr-gaps">Ejes sin datos: ${gaps.join(' · ')}. Registra esos PRs para completar el perfil.</div>` : ''}
+  </div>`;
+}
+
+// Punto de entrada: carga datos y pinta en el contenedor dado
+async function renderAttributes(containerId, athleteId, name){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const uid = athleteId || currentUser.id;
+  el.innerHTML = '<div class="attr-loading">Calculando atributos...</div>';
+  try {
+    const [prs, cns] = await Promise.all([ loadPRs(uid), computeConsistency(uid) ]);
+    const attrs = computeAttributes(prs, cns);
+    el.innerHTML = renderAttrCard(attrs, name);
+  } catch(e){
+    el.innerHTML = `<div class="attr-loading">No se pudieron calcular los atributos.</div>`;
+    console.log('atributos:', e.message);
+  }
+}
+
 
 init();
 initPullToRefresh();
