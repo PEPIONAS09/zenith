@@ -12,7 +12,9 @@
 <link rel="apple-touch-icon" href="/icon-512.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -21,8 +23,17 @@
   --border:#2a2a2a;--border2:#333;
   --text:#f0f0f0;--text2:#888;--text3:#555;
   --accent:#e8ff00;--purple:#7c3aed;--games:#f97316;--hyrox:#06b6d4;
-  --font-d:'Bebas Neue',sans-serif;--font-m:'DM Mono',monospace;--font-b:'DM Sans',sans-serif;
+  /* accent-fill = relleno de botones; accent = accent legible como texto */
+  --accent-fill:#e8ff00;--on-accent:#0a0a0a;
+  --font-d:'Archivo',sans-serif;   /* display — se usa en ancho expandido */
+  --font-m:'Archivo',sans-serif;   /* interfaz: etiquetas, botones, nav */
+  --font-b:'Archivo',sans-serif;   /* cuerpo */
+  --font-n:'DM Mono',ui-monospace,monospace;  /* SOLO cifras: pesos, tiempos, scores */
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 4px 16px rgba(0,0,0,.5);
 }
+/* La sans de interfaz necesita un poco mas de peso y menos tracking que la mono que sustituye */
+body{font-synthesis:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden}
 .app{height:100dvh;display:flex;flex-direction:column;max-width:430px;margin:0 auto;background:var(--bg);position:relative}
 
@@ -36,7 +47,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .login-input{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:2px;padding:12px 14px;font-family:var(--font-m);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s}
 .login-input:focus{border-color:var(--accent)}
 .login-input::placeholder{color:var(--text3)}
-.login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
+.login-btn{width:100%;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
 .login-btn:active{opacity:0.8}
 .login-btn:disabled{opacity:0.4;cursor:not-allowed}
 .login-error{font-family:var(--font-m);font-size:10px;color:#ff4444;margin-top:10px;text-align:center;min-height:16px}
@@ -99,7 +110,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 /* SCALING */
 .scale-row{display:flex;gap:6px;margin-top:14px}
 .scale-pill{padding:4px 12px;border-radius:2px;font-family:var(--font-m);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all 0.15s}
-.scale-pill.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.scale-pill.active{background:var(--accent-fill);color:var(--on-accent);border-color:var(--accent)}
 
 /* PCT GRID */
 .pct-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:12px}
@@ -119,7 +130,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .score-inp{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:8px 10px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none;transition:border-color 0.15s}
 .score-inp:focus{border-color:var(--accent)}
 .score-inp::placeholder{color:var(--text3)}
-.score-save{background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 14px;font-family:var(--font-m);font-size:10px;font-weight:500;letter-spacing:0.05em;cursor:pointer;text-transform:uppercase;flex-shrink:0}
+.score-save{background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 14px;font-family:var(--font-m);font-size:10px;font-weight:500;letter-spacing:0.05em;cursor:pointer;text-transform:uppercase;flex-shrink:0}
 .score-save:active{opacity:0.8}
 .scores-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
 .score-entry{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--bg3);border-radius:2px}
@@ -158,7 +169,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .comp-days-num{font-family:var(--font-d);font-size:28px;color:var(--accent);line-height:1}
 .comp-days-lbl{font-family:var(--font-m);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em}
 .goal-tag{display:inline-block;font-family:var(--font-m);font-size:8px;padding:2px 7px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;margin-top:6px}
-.gt-primary{background:var(--accent);color:#000}
+.gt-primary{background:var(--accent-fill);color:var(--on-accent)}
 .gt-secondary{background:var(--bg3);color:var(--text3);border:1px solid var(--border2)}
 
 /* COACH OVERLAY */
@@ -177,7 +188,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ath-name{font-size:14px;font-weight:500;color:var(--text)}
 .ath-sub{font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:2px}
 .prog-badge{font-family:var(--font-m);font-size:8px;padding:3px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0}
-.pb-compete{background:var(--accent);color:#000}
+.pb-compete{background:var(--accent-fill);color:var(--on-accent)}
 .pb-olympus{background:var(--purple);color:#fff}
 .pb-games{background:var(--games);color:#fff}
 .pb-hyrox{background:var(--hyrox);color:#000}
@@ -191,7 +202,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ad-name{font-family:var(--font-d);font-size:22px;letter-spacing:0.08em;flex:1}
 .prog-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
 .psw-btn{padding:8px;font-family:var(--font-m);font-size:9px;text-transform:uppercase;letter-spacing:0.05em;border-radius:2px;cursor:pointer;border:1px solid var(--border2);color:var(--text3);background:none;transition:all 0.15s}
-.psw-btn.ac-compete{background:var(--accent);color:#000;border-color:var(--accent)}
+.psw-btn.ac-compete{background:var(--accent-fill);color:var(--on-accent);border-color:var(--accent)}
 .psw-btn.ac-olympus{background:var(--purple);color:#fff;border-color:var(--purple)}
 .psw-btn.ac-games{background:var(--games);color:#fff;border-color:var(--games)}
 .psw-btn.ac-hyrox{background:var(--hyrox);color:#000;border-color:var(--hyrox)}
@@ -230,7 +241,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .be-textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:9px 12px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none;resize:none;line-height:1.6;transition:border-color 0.15s}
 .be-textarea:focus{border-color:var(--accent)}
 .be-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:9px 12px;font-family:var(--font-m);font-size:12px;color:var(--text);outline:none}
-.be-save{width:100%;background:var(--accent);color:#000;border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
+.be-save{width:100%;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
 .be-save:active{opacity:0.8}
 .be-delete{width:100%;background:none;color:#ff4444;border:1px solid #ff4444;border-radius:2px;padding:12px;font-family:var(--font-m);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
 .color-row{display:flex;gap:8px;flex-wrap:wrap}
@@ -257,7 +268,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     grid-column: 1 / -1;
     grid-row: 1;
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
+    padding: 0 32px;
+    background: var(--bg2);
   }
 
   /* Desktop nav bar */
@@ -269,11 +281,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     align-items: center;
     gap: 0;
     border-bottom: 1px solid var(--border);
-    background: var(--bg2);
+    background: var(--bg);
     overflow-x: auto;
     overflow-y: visible;
-    height: 48px;
+    height: 52px;
     flex-shrink: 0;
+    padding: 0 20px;
   }
   .desktop-sidebar::-webkit-scrollbar { display: none }
 
@@ -284,6 +297,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     overflow-y: auto;
     background: var(--bg);
   }
+  /* Contener el ancho: en un monitor de 27" el texto no puede correr 2000px */
+  .desktop-main > * { max-width: 1320px; margin-inline: auto; width: 100% }
   .desktop-main::-webkit-scrollbar { width: 4px }
   .desktop-main::-webkit-scrollbar-thumb { background: var(--border2) }
 
@@ -321,8 +336,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     border-top: none;
     flex-shrink: 0;
   }
+  .ds-nav-item { position: relative; border-bottom: none !important; font-weight: 600 }
   .ds-nav-item:hover { color: var(--text2) }
-  .ds-nav-item.active { color: var(--accent); border-bottom-color: var(--accent) }
+  .ds-nav-item.active { color: var(--accent) }
+  /* La diagonal del logo, reutilizada como indicador de pestaña activa */
+  .ds-nav-item.active::after {
+    content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px;
+    background: var(--accent-fill);
+    clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+  }
   .ds-nav-icon { font-size: 14px }
   .ds-nav-divider { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; margin: 0 4px }
   .ds-nav-spacer { flex: 1 }
@@ -352,8 +374,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     border-radius: 2px;
     transition: all 0.15s;
   }
-  .ds-day-item:hover { color: var(--text2); border-color: var(--border2) }
-  .ds-day-item.active { color: var(--accent); border-color: var(--accent) }
+  .ds-day-item { font-weight: 600; padding: 7px 16px; border-radius: 3px }
+  .ds-day-item:hover { color: var(--text2); border-color: var(--border2); background: var(--bg2) }
+  .ds-day-item.active { color: var(--on-accent); border-color: var(--accent-fill); background: var(--accent-fill) }
+  .ds-day-item.active .ds-day-dot { background: var(--on-accent) }
   .ds-day-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border2) }
   .ds-day-dot.active { background: var(--accent) }
 
@@ -375,7 +399,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     width: 36px; height: 36px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-m); font-size: 11px; font-weight: 500;
-    background: var(--accent); color: #000; flex-shrink: 0; overflow: hidden;
+    background: var(--accent-fill); color: var(--on-accent); flex-shrink: 0; overflow: hidden;
   }
   .ds-ath-name { font-family: var(--font-m); font-size: 11px; color: var(--text2); font-weight: 500 }
   .ds-ath-prog { font-family: var(--font-m); font-size: 9px; color: var(--text3); text-transform: uppercase; margin-top: 2px }
@@ -397,18 +421,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   }
 
   /* Desktop blocks — 2 column grid */
-  .ds-blocks { padding: 20px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start }
-  .ds-blocks-single { padding: 20px 28px }
+  .ds-blocks {
+    padding: 28px 32px 48px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px; align-items: start;
+  }
+  .ds-blocks-single { padding: 28px 32px 48px }
   .ds-block {
     border: 1px solid var(--border);
-    border-radius: 4px;
-    margin-bottom: 10px;
+    border-radius: 6px;
+    margin-bottom: 0;
     overflow: hidden;
     background: var(--bg2);
+    transition: border-color .15s, transform .15s, box-shadow .15s;
   }
+  .ds-block:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: var(--shadow-2) }
   .ds-block-hdr {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px; cursor: pointer;
+    padding: 15px 18px; cursor: pointer;
   }
   .ds-block-hdr:hover { background: var(--bg3) }
   .ds-block-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0 }
@@ -422,7 +453,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   }
   .ds-block-btn:hover { color: var(--text2); border-color: var(--text3) }
   .ds-block-btn.danger { border-color: #ff444455; color: #ff4444 }
-  .ds-block-body { padding: 12px 16px; border-top: 1px solid var(--border); display: none }
+  .ds-block-body { padding: 16px 18px 18px; border-top: 1px solid var(--border); display: none }
   .ds-block-body.open { display: block }
   .ds-block-content { font-size: 13px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; margin-bottom: 10px }
   .ds-coach-note { background: var(--bg3); border-left: 2px solid var(--accent); padding: 8px 12px; margin-bottom: 10px; font-size: 12px; color: var(--text3) }
@@ -435,11 +466,109 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .ds-stat-val { font-family: var(--font-m); font-size: 13px; color: var(--text); font-weight: 500 }
 
   /* FABs hidden on desktop */
-  .timer-fab, .chat-fab { bottom: 20px !important }
+  .timer-fab { bottom: 28px !important; right: 28px !important }
+  .chat-fab  { bottom: 28px !important; left: auto !important; right: 92px !important }
+
+  /* Estado vacío */
+  .ds-empty { padding: 96px 32px; text-align: center; max-width: 420px; margin: 0 auto }
+  .ds-empty-mark {
+    font-family: var(--font-d); font-stretch: 125%; font-weight: 800;
+    font-size: 64px; line-height: 1; color: var(--border2); margin-bottom: 20px;
+  }
+  .ds-empty-ttl { font-size: 15px; font-weight: 700; color: var(--text2); letter-spacing: 0.02em; margin-bottom: 8px }
+  .ds-empty-sub { font-size: 13px; color: var(--text3); line-height: 1.6 }
+  .ds-empty-sub strong { color: var(--text2); font-weight: 600 }
+}
+
+
+/* ── ATLETA EN ESCRITORIO ──────────────────────────────────────
+   El panel de escritorio es solo del coach. El atleta recupera su
+   vista normal, centrada y enmarcada en vez de estirada. */
+@media (min-width: 768px) {
+  body.athlete-desktop .desktop-sidebar,
+  body.athlete-desktop .desktop-main,
+  body.athlete-desktop .desktop-right { display: none !important }
+
+  body.athlete-desktop .app {
+    display: flex !important;
+    flex-direction: column;
+    max-width: 480px !important;
+    height: 100vh;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+  body.athlete-desktop .screen { display: none !important }
+  body.athlete-desktop .screen.active { display: flex !important }
+  body.athlete-desktop .bottom-nav { display: flex !important }
+  body.athlete-desktop .ath-detail:not(#ath-week-view) { display: flex !important }
 }
 
 @media (max-width: 767px) {
   .desktop-sidebar, .desktop-main, .desktop-right { display: none !important }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   SISTEMA TIPOGRÁFICO
+   Una sola familia (Archivo variable). El eje de ancho hace el
+   trabajo que antes requería una familia condensada aparte, así el
+   display y la interfaz comparten esqueleto — igual que el logo,
+   que es una sola forma geométrica.
+   DM Mono queda reservado para cifras, donde alinear columnas sí importa.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* — DISPLAY: Archivo en ancho expandido (125), peso 800 — */
+.login-logo,.logo,.hero-name,.sec-title h1,.co-title,.ad-name,.be-title,
+.ex-detail-name,.chat-title,.timer-title,.timer-round,.loading-logo,
+.ds-week-title,.ds-right-title,.comp-days-num{
+  font-stretch:125%;
+  font-weight:800;
+  font-variant-ligatures:none;
+}
+/* Bebas era condensada y con mucho tracking; expandida necesita lo contrario */
+.login-logo{font-size:46px;letter-spacing:0.01em;line-height:1}
+.loading-logo{font-size:38px;letter-spacing:0.01em}
+.logo{font-size:20px;letter-spacing:0.02em}
+.hero-name{font-size:36px;letter-spacing:-0.015em;line-height:0.95}
+.sec-title h1{font-size:25px;letter-spacing:-0.01em}
+.co-title{font-size:19px;letter-spacing:0.005em}
+.ad-name{font-size:19px;letter-spacing:0.005em}
+.be-title{font-size:16px;letter-spacing:0.01em}
+.chat-title{font-size:16px;letter-spacing:0.01em}
+.ex-detail-name{font-size:23px;letter-spacing:-0.005em}
+.timer-title{font-size:18px;letter-spacing:0.01em}
+.timer-round{font-size:30px;letter-spacing:0}
+.ds-week-title{font-size:18px;letter-spacing:0.005em}
+.ds-right-title{font-size:14px;letter-spacing:0.01em}
+.comp-days-num{font-size:26px;letter-spacing:-0.01em}
+
+/* — CIFRAS: mono con figuras tabulares — */
+.hstat-val,.pct-val,.seval,.semeta,.shr-val,.shr-date,.sl-entry-val,
+.sl-entry-date,.ds-stat-val,.timer-time,.week-lbl{
+  font-family:var(--font-n);
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:'tnum' 1;
+}
+/* El reloj no puede bailar cuando cambian los dígitos */
+.timer-time{font-size:82px;font-weight:500;letter-spacing:-0.02em}
+
+/* — MICRO-ETIQUETAS: la sans a 9px pesa menos que la mono que sustituyó — */
+.nav-btn,.day-tab,.login-label,.score-lbl,.be-label,.hero-tag,.sl-label,
+.ad-sec-ttl,.bm-sec-ttl,.prog-badge,.hstat-lbl,.ds-section-title{
+  font-weight:600;
+  letter-spacing:0.09em;
+}
+.block-name,.ds-block-name{font-weight:700;letter-spacing:0.045em}
+.nav-btn{font-size:9.5px}
+.day-tab{font-size:10.5px;font-weight:600}
+
+/* — CUERPO: el contenido del bloque es lo que más se lee — */
+.block-text,.ds-block-content{
+  font-family:var(--font-b);
+  font-size:13px;
+  font-weight:400;
+  line-height:1.62;
+  letter-spacing:0.002em;
 }
 
 /* EXERCISE LIBRARY */
@@ -481,7 +610,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ex-cats{display:flex;overflow-x:auto;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .ex-cats::-webkit-scrollbar{display:none}
 .ex-cat-btn{flex:0 0 auto;padding:5px 12px;font-family:var(--font-m);font-size:9px;text-transform:uppercase;letter-spacing:0.08em;border-radius:2px;cursor:pointer;border:1px solid var(--border2);background:none;color:var(--text3);white-space:nowrap}
-.ex-cat-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.ex-cat-btn.active{background:var(--accent-fill);color:var(--on-accent);border-color:var(--accent)}
 .ex-list{flex:1;overflow-y:auto}
 .ex-list::-webkit-scrollbar{width:0}
 .ex-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer}
@@ -504,7 +633,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ex-detail-cat{font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px}
 .ex-detail-section{font-family:var(--font-m);font-size:9px;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;margin-top:16px}
 .ex-detail-text{font-size:13px;color:var(--text2);line-height:1.6}
-.ex-add-btn{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#000;border:none;border-radius:2px;padding:12px 20px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.1em;z-index:402;display:none}
+.ex-add-btn{position:fixed;bottom:20px;right:20px;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:12px 20px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.1em;z-index:402;display:none}
 
 /* CHAT */
 .chat-fab{position:fixed;bottom:80px;left:16px;width:52px;height:52px;background:var(--bg2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:150;box-shadow:0 4px 12px rgba(0,0,0,0.4);border:1px solid var(--border2);font-size:20px;transition:transform 0.2s}
@@ -519,7 +648,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .chat-list::-webkit-scrollbar{width:0}
 .chat-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer}
 .chat-row:active{background:var(--bg2)}
-.chat-row-ini{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:12px;font-weight:500;flex-shrink:0;background:var(--accent);color:#000;overflow:hidden}
+.chat-row-ini{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:12px;font-weight:500;flex-shrink:0;background:var(--accent-fill);color:var(--on-accent);overflow:hidden}
 .chat-row-info{flex:1;min-width:0}
 .chat-row-name{font-size:14px;font-weight:500;color:var(--text)}
 .chat-row-preview{font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -527,7 +656,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .chat-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
 .chat-messages::-webkit-scrollbar{width:0}
 .msg-bubble{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;word-break:break-word}
-.msg-bubble.sent{background:var(--accent);color:#000;align-self:flex-end;border-bottom-right-radius:2px}
+.msg-bubble.sent{background:var(--accent-fill);color:var(--on-accent);align-self:flex-end;border-bottom-right-radius:2px}
 .msg-bubble.recv{background:var(--bg3);color:var(--text);align-self:flex-start;border-bottom-left-radius:2px}
 .msg-time{font-family:var(--font-m);font-size:9px;opacity:0.6;margin-top:4px}
 .msg-img{max-width:100%;border-radius:8px;cursor:pointer;display:block;margin-top:4px}
@@ -566,7 +695,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .timer-controls{display:flex;gap:10px;padding:0 20px 20px;flex-shrink:0}
 .timer-btn{flex:1;padding:14px;border-radius:2px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;border:none;transition:opacity 0.15s}
 .timer-btn:active{opacity:0.8}
-.timer-btn-start{background:var(--accent);color:#000}
+.timer-btn-start{background:var(--accent-fill);color:var(--on-accent)}
 .timer-btn-stop{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
 .timer-btn-reset{background:none;color:var(--text3);border:1px solid var(--border2);flex:0 0 auto;padding:14px 18px}
 
@@ -578,7 +707,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sl-input::placeholder{color:var(--text3)}
 .sl-unit{font-family:var(--font-m);font-size:10px;color:var(--text3);margin-top:4px}
 .sl-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sl-save{width:100%;background:var(--accent);color:#000;border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
+.sl-save{width:100%;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:14px;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px}
 .sl-save:active{opacity:0.8}
 .sl-history{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
 .sl-history-title{font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -628,8 +757,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   --text: #0a0a0a;
   --text2: #444444;
   --text3: #888888;
-  --accent: #0055dd;
-  --purple: #7c3aed;
+  /* El amarillo puro es ilegible como texto sobre blanco, pero sigue siendo
+     la marca. Se parte en dos: oliva profundo para texto, amarillo para rellenos. */
+  --accent: #4a5500;
+  --accent-fill: #e8ff00;
+  --on-accent: #0a0a0a;
+  --purple: #6d28d9;
 }
 
 /* Base */
@@ -1001,7 +1134,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div id="ds-days" style="display:flex;gap:8px;flex-wrap:wrap;flex:1"></div>
         <div style="display:flex;gap:8px">
           <button onclick="openDsCopyWeek()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text3);cursor:pointer">⎘ Copiar sem</button>
-          <button id="ds-add-block-btn" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Bloque</button>
+          <button id="ds-add-block-btn" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:6px 14px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Bloque</button>
         </div>
       </div>
       <div id="ds-content" style="padding:20px 28px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start"></div>
@@ -1080,7 +1213,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="screen" id="screen-cal">
       <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:16px">
         <div><h1>GOALS</h1><p>Mis competencias y objetivos</p></div>
-        <button onclick="openAddComp()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Agregar</button>
+        <button onclick="openAddComp()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Agregar</button>
       </div>
       <div id="goals-content" style="padding:16px;display:flex;flex-direction:column;gap:8px">
         <div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Cargando...</div>
@@ -1223,7 +1356,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="ex-header">
     <button class="chat-back" onclick="closeExLibrary()">← Volver</button>
     <input class="ex-search" id="ex-search" placeholder="Buscar ejercicio..." oninput="filterExercises()">
-    <button id="ex-add-new-btn" style="display:none;background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap" onclick="openAddExercise()">+ Agregar</button>
+    <button id="ex-add-new-btn" style="display:none;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap" onclick="openAddExercise()">+ Agregar</button>
   </div>
   <div class="ex-cats" id="ex-cats"></div>
   <div class="ex-list" id="ex-list"></div>
@@ -1520,7 +1653,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="co-header">
     <div class="co-title">COACH VIEW</div>
     <div style="display:flex;gap:8px" id="coach-action-btns">
-      <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Atleta</button>
+      <button onclick="openAddAthlete()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">+ Atleta</button>
       <button onclick="openNotifyPanel()" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:6px 12px;font-family:var(--font-m);font-size:9px;color:var(--text2);cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">✉ Notificar</button>
       <button class="co-close" onclick="closeCoach()">✕</button>
     </div>
@@ -1556,7 +1689,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="ad-sec"><div class="ad-sec-ttl">Nota del coach</div></div>
     <textarea class="note-area" id="ad-note" rows="4" placeholder="Observaciones, ajustes, feedback técnico..."></textarea>
     <button class="note-save-btn" onclick="saveNote()">Guardar nota</button>
-    <button onclick="openAthWeek()" style="display:block;margin:8px 20px 0;background:var(--accent);color:#000;border:none;border-radius:2px;padding:10px 16px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;width:calc(100% - 40px)">▤ Ver programación semanal</button>
+    <button onclick="openAthWeek()" style="display:block;margin:8px 20px 0;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:10px 16px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;width:calc(100% - 40px)">▤ Ver programación semanal</button>
     <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Scores recientes</div></div>
     <div id="ad-scores"></div>
     <div style="height:24px"></div>
@@ -2538,7 +2671,7 @@ async function renderGoals(){
     container.innerHTML = `
       <div style="padding:40px 0;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
         Sin competencias agregadas aún.<br><br>
-        <button onclick="openAddComp()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primera competencia</button>
+        <button onclick="openAddComp()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primera competencia</button>
       </div>`;
     return;
   }
@@ -2897,7 +3030,7 @@ async function renderPRs(athleteId){
   const isOwn = !athleteId || athleteId === currentUser.id;
   const container = document.getElementById('prs-content');
   if(!prs.length){
-    container.innerHTML = `<div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin PRs registrados aún.<br><br><button onclick="openAddPR()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primer PR</button></div>`;
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Sin PRs registrados aún.<br><br><button onclick="openAddPR()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar primer PR</button></div>`;
     return;
   }
   const grouped = {};
@@ -3091,7 +3224,7 @@ async function openScoreHistory(blockId, btnEl){
         <div style="font-family:var(--font-m);font-size:13px;font-weight:500;color:var(--text)">${s.value}</div>
         <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:2px">${new Date(s.logged_at).toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}</div>
       </div>
-      ${i===0?`<span style="font-family:var(--font-m);font-size:8px;background:var(--accent);color:#000;padding:2px 7px;border-radius:2px">ÚLTIMO</span>`:''}
+      ${i===0?`<span style="font-family:var(--font-m);font-size:8px;background:var(--accent-fill);color:var(--on-accent);padding:2px 7px;border-radius:2px">ÚLTIMO</span>`:''}
     </div>`).join('');
 
   document.getElementById('sh-content').innerHTML =
@@ -3782,6 +3915,13 @@ function isDesktop(){ return window.innerWidth >= 768; }
 
 async function initDesktop(){
   if(!isDesktop()) return;
+  // Solo el coach tiene panel de escritorio. El atleta usa la vista normal,
+  // centrada en la columna — ver .app.athlete-desktop en el CSS.
+  if(currentProfile?.role !== 'coach'){
+    document.body.classList.add('athlete-desktop');
+    return;
+  }
+  document.body.classList.remove('athlete-desktop');
   dsCurrentProg = currentProfile?.program || 'compete';
 
   // Load athletes
@@ -3815,7 +3955,7 @@ function openExLibraryDesktop(){
     <div style="width:340px;border-right:1px solid var(--border);display:flex;flex-direction:column;height:100%">
       <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
         <input id="ds-ex-search" class="ex-search" placeholder="Buscar ejercicio..." oninput="filterDsExercises()" style="flex:1">
-        ${currentProfile?.role==='coach'?'<button onclick="openAddExercise()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap">+ Agregar</button>':''}
+        ${currentProfile?.role==='coach'?'<button onclick="openAddExercise()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:7px 12px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;white-space:nowrap">+ Agregar</button>':''}
       </div>
       <div id="ds-ex-cats" style="display:flex;flex-wrap:wrap;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border)"></div>
       <div id="ds-ex-list" style="flex:1;overflow-y:auto"></div>
@@ -3909,7 +4049,12 @@ async function setDsProg(prog){
   dsCurrentDay = null;
   renderDsProgTabs();
   await loadDsWeek();
-  document.getElementById('ds-content').innerHTML = '<div style="padding:40px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un día</div>';
+  document.getElementById('ds-content').innerHTML = `
+    <div class="ds-empty">
+      <div class="ds-empty-mark">Z</div>
+      <div class="ds-empty-ttl">Elige un día</div>
+      <div class="ds-empty-sub">Los bloques de ese día aparecen aquí. También puedes crear uno nuevo con <strong>+ Bloque</strong>.</div>
+    </div>`;
 }
 
 async function dsChangeWeek(dir){
@@ -3990,7 +4135,7 @@ function renderDsDayContent(blocks, dow){
   if(!blocks.length){
     main.innerHTML = `<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
       ${isAthMode ? 'Sin bloques este día' : 'Día de descanso'}
-      ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
+      ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
     </div>`;
     return;
   }
@@ -4091,7 +4236,7 @@ function renderDsAthleteList(){
   panel.innerHTML = `
     <div style="padding:20px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
       <div style="font-family:var(--font-d);font-size:22px;letter-spacing:0.1em">ATLETAS</div>
-      <button onclick="openAddAthlete()" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Nuevo atleta</button>
+      <button onclick="openAddAthlete()" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase;font-weight:500">+ Nuevo atleta</button>
     </div>
     <div style="padding:20px 28px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
       ${visible.map(a => {
@@ -4416,7 +4561,7 @@ async function renderDsAthletePage(a){
       <div style="overflow-y:auto;padding:0">
         <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
           <div style="font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em">PRs · ${prsFilled.length} registrados</div>
-          <button onclick="openAddPrForAthlete('${a.id}')" style="background:var(--accent);color:#000;border:none;border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ PR</button>
+          <button onclick="openAddPrForAthlete('${a.id}')" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:5px 10px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ PR</button>
         </div>
         ${Object.entries(prsByCat).map(([cat, items]) => `
           <div style="padding:10px 20px 4px;font-family:var(--font-m);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em">${PR_CATEGORIES[cat]||cat}</div>
@@ -4819,7 +4964,7 @@ async function loadConversations(){
     const last = msgs?.[0];
     const preview = last ? (last.media_url ? '📎 Archivo' : last.content) : 'Escribe un mensaje a tu coach';
     container.innerHTML = `<div class="chat-row" onclick="openChat('${coachId}','Jose Carlos Coach','','JC')">
-      <div class="chat-row-ini" style="background:var(--accent);color:#000">JC</div>
+      <div class="chat-row-ini" style="background:var(--accent-fill);color:var(--on-accent)">JC</div>
       <div class="chat-row-info">
         <div class="chat-row-name">Jose Carlos · Coach</div>
         <div class="chat-row-preview">${preview}</div>
@@ -5481,7 +5626,7 @@ function updateReplaceBtns(){
   document.querySelectorAll('[id^=replace-btn-]').forEach(div => {
     const blockId = div.id.replace('replace-btn-','');
     if(copiedBlock){
-      div.innerHTML = `<button onclick="replaceBlock('${blockId}',event)" style="width:100%;margin-top:6px;background:var(--accent);color:#000;border:none;border-radius:2px;padding:8px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Reemplazar con "${copiedBlock.name}"</button>`;
+      div.innerHTML = `<button onclick="replaceBlock('${blockId}',event)" style="width:100%;margin-top:6px;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px;font-family:var(--font-m);font-size:9px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em">⎘ Reemplazar con "${copiedBlock.name}"</button>`;
     } else {
       div.innerHTML = '';
     }
@@ -5844,3 +5989,4 @@ if('serviceWorker' in navigator){
 </script>
 </body>
 </html>
+  
