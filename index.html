@@ -74,7 +74,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .bottom-nav{display:flex;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;z-index:1}
 .nav-btn{flex:1;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9px;font-family:var(--font-m);letter-spacing:0.05em;color:var(--text3);cursor:pointer;border:none;background:none;text-transform:uppercase;transition:color 0.15s}
 .nav-btn.active{color:var(--accent)}
-.nav-icon{font-size:18px;line-height:1}
+.nav-icon{font-size:18px;line-height:1;display:block}
+.nav-icon svg{width:21px;height:21px;display:block}
+/* El icono activo engorda un poco: se lee antes que el color */
+.nav-btn.active .nav-icon svg{stroke-width:2.1}
+.ds-ico{display:inline-flex;align-items:center}
+.ds-ico svg{width:15px;height:15px;display:block}
 
 /* SCREENS */
 .screens{flex:1;position:relative;overflow:hidden;min-height:0}
@@ -1158,9 +1163,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <button onclick="dsChangeWeek(1)" style="background:none;border:none;padding:0 10px;height:100%;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">→</button>
     <div class="ds-nav-divider"></div>
     <!-- Tab views -->
-    <button class="ds-nav-item active" id="ds-tab-programa" onclick="switchDsTab('programa')">📋 Programa</button>
-    <button class="ds-nav-item" id="ds-tab-atletas" onclick="switchDsTab('atletas')">👥 Atletas</button>
-    <button class="ds-nav-item" id="ds-tab-libreria" onclick="switchDsTab('libreria')">🏋️ Librería</button>
+    <button class="ds-nav-item active" id="ds-tab-programa" onclick="switchDsTab('programa')"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="3.4" width="15.6" height="17.2" rx="1.5"/><path d="M8.6 3.4V2m6.8 1.4V2M8.2 9.4h7.6M8.2 13.4h7.6M8.2 17.2h4.4"/></svg></span>Programa</button>
+    <button class="ds-nav-item" id="ds-tab-atletas" onclick="switchDsTab('atletas')"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.2" cy="8.4" r="3.4"/><path d="M2.9 20.4c0-3.5 2.8-6.1 6.3-6.1s6.3 2.6 6.3 6.1"/><path d="M16.4 5.4a3.2 3.2 0 0 1 0 6.1M17.6 14.6c2.2.6 3.7 2.6 3.7 5"/></svg></span>Atletas</button>
+    <button class="ds-nav-item" id="ds-tab-libreria" onclick="switchDsTab('libreria')"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 9.6v4.8M6.1 7.4v9.2M17.9 7.4v9.2M21.2 9.6v4.8M6.1 12h11.8"/></svg></span>Librería</button>
     <div class="ds-nav-spacer"></div>
     <div class="ds-nav-divider"></div>
     <button class="ds-nav-item" onclick="openNotifyPanel()" style="gap:6px">✉ Notificar</button>
@@ -1264,11 +1269,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 
   <div class="bottom-nav">
-    <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')"><span class="nav-icon">⌂</span>inicio</button>
-    <button class="nav-btn" id="nav-week" onclick="switchScreen('week')"><span class="nav-icon">▤</span>semana</button>
-    <button class="nav-btn" id="nav-prs" onclick="switchScreen('prs')"><span class="nav-icon">◎</span>prs</button>
-    <button class="nav-btn" id="nav-stats" onclick="switchScreen('stats')"><span class="nav-icon">↗</span>stats</button>
-    <button class="nav-btn" id="nav-cal" onclick="switchScreen('cal')"><span class="nav-icon">◷</span>goals</button>
+    <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.6 10.3 12 3.6l8.4 6.7V20a.9.9 0 0 1-.9.9h-4.6v-6H9.1v6H4.5a.9.9 0 0 1-.9-.9z"/></svg></span>inicio</button>
+    <button class="nav-btn" id="nav-week" onclick="switchScreen('week')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.2" y="5" width="17.6" height="15.8" rx="1.5"/><path d="M3.2 9.7h17.6M8 3.2v3.4M16 3.2v3.4"/><path d="M7.2 13.3h4M7.2 16.9h8.6"/></svg></span>semana</button>
+    <button class="nav-btn" id="nav-prs" onclick="switchScreen('prs')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 9.6v4.8M6.1 7.4v9.2M17.9 7.4v9.2M21.2 9.6v4.8M6.1 12h11.8"/></svg></span>prs</button>
+    <button class="nav-btn" id="nav-stats" onclick="switchScreen('stats')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.9 19.9 7.4v9.2L12 21.1 4.1 16.6V7.4z"/><path d="M12 7.6l3.7 2.4-1.2 4.3H9.5L8.3 10z" stroke-width="1.35" opacity=".85"/></svg></span>stats</button>
+    <button class="nav-btn" id="nav-cal" onclick="switchScreen('cal')"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.6 21.2V3.4"/><path d="M5.6 4.5h12.1l-2.4 4 2.4 4H5.6z"/></svg></span>goals</button>
   </div>
 </div>
 
