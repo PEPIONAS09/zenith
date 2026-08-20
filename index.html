@@ -2826,6 +2826,21 @@ async function saveBlock(){
       : null,
   };
   if(!data.name){ alert('El bloque necesita un nombre'); return; }
+
+  // order_index define el orden dentro del día. Nunca se enviaba,
+  // así que los bloques nuevos quedaban sin posición: al final de la
+  // lista o en orden impredecible. En un bloque nuevo va al final.
+  if(!id){
+    const {data: ult} = await sb.from('blocks')
+      .select('order_index')
+      .eq('program_slug', data.program_slug)
+      .eq('week_number', data.week_number)
+      .eq('day_of_week', data.day_of_week)
+      .order('order_index', {ascending:false})
+      .limit(1);
+    data.order_index = ((ult?.[0]?.order_index ?? -1) + 1);
+  }
+
   const {error} = id
     ? await sb.from('blocks').update(data).eq('id', id)
     : await sb.from('blocks').insert(data);
