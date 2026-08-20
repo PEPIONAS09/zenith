@@ -2762,12 +2762,16 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.querySelectorAll('.color-opt').forEach(el=>{ el.classList.toggle('active', el.dataset.color===selectedColor); });
   document.getElementById('block-editor').classList.add('open');
 }
-function openNewBlock(dow, prog){
+function openNewBlock(dow, prog, week){
+  // La semana DEBE venir del programa que se está viendo. La global
+  // currentWeekNumber sigue al programa del coach, y si no coinciden
+  // el bloque se guarda en otra semana y desaparece de la vista.
+  const semana = week || programWeeks[prog] || currentWeekNumber || 1;
   document.getElementById('be-block-id').value = '';
   document.getElementById('be-name').value = '';
   document.getElementById('be-meta').value = '';
   document.getElementById('be-program').value = prog;
-  document.getElementById('be-week-num').value = currentWeekNumber || 1;
+  document.getElementById('be-week-num').value = semana;
   document.getElementById('be-day').value = dow;
   document.getElementById('be-content').value = '';
   document.getElementById('be-coach-note').value = '';
@@ -4585,7 +4589,7 @@ function renderDsDayContent(blocks, dow){
   const addBtn = document.getElementById('ds-add-block-btn');
   if(addBtn){
     addBtn.style.display = isAthMode ? 'none' : 'block';
-    addBtn.onclick = () => openNewBlock(dow, dsCurrentProg);
+    addBtn.onclick = () => openNewBlock(dow, dsCurrentProg, weekNum);
   }
 
   const header = '';
@@ -4593,7 +4597,7 @@ function renderDsDayContent(blocks, dow){
   if(!blocks.length){
     main.innerHTML = `<div style="padding:60px 20px;text-align:center;font-family:var(--font-m);font-size:10px;color:var(--text3)">
       ${isAthMode ? 'Sin bloques este día' : 'Día de descanso'}
-      ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}')" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
+      ${!isAthMode ? `<br><br><button onclick="openNewBlock(${dow},'${dsCurrentProg}',${weekNum})" style="background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:8px 16px;font-family:var(--font-m);font-size:9px;cursor:pointer;text-transform:uppercase">+ Agregar bloque</button>` : ''}
     </div>`;
     return;
   }
