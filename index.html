@@ -623,6 +623,52 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 [data-theme="light"] .attr-ovr{background:#fff}
 
 
+/* ═══ SCORES DEL ATLETA (COACH) ═════════════════════ */
+.asc-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);
+  margin:0 20px 2px;border:1px solid var(--border)}
+.asc-cell{background:var(--bg2);padding:11px 6px;text-align:center}
+.asc-n{font-family:var(--font-n);font-size:16px;font-weight:500;color:var(--accent);
+  font-variant-numeric:tabular-nums;line-height:1}
+.asc-l{font-size:8.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text3);margin-top:4px}
+.asc-new{margin:8px 20px 0;padding:8px 12px;background:rgba(255,68,68,0.1);
+  border-left:3px solid #ff4444;font-size:11px;color:var(--text2)}
+.asc-week{border-bottom:1px solid var(--border)}
+.asc-whead{display:flex;align-items:center;gap:10px;padding:13px 20px;cursor:pointer}
+.asc-wname{font-size:12px;font-weight:700;letter-spacing:0.04em;color:var(--text);flex:1}
+.asc-wmeta{font-size:10px;color:var(--text3)}
+.asc-chev{font-size:16px;color:var(--text3);transition:transform .2s;line-height:1}
+.asc-week.open .asc-chev{transform:rotate(90deg)}
+.asc-wbody{display:none}
+.asc-week.open .asc-wbody{display:block}
+.asc-row{display:flex;gap:12px;align-items:flex-start;padding:11px 20px 11px 28px;
+  border-top:1px solid var(--border);cursor:pointer}
+.asc-row:active{background:var(--bg3)}
+.asc-row.unseen{box-shadow:inset 3px 0 0 #ff4444}
+.asc-main{flex:1;min-width:0}
+.asc-block{font-size:12px;font-weight:600;color:var(--text);line-height:1.35}
+.asc-note{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.5}
+.asc-vid{font-size:10px;color:var(--accent);text-decoration:none;display:inline-block;margin-top:4px}
+.asc-right{text-align:right;flex-shrink:0}
+.asc-val{font-family:var(--font-n);font-size:14px;font-weight:500;color:var(--text);
+  font-variant-numeric:tabular-nums}
+.asc-meta{font-size:9px;color:var(--text3);margin-top:3px;white-space:nowrap}
+.asc-cat{font-weight:700;letter-spacing:0.05em;padding:1px 4px;border-radius:2px}
+.asc-cat.c-RX{background:var(--accent-fill);color:var(--on-accent)}
+.asc-cat.c-INTERMEDIATE{background:var(--hyrox);color:#000}
+.asc-cat.c-OPEN{background:var(--bg4);color:var(--text2)}
+/* Historial de un bloque */
+.sh-row{padding:14px 20px;border-bottom:1px solid var(--border)}
+.sh-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sh-val{font-family:var(--font-n);font-size:17px;font-weight:500;color:var(--text);
+  font-variant-numeric:tabular-nums}
+.sh-date{font-size:10px;color:var(--text3);white-space:nowrap}
+.sh-bar{height:3px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden}
+.sh-bar span{display:block;height:100%;background:var(--accent-fill);border-radius:2px}
+.sh-note{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.55}
+.sh-vid{font-size:10px;color:var(--accent);text-decoration:none;display:inline-block;margin-top:6px}
+.sh-foot{padding:18px 20px 40px;font-size:10px;color:var(--text3);text-align:center;line-height:1.6}
+
 /* ═══ LEADERBOARD COMUNAL ═══════════════════════════ */
 .lb-screen{position:fixed;inset:0;background:var(--bg);z-index:640;display:none;flex-direction:column}
 .lb-screen.open{display:flex}
@@ -1587,6 +1633,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- SCORE LOGGER -->
+<div class="lb-screen" id="sh-screen">
+  <div class="lb-head">
+    <button class="lb-close" onclick="closeScoreHistory()">✕</button>
+    <div style="min-width:0">
+      <div class="lb-eyebrow">Historial del bloque</div>
+      <div class="lb-title" id="sh-title"></div>
+    </div>
+  </div>
+  <div class="lb-body" id="sh-body"></div>
+</div>
+
 <div class="lb-screen" id="lb-screen">
   <div class="lb-head">
     <button class="lb-close" onclick="closeLeaderboard()">✕</button>
@@ -3418,33 +3475,118 @@ function closeScoreHistory(){ document.getElementById('score-history-overlay').c
 
 // ── COACH SCORES VIEW ─────────────────────────────────
 async function renderAthScores(id){
-  const {data} = await sb.from('scores')
-    .select('*, blocks(name)')
+  const cont = document.getElementById('ad-scores');
+  cont.innerHTML = '<div class="empty-note">Cargando scores...</div>';
+  athScoresId = id;
+
+  // Todo el historial. Sin limit: el coach necesita ver la temporada completa.
+  const {data, error} = await sb.from('scores')
+    .select('id, value, notes, video_url, category, logged_at, seen_by_coach, block_id, blocks(name, week_number, day_of_week)')
     .eq('athlete_id', id)
-    .order('logged_at', {ascending: false})
-    .limit(15);
-  const c = document.getElementById('ad-scores');
-  if(!data?.length){
-    c.innerHTML = '<div class="empty-note">Sin scores registrados aún.</div>';
-    return;
-  }
-  // Group by block
-  const grouped = {};
+    .order('logged_at', {ascending:false});
+
+  if(error){ cont.innerHTML = '<div class="empty-note">No se pudieron cargar.</div>'; return; }
+  if(!data?.length){ cont.innerHTML = '<div class="empty-note">Sin scores registrados aún.</div>'; return; }
+
+  // Resumen: adherencia real, días distintos entrenados
+  const hoy = Date.now();
+  const dias = s => (hoy - new Date(s.logged_at)) / 86400000;
+  const dist = arr => new Set(arr.map(s=>s.logged_at.slice(0,10))).size;
+  const d7  = dist(data.filter(s=>dias(s)<=7));
+  const d28 = dist(data.filter(s=>dias(s)<=28));
+  const ultimo = Math.floor(dias(data[0]));
+  const sinVer = data.filter(s=>!s.seen_by_coach).length;
+
+  const resumen = `<div class="asc-sum">
+    <div class="asc-cell"><div class="asc-n">${d7}</div><div class="asc-l">días · 7d</div></div>
+    <div class="asc-cell"><div class="asc-n">${d28}</div><div class="asc-l">días · 28d</div></div>
+    <div class="asc-cell"><div class="asc-n">${ultimo === 0 ? 'hoy' : ultimo + 'd'}</div><div class="asc-l">último</div></div>
+    <div class="asc-cell"><div class="asc-n">${data.length}</div><div class="asc-l">total</div></div>
+  </div>` + (sinVer ? `<div class="asc-new">${sinVer} score${sinVer>1?'s':''} sin revisar</div>` : '');
+
+  // Agrupar por semana del programa; sin semana van a "otros"
+  const porSem = {};
   data.forEach(s=>{
-    const name = s.blocks?.name || '—';
-    if(!grouped[name]) grouped[name] = [];
-    grouped[name].push(s);
+    const w = s.blocks?.week_number ?? 0;
+    (porSem[w] = porSem[w] || []).push(s);
   });
-  c.innerHTML = Object.entries(grouped).map(([block, scores])=>`
-    <div style="border-bottom:1px solid var(--border)">
-      <div style="padding:8px 20px 4px;font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">${block}</div>
-      ${scores.slice(0,3).map(s=>`
-        <div class="score-hist-row">
-          <span class="shr-val">${s.value}</span>
-          <span class="shr-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
-        </div>`).join('')}
-    </div>`).join('') + '<div style="height:8px"></div>';
+  const semanas = Object.keys(porSem).map(Number).sort((a,b)=>b-a);
+
+  cont.innerHTML = resumen + semanas.map((w, idx)=>{
+    const filas = porSem[w];
+    const abierta = idx === 0;   // la más reciente arranca abierta
+    return `<div class="asc-week${abierta?' open':''}" id="ascw-${w}">
+      <div class="asc-whead" onclick="document.getElementById('ascw-${w}').classList.toggle('open')">
+        <span class="asc-wname">${w ? 'Semana ' + w : 'Sin semana'}</span>
+        <span class="asc-wmeta">${filas.length} score${filas.length>1?'s':''}</span>
+        <span class="asc-chev">›</span>
+      </div>
+      <div class="asc-wbody">
+        ${filas.map(s=>{
+          const nombre = (s.blocks?.name || '—').replace(/'/g,"\\'");
+          const fecha = new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+          const cat = s.category || 'RX';
+          return `<div class="asc-row${s.seen_by_coach?'':' unseen'}"
+              onclick="openScoreHistory('${s.block_id}','${nombre}')">
+            <div class="asc-main">
+              <div class="asc-block">${s.blocks?.name || '—'}</div>
+              ${s.notes ? `<div class="asc-note">${s.notes}</div>` : ''}
+              ${s.video_url ? `<a class="asc-vid" href="${s.video_url}" target="_blank" rel="noopener"
+                 onclick="event.stopPropagation()">▶ ver video</a>` : ''}
+            </div>
+            <div class="asc-right">
+              <div class="asc-val">${s.value}</div>
+              <div class="asc-meta"><span class="asc-cat c-${cat}">${cat==='INTERMEDIATE'?'INT':cat}</span> ${fecha}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
+
+// ── HISTORIAL DE UN BLOQUE ────────────────────────────
+// Todas las veces que este atleta hizo ESTE workout, para ver progresión.
+let athScoresId = null;
+
+async function openScoreHistory(blockId, nombre){
+  const scr = document.getElementById('sh-screen');
+  document.getElementById('sh-title').textContent = nombre;
+  document.getElementById('sh-body').innerHTML = '<div class="empty-note">Cargando...</div>';
+  scr.classList.add('open');
+
+  // Mismo nombre = mismo workout, aunque sea otra semana u otro programa
+  const {data: bl} = await sb.from('blocks').select('id').eq('name', nombre);
+  const ids = (bl||[]).map(b=>b.id);
+  if(!ids.length) ids.push(blockId);
+
+  const {data} = await sb.from('scores')
+    .select('value, notes, video_url, category, logged_at, blocks(week_number)')
+    .eq('athlete_id', athScoresId).in('block_id', ids)
+    .order('logged_at', {ascending:true});
+
+  const body = document.getElementById('sh-body');
+  if(!data?.length){ body.innerHTML = '<div class="empty-note">Sin registros.</div>'; return; }
+
+  const nums = data.map(s=>attrParse(s.value)).filter(n=>n!==null);
+  const min = Math.min(...nums), max = Math.max(...nums), rango = max-min || 1;
+
+  body.innerHTML = data.map((s,i)=>{
+    const n = attrParse(s.value);
+    const pct = n===null ? 0 : ((n-min)/rango)*100;
+    const fecha = new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit'});
+    return `<div class="sh-row">
+      <div class="sh-top">
+        <span class="sh-val">${s.value}</span>
+        <span class="sh-date">${s.blocks?.week_number?'Sem '+s.blocks.week_number+' · ':''}${fecha}</span>
+      </div>
+      <div class="sh-bar"><span style="width:${Math.max(6,pct)}%"></span></div>
+      ${s.notes ? `<div class="sh-note">${s.notes}</div>` : ''}
+      ${s.video_url ? `<a class="sh-vid" href="${s.video_url}" target="_blank" rel="noopener">▶ ver video</a>` : ''}
+    </div>`;
+  }).join('') + `<div class="sh-foot">${data.length} registro${data.length>1?'s':''} · la barra compara entre sí, no contra un estándar</div>`;
+}
+function closeScoreHistory(){ document.getElementById('sh-screen').classList.remove('open'); }
 
 // ── COACH PR VIEW ─────────────────────────────────────
 async function renderAthPRs(athleteId){
