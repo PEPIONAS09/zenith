@@ -622,6 +622,62 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 @media (prefers-reduced-motion:reduce){.attr-row-bar span{transition:none}}
 [data-theme="light"] .attr-ovr{background:#fff}
 
+
+/* ═══ LEADERBOARD COMUNAL ═══════════════════════════ */
+.lb-screen{position:fixed;inset:0;background:var(--bg);z-index:640;display:none;flex-direction:column}
+.lb-screen.open{display:flex}
+.lb-head{display:flex;align-items:center;gap:14px;padding:18px 20px 14px;
+  border-bottom:1px solid var(--border);flex-shrink:0}
+.lb-close{background:none;border:1px solid var(--border2);color:var(--text2);
+  width:34px;height:34px;border-radius:3px;font-size:15px;cursor:pointer;flex-shrink:0}
+.lb-eyebrow{font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--accent)}
+.lb-title{font-family:var(--font-d);font-stretch:125%;font-weight:800;font-size:19px;
+  color:var(--text);margin-top:3px;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-cats{display:flex;gap:6px;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.lb-cat{flex:1;padding:9px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;
+  font-family:var(--font-m);font-size:10px;font-weight:600;letter-spacing:0.07em;
+  text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all .15s}
+.lb-cat.active{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent)}
+.lb-body{flex:1;overflow-y:auto;padding:4px 0 40px;-webkit-overflow-scrolling:touch}
+.lb-empty{padding:48px 24px;text-align:center;font-size:12px;color:var(--text3);line-height:1.7}
+.lb-row{display:grid;grid-template-columns:32px 1fr auto;gap:11px;align-items:center;
+  padding:13px 20px;border-bottom:1px solid var(--border)}
+.lb-row.me{background:rgba(232,255,0,0.06);box-shadow:inset 3px 0 0 var(--accent-fill)}
+.lb-pos{font-family:var(--font-n);font-size:14px;font-weight:500;color:var(--text3);
+  text-align:center;font-variant-numeric:tabular-nums}
+.lb-ath{display:flex;align-items:center;gap:11px;min-width:0}
+.lb-ini{width:34px;height:34px;border-radius:50%;flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:11px;font-weight:700}
+.lb-ini img{width:100%;height:100%;object-fit:cover}
+.lb-name{font-size:13px;font-weight:600;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-you{font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--on-accent);background:var(--accent-fill);padding:2px 5px;border-radius:2px;margin-left:6px}
+.lb-note{font-size:10.5px;color:var(--text3);margin-top:2px;line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-val{text-align:right;flex-shrink:0}
+.lb-score{font-family:var(--font-n);font-size:15px;font-weight:500;color:var(--text);
+  font-variant-numeric:tabular-nums}
+.lb-vid{font-size:9.5px;color:var(--accent);text-decoration:none;display:block;margin-top:2px}
+.lb-open-btn{width:100%;margin-top:8px;padding:10px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:3px;color:var(--text2);
+  font-family:var(--font-m);font-size:10px;font-weight:600;letter-spacing:0.08em;
+  text-transform:uppercase;cursor:pointer}
+.lb-open-btn:active{background:var(--bg4)}
+/* Categoría dentro del logger */
+.sl-cats{display:flex;gap:6px;margin-top:6px}
+.sl-cat{flex:1;padding:9px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;
+  font-family:var(--font-m);font-size:9.5px;font-weight:600;letter-spacing:0.05em;
+  text-transform:uppercase;color:var(--text3);cursor:pointer}
+.sl-cat.active{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent)}
+.sl-cat-hint{font-size:10px;color:var(--text3);margin-top:6px;line-height:1.5;min-height:14px}
+.sl-textarea{resize:vertical;min-height:64px;line-height:1.55;font-family:var(--font-b)}
+.be-hint{font-size:10px;color:var(--text3);line-height:1.5;margin-top:6px}
+[data-theme="light"] .lb-screen{background:#ffffff}
+[data-theme="light"] .lb-row.me{background:rgba(74,85,0,0.07)}
+
 /* EXERCISE LIBRARY */
 .ex-overlay{position:fixed;inset:0;background:var(--bg);z-index:400;display:none;flex-direction:column;max-width:430px;margin:0 auto}
 .ex-overlay.open{display:flex}
@@ -1531,6 +1587,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- SCORE LOGGER -->
+<div class="lb-screen" id="lb-screen">
+  <div class="lb-head">
+    <button class="lb-close" onclick="closeLeaderboard()">✕</button>
+    <div style="min-width:0">
+      <div class="lb-eyebrow">Leaderboard comunal</div>
+      <div class="lb-title" id="lb-title"></div>
+    </div>
+  </div>
+  <div class="lb-cats" id="lb-cats"></div>
+  <div class="lb-body" id="lb-body"></div>
+</div>
+
 <div class="block-editor" id="score-logger" style="z-index:250">
   <div class="be-header">
     <button class="ad-back" onclick="closeScoreLogger()">← Volver</button>
@@ -1922,6 +1990,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div id="be-exercise-preview" style="margin-top:6px;font-family:var(--font-m);font-size:9px;color:var(--accent)"></div>
     </div>
     <div class="be-field">
+      <label class="be-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="be-leaderboard" style="width:17px;height:17px;accent-color:var(--accent)">
+        <span>Contar para el leaderboard comunal</span>
+      </label>
+      <div class="be-hint">Los bloques con el mismo nombre, semana y día comparten tabla — aunque
+      estén en programas distintos. Así compiten Compete y HubMind sin duplicar nada.</div>
+    </div>
+    <div class="be-field">
       <label class="be-label">Formato de score</label>
       <select class="be-select" id="be-score-format" onchange="toggleStrengthFields()">
         <option value="weight_reps">Fuerza / Hipertrofia (peso + reps)</option>
@@ -2190,12 +2266,16 @@ function buildScoreSection(b, isCoach){
   if(isCoach) return ''; // el coach ve los scores desde el detalle del atleta
   const fmt = SCORE_FORMATS[b.score_format] || SCORE_FORMATS.text;
   const safeName = (b.name||'Bloque').replace(/'/g,"\\'");
+  const lb = b.leaderboard_key
+    ? `<button class="lb-open-btn" onclick="openLeaderboard('${b.leaderboard_key}','${(b.name||'').replace(/'/g,"\\'")}')">🏆 Ver leaderboard</button>`
+    : '';
   return `<div class="score-sec">
     <div class="score-lbl">Mi score${b.score_type?' · '+b.score_type:''}</div>
     <button class="score-save" style="width:100%;padding:10px"
       onclick="openScoreLogger('${b.id}','${safeName}','${b.score_format||'text'}',event)">
       ✎ Registrar score — ${fmt.label}
     </button>
+    ${lb}
     <div class="scores-list" id="sclist-${b.id}"></div>
   </div>`;
 }
@@ -2610,6 +2690,7 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
+  document.getElementById('be-leaderboard').checked = !!b.leaderboard_key;
   document.getElementById('be-score-type').value = b.score_type||'';
   document.getElementById('be-base-movement').value = b.base_movement||'';
   document.getElementById('be-percentage').value = b.percentage||'';
@@ -2650,6 +2731,13 @@ function selectColor(color, el){
 }
 function closeBlockEditor(){ document.getElementById('block-editor').classList.remove('open'); }
 
+function lbKey(week, dow, name){
+  const slug = (name||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+  return `w${week}-d${dow}-${slug}`;
+}
+
 async function saveBlock(){
   const id = document.getElementById('be-block-id').value;
   const prog = document.getElementById('be-program').value;
@@ -2673,6 +2761,12 @@ async function saveBlock(){
     scaling_rx: document.getElementById('be-rx').value,
     scaling_sc: document.getElementById('be-sc').value,
     scaling_beg: document.getElementById('be-beg').value,
+    // Llave derivada de semana+día+nombre, NO del programa: dos bloques
+    // iguales en programas distintos caen en la misma tabla automáticamente.
+    leaderboard_key: document.getElementById('be-leaderboard')?.checked
+      ? lbKey(weekNum, parseInt(document.getElementById('be-day').value),
+              document.getElementById('be-name').value)
+      : null,
   };
   if(!data.name){ alert('El bloque necesita un nombre'); return; }
   const {error} = id
@@ -3854,6 +3948,92 @@ function resizeImage(file, maxW, maxH){
   });
 }
 
+// ── LEADERBOARD COMUNAL ───────────────────────────────
+// Dirección del ranking: en tiempos y pace menos es mejor;
+// en peso y repeticiones, más.
+const LB_DIR = {time:'asc', pace_hr:'asc', weight_reps:'desc',
+                weight_notes:'desc', reps_notes:'desc', sets_notes:null, text:null};
+const LB_CATS = [['RX','RX'],['INTERMEDIATE','Intermediate'],['OPEN','Open']];
+let lbCat='RX', lbKeyActual=null;
+
+async function openLeaderboard(key, nombre){
+  lbKeyActual = key; lbCat = 'RX';
+  document.getElementById('lb-title').textContent = nombre || 'Leaderboard';
+  document.getElementById('lb-screen').classList.add('open');
+  renderLbCats();
+  await loadLeaderboard();
+}
+function closeLeaderboard(){ document.getElementById('lb-screen').classList.remove('open'); }
+function renderLbCats(){
+  document.getElementById('lb-cats').innerHTML = LB_CATS.map(([k,l])=>
+    `<button class="lb-cat${k===lbCat?' active':''}" onclick="setLbCat('${k}')">${l}</button>`).join('');
+}
+async function setLbCat(k){ lbCat=k; renderLbCats(); await loadLeaderboard(); }
+
+async function loadLeaderboard(){
+  const body = document.getElementById('lb-body');
+  body.innerHTML = '<div class="lb-empty">Cargando...</div>';
+
+  const {data: blocks} = await sb.from('blocks')
+    .select('id, score_format').eq('leaderboard_key', lbKeyActual);
+  if(!blocks?.length){
+    body.innerHTML = '<div class="lb-empty">Este bloque no está en ningún leaderboard.</div>'; return;
+  }
+  const dir = LB_DIR[blocks[0].score_format || 'text'];
+
+  const {data: scores, error} = await sb.from('scores')
+    .select('athlete_id, value, notes, video_url, logged_at')
+    .in('block_id', blocks.map(b=>b.id))
+    .eq('category', lbCat)
+    .order('logged_at', {ascending:false});
+  if(error){ body.innerHTML = '<div class="lb-empty">No se pudo cargar.</div>'; return; }
+  const etiqueta = (LB_CATS.find(x=>x[0]===lbCat)||[])[1] || lbCat;
+  if(!scores?.length){
+    body.innerHTML = `<div class="lb-empty">Nadie ha registrado score en ${etiqueta} todavía.<br>Sé el primero.</div>`;
+    return;
+  }
+
+  // Un renglón por atleta: su MEJOR marca, no la más reciente
+  const mejor = {};
+  for(const s of scores){
+    const n = attrParse(s.value);
+    const p = mejor[s.athlete_id];
+    if(!p){ mejor[s.athlete_id] = {...s, num:n}; continue; }
+    if(n===null || p.num===null || !dir) continue;
+    if(dir==='asc' ? n < p.num : n > p.num) mejor[s.athlete_id] = {...s, num:n};
+  }
+  const filas = Object.values(mejor);
+  if(dir) filas.sort((a,b)=>
+    a.num===null ? 1 : b.num===null ? -1 : (dir==='asc' ? a.num-b.num : b.num-a.num));
+
+  const {data: perfiles} = await sb.from('profiles')
+    .select('id, full_name, initials, avatar_url, program').in('id', filas.map(f=>f.athlete_id));
+  const byId = Object.fromEntries((perfiles||[]).map(p=>[p.id,p]));
+
+  body.innerHTML = filas.map((f,i)=>{
+    const p = byId[f.athlete_id] || {};
+    const pm = progMeta(p.program);
+    const yo = f.athlete_id === currentUser.id;
+    const ini = p.initials || p.full_name?.substring(0,2).toUpperCase() || '??';
+    const medalla = ['🥇','🥈','🥉'][i] || '';
+    return `<div class="lb-row${yo?' me':''}">
+      <div class="lb-pos">${medalla || (i+1)}</div>
+      <div class="lb-ath">
+        <div class="lb-ini" style="background:${pm.color};color:${pm.fg}">${
+          p.avatar_url ? `<img src="${p.avatar_url}" alt="">` : ini}</div>
+        <div style="min-width:0">
+          <div class="lb-name">${p.full_name || 'Atleta'}${yo?'<span class="lb-you">tú</span>':''}</div>
+          ${f.notes ? `<div class="lb-note">${f.notes}</div>` : ''}
+        </div>
+      </div>
+      <div class="lb-val">
+        <div class="lb-score">${f.value}</div>
+        ${f.video_url ? `<a class="lb-vid" href="${f.video_url}" target="_blank" rel="noopener">ver video</a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 // ── SCORES SIN VER (COACH) ────────────────────────────
 async function refreshScoreBadge(){
   if(currentProfile?.role !== 'coach') return;
@@ -4289,6 +4469,7 @@ async function openBlockEditorDs(blockId){
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
+  document.getElementById('be-leaderboard').checked = !!b.leaderboard_key;
   document.getElementById('be-score-type').value = b.score_type||'';
   document.getElementById('be-base-movement').value = b.base_movement||'';
   document.getElementById('be-percentage').value = b.percentage||'';
@@ -5556,6 +5737,11 @@ async function executeCopyWeek(){
     program_slug: destProg,
     day_of_week: b.day_of_week,
     week_number: destWeek,
+    // La llave se recalcula con la semana destino. Si copias la misma
+    // semana a otro programa, la llave coincide y los dos bloques
+    // caen en el mismo leaderboard automáticamente.
+    leaderboard_key: b.leaderboard_key
+      ? lbKey(destWeek, b.day_of_week, b.name) : null,
     order_index: b.order_index,
     name: b.name,
     meta: b.meta,
@@ -5935,7 +6121,19 @@ const SCORE_FORMATS = {
   }
 };
 
+let currentCat = 'RX';
+function pickCat(btn){
+  document.querySelectorAll('.sl-cat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = btn.dataset.cat;
+  const b = Object.values(allBlocks).flat().find(x=>x.id===currentLoggerBlockId);
+  const txt = {RX:b?.scaling_rx, INTERMEDIATE:b?.scaling_sc, OPEN:b?.scaling_beg}[currentCat];
+  const h = document.getElementById('sl-cat-hint');
+  if(h) h.textContent = (txt && txt !== '—') ? txt : '';
+}
+
 async function openScoreLogger(blockId, blockName, format, e){
+  currentCat = 'RX';
   e.stopPropagation();
   currentLoggerBlockId = blockId;
   currentLoggerFormat = format || 'text';
@@ -5960,11 +6158,26 @@ async function openScoreLogger(blockId, blockName, format, e){
       </div>`;
   }
 
-  // Notes field always at bottom
   fieldsHtml += `
     <div class="sl-field">
+      <label class="sl-label">Categoría</label>
+      <div class="sl-cats">
+        <button type="button" class="sl-cat active" data-cat="RX" onclick="pickCat(this)">RX</button>
+        <button type="button" class="sl-cat" data-cat="INTERMEDIATE" onclick="pickCat(this)">Intermediate</button>
+        <button type="button" class="sl-cat" data-cat="OPEN" onclick="pickCat(this)">Open</button>
+      </div>
+      <div class="sl-cat-hint" id="sl-cat-hint"></div>
+    </div>
+    <div class="sl-field">
       <label class="sl-label">Notas (opcional)</label>
-      <input class="sl-input" id="slf-notes" type="text" placeholder="Cómo te sentiste, qué mejorar...">
+      <textarea class="sl-input sl-textarea" id="slf-notes" rows="3"
+        placeholder="Cómo te sentiste, dónde se cayó el ritmo, qué escalaste..."></textarea>
+    </div>
+    <div class="sl-field">
+      <label class="sl-label">Link de video (opcional)</label>
+      <input class="sl-input" id="slf-video" type="url" inputmode="url"
+        placeholder="https://... YouTube, Drive o Instagram">
+      <div class="sl-cat-hint">Súbelo como &laquo;no listado&raquo; si no quieres que sea público.</div>
     </div>`;
 
   // Load history by block name across all weeks (not just this block_id)
@@ -6034,6 +6247,9 @@ async function submitScore(){
   
   const notesEl = document.getElementById('slf-notes');
   const notes = notesEl ? notesEl.value.trim() : '';
+  const videoEl = document.getElementById('slf-video');
+  let video = videoEl ? videoEl.value.trim() : '';
+  if(video && !/^https?:\/\//i.test(video)) video = 'https://' + video;
   
   if(!hasValue){ msg.textContent = 'Llena al menos un campo'; msg.style.color='#ff4444'; return; }
   
@@ -6049,6 +6265,8 @@ async function submitScore(){
     block_id: currentLoggerBlockId,
     value: displayValue,
     notes: notes,
+    video_url: video || null,
+    category: currentCat || 'RX',
     score_data: data
   });
   
