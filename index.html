@@ -669,6 +669,39 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sh-vid{font-size:10px;color:var(--accent);text-decoration:none;display:inline-block;margin-top:6px}
 .sh-foot{padding:18px 20px 40px;font-size:10px;color:var(--text3);text-align:center;line-height:1.6}
 
+/* ═══ ÍNDICE DE LEADERBOARDS ════════════════════════ */
+.lbi-week{padding:16px 20px 8px;font-size:10px;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--accent)}
+.lbi-row{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:center;
+  padding:13px 20px;border-bottom:1px solid var(--border);cursor:pointer}
+.lbi-row:active{background:var(--bg3)}
+.lbi-day{font-family:var(--font-m);font-size:10px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;text-align:center}
+.lbi-main{min-width:0}
+.lbi-name{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.35}
+.lbi-progs{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.lbi-chip{font-size:8px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px}
+.lbi-count{text-align:right;flex-shrink:0}
+.lbi-n{font-family:var(--font-n);font-size:17px;font-weight:500;color:var(--accent);
+  line-height:1;font-variant-numeric:tabular-nums}
+.lbi-nl{font-size:8.5px;color:var(--text3);margin-top:2px}
+/* Mi perfil */
+.mp-sec{padding:20px;border-bottom:1px solid var(--border)}
+.mp-lbl{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:8px}
+.mp-hint{font-size:12px;color:var(--text3);line-height:1.6;margin-bottom:14px}
+.mp-progs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mp-prog{padding:13px 10px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:4px;font-family:var(--font-m);font-size:11px;font-weight:600;
+  color:var(--text2);cursor:pointer;transition:all .15s}
+.mp-prog.active{font-weight:700}
+.mp-toggle{display:flex;align-items:center;gap:12px;cursor:pointer;
+  padding:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:4px}
+.mp-toggle input{width:19px;height:19px;accent-color:var(--accent);flex-shrink:0}
+.mp-toggle span{font-size:13px;font-weight:600;color:var(--text)}
+.mp-msg{padding:18px 20px;font-size:12px;line-height:1.6;min-height:20px}
+
 /* ═══ LEADERBOARD COMUNAL ═══════════════════════════ */
 .lb-screen{position:fixed;inset:0;background:var(--bg);z-index:640;display:none;flex-direction:column}
 .lb-screen.open{display:flex}
@@ -1633,6 +1666,43 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- SCORE LOGGER -->
+<div class="lb-screen" id="lbi-screen">
+  <div class="lb-head">
+    <button class="lb-close" onclick="closeLeaderboardIndex()">✕</button>
+    <div style="min-width:0">
+      <div class="lb-eyebrow">Comunidad</div>
+      <div class="lb-title">Leaderboards</div>
+    </div>
+  </div>
+  <div class="lb-body" id="lbi-body"></div>
+</div>
+
+<div class="lb-screen" id="mp-screen">
+  <div class="lb-head">
+    <button class="lb-close" onclick="closeMyProfile()">✕</button>
+    <div style="min-width:0">
+      <div class="lb-eyebrow">Ajustes</div>
+      <div class="lb-title">Mi perfil</div>
+    </div>
+  </div>
+  <div class="lb-body">
+    <div class="mp-sec">
+      <div class="mp-lbl">Mi programa</div>
+      <div class="mp-hint">Define qué programación ves tú en Inicio y Semana. No afecta a tus atletas.</div>
+      <div class="mp-progs" id="mp-progs"></div>
+    </div>
+    <div class="mp-sec">
+      <div class="mp-lbl">Competir</div>
+      <div class="mp-hint">Actívalo para registrar tus propios scores y aparecer en el leaderboard junto a tus atletas. Sigues siendo coach.</div>
+      <label class="mp-toggle">
+        <input type="checkbox" id="mp-competes" onchange="toggleCompetes(this)">
+        <span>Competir como atleta</span>
+      </label>
+    </div>
+    <div class="mp-msg" id="mp-msg"></div>
+  </div>
+</div>
+
 <div class="lb-screen" id="sh-screen">
   <div class="lb-head">
     <button class="lb-close" onclick="closeScoreHistory()">✕</button>
@@ -2277,6 +2347,46 @@ function onAvatarClick(){
   openUserMenu();
 }
 
+async function openMyProfile(){
+  const scr = document.getElementById('mp-screen');
+  scr.classList.add('open');
+  const prog = currentProfile?.program || 'compete';
+  document.getElementById('mp-progs').innerHTML = PROGRAMS.map(p=>
+    `<button class="mp-prog${p.slug===prog?' active':''}" onclick="setMyProgram('${p.slug}')"
+       style="${p.slug===prog?`background:${p.color};color:${p.fg};border-color:${p.color}`:''}">
+       ${p.icon} ${p.label}</button>`).join('');
+  document.getElementById('mp-competes').checked = !!currentProfile?.competes;
+  document.getElementById('mp-msg').textContent = '';
+}
+function closeMyProfile(){ document.getElementById('mp-screen').classList.remove('open'); }
+
+async function setMyProgram(slug){
+  const msg = document.getElementById('mp-msg');
+  msg.textContent = 'Guardando...'; msg.style.color = 'var(--text3)';
+  const {error} = await sb.from('profiles').update({program: slug}).eq('id', currentUser.id);
+  if(error){ msg.textContent = 'Error: '+error.message; msg.style.color='#ff4444'; return; }
+  currentProfile.program = slug;
+  msg.textContent = '✓ Ahora ves el programa ' + progMeta(slug).label;
+  msg.style.color = 'var(--accent)';
+  openMyProfile();
+  await refreshApp();
+}
+
+async function toggleCompetes(el){
+  const msg = document.getElementById('mp-msg');
+  const {error} = await sb.from('profiles').update({competes: el.checked}).eq('id', currentUser.id);
+  if(error){
+    el.checked = !el.checked;
+    msg.textContent = 'Error: '+error.message; msg.style.color='#ff4444'; return;
+  }
+  currentProfile.competes = el.checked;
+  msg.textContent = el.checked
+    ? '✓ Ya puedes registrar scores y aparecer en el leaderboard'
+    : 'Dejaste de competir. Sigues siendo coach.';
+  msg.style.color = 'var(--accent)';
+  await refreshApp();
+}
+
 function openUserMenu(){
   const existing = document.getElementById('user-menu');
   if(existing){ existing.remove(); return; }
@@ -2290,6 +2400,8 @@ function openUserMenu(){
   menu.innerHTML = `
     <div style="padding:10px 16px;font-family:var(--font-m);font-size:10px;color:var(--text3);border-bottom:1px solid var(--border)">${currentProfile?.full_name||'Mi cuenta'} · ${isCoach?'Coach':'Atleta'}</div>
     ${coachBtn}
+    <button onclick="document.getElementById('user-menu').remove();openMyProfile()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text);text-align:left;cursor:pointer">⚙ Mi perfil</button>
+    <button onclick="document.getElementById('user-menu').remove();openLeaderboardIndex()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text);text-align:left;cursor:pointer">🏆 Leaderboards</button>
     <button onclick="document.getElementById('user-menu').remove();toggleTheme()" id="theme-toggle-btn" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">${themeLabel}</button>
     <button onclick="document.getElementById('user-menu').remove();openPWEditor()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🔑 Cambiar contraseña</button>
     <button onclick="document.getElementById('user-menu').remove();openExLibrary()" style="width:100%;padding:13px 16px;background:none;border:none;border-bottom:1px solid var(--border);font-family:var(--font-m);font-size:11px;color:var(--text2);cursor:pointer;text-align:left;letter-spacing:0.05em">🏋️ Librería de ejercicios</button>
@@ -2320,7 +2432,9 @@ function buildCoachActions(b, isCoach, completedBlocks){
 }
 
 function buildScoreSection(b, isCoach){
-  if(isCoach) return ''; // el coach ve los scores desde el detalle del atleta
+  // El coach normalmente no registra scores. Pero si activó "competir
+  // como atleta", entra al leaderboard igual que todos.
+  if(isCoach && !currentProfile?.competes) return '';
   const fmt = SCORE_FORMATS[b.score_format] || SCORE_FORMATS.text;
   const safeName = (b.name||'Bloque').replace(/'/g,"\\'");
   const lb = b.leaderboard_key
@@ -4141,6 +4255,73 @@ function resizeImage(file, maxW, maxH){
     img.src = url;
   });
 }
+
+// ── ÍNDICE DE LEADERBOARDS ────────────────────────────
+async function openLeaderboardIndex(){
+  const scr = document.getElementById('lbi-screen');
+  scr.classList.add('open');
+  const body = document.getElementById('lbi-body');
+  body.innerHTML = '<div class="lb-empty">Cargando...</div>';
+
+  const {data: blocks, error} = await sb.from('blocks')
+    .select('leaderboard_key, name, week_number, day_of_week, program_slug, score_format')
+    .not('leaderboard_key','is',null)
+    .order('week_number').order('day_of_week');
+
+  if(error || !blocks?.length){
+    body.innerHTML = `<div class="lb-empty">
+      Todavía no hay leaderboards.<br><br>
+      Marca la casilla <strong>&laquo;Contar para el leaderboard comunal&raquo;</strong>
+      al crear o editar un bloque.</div>`;
+    return;
+  }
+
+  // Una tarjeta por llave, no por bloque: la misma pieza vive en varios programas
+  const porLlave = {};
+  blocks.forEach(b=>{
+    if(!porLlave[b.leaderboard_key]) porLlave[b.leaderboard_key] = {...b, progs:[]};
+    porLlave[b.leaderboard_key].progs.push(b.program_slug);
+  });
+  const items = Object.values(porLlave);
+
+  // Cuántos han registrado score en cada uno
+  const {data: sc} = await sb.from('scores')
+    .select('block_id, athlete_id, blocks!inner(leaderboard_key)')
+    .not('blocks.leaderboard_key','is',null);
+  const conteo = {};
+  (sc||[]).forEach(s=>{
+    const k = s.blocks?.leaderboard_key; if(!k) return;
+    (conteo[k] = conteo[k] || new Set()).add(s.athlete_id);
+  });
+
+  const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const porSemana = {};
+  items.forEach(it=> (porSemana[it.week_number] = porSemana[it.week_number]||[]).push(it));
+
+  body.innerHTML = Object.keys(porSemana).map(Number).sort((a,b)=>a-b).map(w=>`
+    <div class="lbi-week">Semana ${w}</div>
+    ${porSemana[w].map(it=>{
+      const n = conteo[it.leaderboard_key]?.size || 0;
+      const nombre = (it.name||'').replace(/'/g,"\\'");
+      const chips = [...new Set(it.progs)].map(p=>{
+        const m = progMeta(p);
+        return `<span class="lbi-chip" style="background:${m.color};color:${m.fg}">${m.label}</span>`;
+      }).join('');
+      return `<div class="lbi-row" onclick="openLeaderboard('${it.leaderboard_key}','${nombre}')">
+        <div class="lbi-day">${DIAS[it.day_of_week]}</div>
+        <div class="lbi-main">
+          <div class="lbi-name">${it.name}</div>
+          <div class="lbi-progs">${chips}</div>
+        </div>
+        <div class="lbi-count">
+          <div class="lbi-n">${n}</div>
+          <div class="lbi-nl">${n===1?'atleta':'atletas'}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  `).join('');
+}
+function closeLeaderboardIndex(){ document.getElementById('lbi-screen').classList.remove('open'); }
 
 // ── LEADERBOARD COMUNAL ───────────────────────────────
 // Dirección del ranking: en tiempos y pace menos es mejor;
