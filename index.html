@@ -2841,10 +2841,43 @@ async function saveBlock(){
     data.order_index = ((ult?.[0]?.order_index ?? -1) + 1);
   }
 
-  const {error} = id
-    ? await sb.from('blocks').update(data).eq('id', id)
-    : await sb.from('blocks').insert(data);
-  if(error){ alert('Error al guardar: ' + error.message); return; }
+  // .select() al final es clave para el diagnóstico: si una política de
+  // seguridad bloquea la escritura, Postgres a veces NO devuelve error —
+  // simplemente no afecta ninguna fila. Sin esto, el fallo es invisible.
+  const {data: res, error} = id
+    ? await sb.from('blocks').update(data).eq('id', id).select()
+    : await sb.from('blocks').insert(data).select();
+
+  if(error){
+    alert(
+      'ERROR AL GUARDAR\n\n' +
+      'Mensaje: ' + (error.message || '—') + '\n' +
+      'Código:  ' + (error.code    || '—') + '\n' +
+      'Detalle: ' + (error.details || '—') + '\n' +
+      'Pista:   ' + (error.hint    || '—') + '\n\n' +
+      '── Lo que se intentó guardar ──\n' +
+      'Programa: ' + JSON.stringify(data.program_slug) + '\n' +
+      'Semana:   ' + data.week_number + '\n' +
+      'Día:      ' + data.day_of_week + '\n' +
+      'Nombre:   ' + JSON.stringify(data.name) + '\n' +
+      'Modo:     ' + (id ? 'editar (id ' + id.slice(0,8) + ')' : 'crear nuevo')
+    );
+    console.error('saveBlock:', {error, data, id});
+    return;
+  }
+
+  if(!res || res.length === 0){
+    alert(
+      'NO SE GUARDÓ — sin error de la base\n\n' +
+      'La operación no afectó ninguna fila. Casi siempre significa que una\n' +
+      'política de seguridad (RLS) bloqueó la escritura en silencio.\n\n' +
+      'Programa: ' + JSON.stringify(data.program_slug) + '\n' +
+      'Semana:   ' + data.week_number + ' · Día: ' + data.day_of_week + '\n' +
+      'Modo:     ' + (id ? 'editar (id ' + id.slice(0,8) + ')' : 'crear nuevo')
+    );
+    console.error('saveBlock sin filas:', {data, id, res});
+    return;
+  }
   closeBlockEditor();
   currentWeekNumber = weekNum;
 
