@@ -669,6 +669,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .sh-vid{font-size:10px;color:var(--accent);text-decoration:none;display:inline-block;margin-top:6px}
 .sh-foot{padding:18px 20px 40px;font-size:10px;color:var(--text3);text-align:center;line-height:1.6}
 
+.ov-day-box{padding:14px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:4px;margin-bottom:14px}
+.ov-check{display:flex;align-items:center;gap:11px;cursor:pointer}
+.ov-check input{width:18px;height:18px;accent-color:var(--accent);flex-shrink:0}
+.ov-check span{font-size:13px;font-weight:600;color:var(--text)}
+#ov-move-field{transition:opacity .15s}
+
 /* ═══ ÍNDICE DE LEADERBOARDS ════════════════════════ */
 .lbi-week{padding:16px 20px 8px;font-size:10px;font-weight:700;letter-spacing:0.14em;
   text-transform:uppercase;color:var(--accent)}
@@ -1887,6 +1894,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <div class="be-field">
       <label class="be-label">Contenido personalizado</label>
+      <div class="ov-day-box">
+        <label class="ov-check">
+          <input type="checkbox" id="ov-hidden" onchange="toggleOvHidden(this)">
+          <span>Descanso — quitarle este bloque</span>
+        </label>
+        <div class="be-hint">El bloque desaparece solo para esta atleta. El programa maestro no se toca.</div>
+      </div>
+      <div class="be-field" id="ov-move-field">
+        <label class="be-label">Mover a otro día</label>
+        <select class="be-select" id="ov-day">
+          <option value="">— Dejarlo en su día —</option>
+          <option value="1">Lunes</option><option value="2">Martes</option>
+          <option value="3">Miércoles</option><option value="4">Jueves</option>
+          <option value="5">Viernes</option><option value="6">Sábado</option>
+          <option value="0">Domingo</option>
+        </select>
+        <div class="be-hint">Para reacomodar la carga cuando alguien descansa otro día.</div>
+      </div>
       <textarea class="be-input" id="ov-content" style="min-height:120px" placeholder="Deja vacío para usar el programa maestro..."></textarea>
     </div>
     <div class="be-field">
@@ -2291,12 +2316,35 @@ async function loadBlocks(programSlug, weekNum){
     .eq('program_slug', programSlug)
     .eq('week_number', week)
     .order('day_of_week').order('order_index');
+
+  // Overrides del propio usuario: pueden esconder un bloque o moverlo de día
+  const {data: ovs} = await sb.from('block_overrides')
+    .select('*').eq('athlete_id', currentUser.id);
+  const ov = {};
+  (ovs||[]).forEach(o => ov[o.block_id] = o);
+  currentOverrides = ov;
+
   allBlocks = {};
   if(data){
     data.forEach(b=>{
-      if(!allBlocks[b.day_of_week]) allBlocks[b.day_of_week]=[];
-      allBlocks[b.day_of_week].push(b);
+      const o = ov[b.id];
+      if(o?.hidden) return;                    // descanso: no se muestra
+      const dia = (o && o.day_of_week !== null && o.day_of_week !== undefined)
+        ? o.day_of_week : b.day_of_week;       // movido de día
+      const m = o ? {...b,
+        content: o.content ?? b.content,
+        coach_note: o.coach_note ?? b.coach_note,
+        meta: o.meta ?? b.meta,
+        base_movement: o.base_movement ?? b.base_movement,
+        percentage: o.percentage ?? b.percentage,
+        _override: true
+      } : b;
+      if(!allBlocks[dia]) allBlocks[dia]=[];
+      allBlocks[dia].push(m);
     });
+    // Al mover bloques entre días hay que reordenar cada día
+    Object.keys(allBlocks).forEach(d=>
+      allBlocks[d].sort((x,y)=>(x.order_index??0)-(y.order_index??0)));
   }
 }
 
@@ -6182,6 +6230,14 @@ async function loadAthOverrides(athleteId){
   });
 }
 
+function toggleOvHidden(el){
+  // Si descansa ese día, moverlo de día no tiene sentido
+  const mv = document.getElementById('ov-move-field');
+  if(!mv) return;
+  mv.style.opacity = el.checked ? '0.35' : '1';
+  mv.style.pointerEvents = el.checked ? 'none' : 'auto';
+}
+
 async function openOverrideEditor(blockId, e){
   e.stopPropagation();
   const athId = currentAthId || currentAthWeekProfile?.id;
@@ -6189,6 +6245,12 @@ async function openOverrideEditor(blockId, e){
 
   document.getElementById('ov-block-id').value = blockId;
   document.getElementById('ov-athlete-id').value = athId;
+  const prev = currentOverrides?.[blockId];
+  const hid = document.getElementById('ov-hidden');
+  if(hid){ hid.checked = !!prev?.hidden; toggleOvHidden(hid); }
+  const dsel = document.getElementById('ov-day');
+  if(dsel) dsel.value = (prev?.day_of_week === null || prev?.day_of_week === undefined)
+    ? '' : String(prev.day_of_week);
 
   // Load existing override if any
   const existing = currentOverrides[blockId];
@@ -6218,6 +6280,9 @@ async function saveOverride(){
   const meta = document.getElementById('ov-meta').value.trim();
   const baseMovement = document.getElementById('ov-base-movement').value;
   const percentage = parseInt(document.getElementById('ov-percentage').value) || null;
+  const hidden = document.getElementById('ov-hidden')?.checked || false;
+  const dayRaw = document.getElementById('ov-day')?.value ?? '';
+  const dayOverride = dayRaw === '' ? null : parseInt(dayRaw);
 
   const data = {
     athlete_id: athleteId,
@@ -6227,6 +6292,8 @@ async function saveOverride(){
     meta: meta || null,
     base_movement: baseMovement || null,
     percentage,
+    hidden,
+    day_of_week: dayOverride,
     updated_at: new Date().toISOString()
   };
 
