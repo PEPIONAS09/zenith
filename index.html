@@ -765,6 +765,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 [data-theme="light"] .lb-row.me{background:rgba(74,85,0,0.07)}
 
 
+.week-ctrl{display:flex;flex-direction:column;gap:6px}
+.wc-item{display:flex;align-items:center;gap:8px}
+.ath-search{display:flex;gap:8px;align-items:center;padding:12px 20px;
+  border-bottom:1px solid var(--border);flex-wrap:wrap}
+.ath-search input, .ath-search select{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:3px;
+  padding:9px 12px;font-family:var(--font-b);font-size:13px;color:var(--text);outline:none}
+.ath-search input{flex:1;min-width:140px}
+.ath-search input:focus, .ath-search select:focus{border-color:var(--accent-fill)}
+.ath-search select{font-size:12px;color:var(--text2)}
+.ath-count{font-family:var(--font-n);font-size:11px;color:var(--text3);flex-shrink:0}
+
 /* ═══════════════════════════════════════════════════════════════
    ESCRITORIO — pantallas que hasta ahora eran la app móvil
    fijada a 430px y centrada. Aquí recuperan el ancho real.
@@ -802,12 +814,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .co-header { padding: 20px 28px }
   .co-title  { font-size: 24px }
 
-  /* Semana por programa: en fila, no apilada */
-  .coach-overlay .week-controls {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 10px; padding: 18px 28px;
+  /* Semana por programa: en rejilla, no en una columna angosta */
+  .week-ctrl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
   }
+  .wc-item {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 12px;
+  }
+  .ath-search { padding: 14px 28px }
+
+  /* Filas más densas: 15 atletas deben caber sin scroll eterno */
+  .coach-overlay .ath-row { padding: 12px 16px; gap: 11px }
+  .coach-overlay .ath-ini { width: 34px; height: 34px; font-size: 11px }
+  .coach-overlay .ath-name { font-size: 13px }
+  .coach-overlay .ath-sub  { font-size: 10px }
+  .coach-overlay .prog-badge { flex-shrink: 0 }
 
   /* ── DETALLE DEL ATLETA: dos columnas ── */
   .ad-scroll {
@@ -2059,9 +2083,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
   <div style="padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2)">
     <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Semana actual por programa</div>
-    <div style="display:flex;flex-direction:column;gap:6px" id="week-controls"></div>
+    <div class="week-ctrl" id="week-controls"></div>
   </div>
-  <div class="ath-list" id="ath-list"></div>
+  <div class="ath-search">
+  <input id="ath-q" type="search" placeholder="Buscar atleta..." oninput="renderAthList()">
+  <select id="ath-filter" onchange="renderAthList()">
+    <option value="">Todos los programas</option>
+  </select>
+  <span class="ath-count" id="ath-count"></span>
+</div>
+<div class="ath-list" id="ath-list"></div>
 </div>
 
 <!-- ATHLETE DETAIL -->
@@ -2895,7 +2926,7 @@ function renderWeekControls(){
   const progs = PROGRAMS;
   container.innerHTML = progs.map(p => {
     const week = programWeeks[p.slug] || 1;
-    return `<div style="display:flex;align-items:center;gap:8px">
+    return `<div class="wc-item">
       <span style="font-family:var(--font-m);font-size:9px;color:${p.color};text-transform:uppercase;letter-spacing:0.05em;width:60px">${p.label}</span>
       <button onclick="adjustProgramWeek('${p.slug}',-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:2px 8px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">−</button>
       <span id="pw-${p.slug}" style="font-family:var(--font-m);font-size:12px;color:var(--text);min-width:60px;text-align:center">Sem ${week}</span>
@@ -2926,8 +2957,33 @@ function closeCoach(){
 }
 function renderAthList(){
   const c = document.getElementById('ath-list');
+
+  // Poblar el filtro de programas una sola vez
+  const fsel = document.getElementById('ath-filter');
+  if(fsel && fsel.options.length === 1){
+    PROGRAMS.forEach(p=>{
+      const o = document.createElement('option');
+      o.value = p.slug; o.textContent = p.label; fsel.appendChild(o);
+    });
+  }
+  const q = (document.getElementById('ath-q')?.value || '').toLowerCase().trim();
+  const fp = document.getElementById('ath-filter')?.value || '';
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const visibles = athletes.filter(a=>{
+    if(fp && a.program !== fp) return false;
+    if(!q) return true;
+    return norm(a.full_name).includes(norm(q)) || norm(a.goal).includes(norm(q));
+  });
+  const cnt = document.getElementById('ath-count');
+  if(cnt) cnt.textContent = visibles.length === athletes.length
+    ? `${athletes.length}` : `${visibles.length} de ${athletes.length}`;
+
+  if(!visibles.length && athletes.length){
+    c.innerHTML = '<div class="empty-note">Ningún atleta coincide con la búsqueda.</div>';
+    return;
+  }
   if(!athletes.length){ c.innerHTML='<div class="empty-note">Sin atletas registrados aún. Invítalos desde Supabase → Authentication → Users.</div>'; return; }
-  c.innerHTML = athletes.map(a=>{
+  c.innerHTML = visibles.map(a=>{
     const pm = progMeta(a.program);
     const ini = a.initials || a.full_name?.substring(0,2).toUpperCase() || '??';
     return `<div class="ath-row" onclick="openAthDetail('${a.id}')">
