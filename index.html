@@ -2281,6 +2281,41 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       estén en programas distintos. Así compiten Compete y HubMind sin duplicar nada.</div>
     </div>
     <div class="be-field">
+      <label class="be-label" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="be-rated" style="width:17px;height:17px;accent-color:var(--accent)" onchange="toggleRatedFields()">
+        <span>RATED · actualizar hexágono</span>
+      </label>
+      <div class="be-hint">El score sigue entrando al leaderboard comunal. Si además es RATED, el resultado alimenta GYM / ENG / BBL / STR / SPD / CAP.</div>
+    </div>
+
+    <div id="be-rated-fields" style="display:none;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;margin-bottom:14px">
+      <div class="be-field">
+        <label class="be-label">Clave del test</label>
+        <input class="be-input" id="be-rating-key" type="text" placeholder="Ej: c2b-density-01">
+        <div class="be-hint">Usa la misma clave cuando repitas el mismo test. Así se mide progreso contra el primer intento.</div>
+      </div>
+      <div class="be-field">
+        <label class="be-label">Qué resultado es mejor</label>
+        <select class="be-select" id="be-rating-direction">
+          <option value="higher">Más alto = mejor</option>
+          <option value="lower">Más bajo = mejor</option>
+        </select>
+      </div>
+      <div class="be-field">
+        <label class="be-label">Pesos del hexágono (%)</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div><div class="be-hint" style="margin:0 0 3px">GYM</div><input class="be-input" id="be-r-gym" type="number" min="0" max="100" value="0"></div>
+          <div><div class="be-hint" style="margin:0 0 3px">ENG</div><input class="be-input" id="be-r-eng" type="number" min="0" max="100" value="0"></div>
+          <div><div class="be-hint" style="margin:0 0 3px">BBL</div><input class="be-input" id="be-r-bbl" type="number" min="0" max="100" value="0"></div>
+          <div><div class="be-hint" style="margin:0 0 3px">STR</div><input class="be-input" id="be-r-str" type="number" min="0" max="100" value="0"></div>
+          <div><div class="be-hint" style="margin:0 0 3px">SPD</div><input class="be-input" id="be-r-spd" type="number" min="0" max="100" value="0"></div>
+          <div><div class="be-hint" style="margin:0 0 3px">CAP</div><input class="be-input" id="be-r-cap" type="number" min="0" max="100" value="0"></div>
+        </div>
+        <div class="be-hint">Ideal: suma 100. El motor normaliza internamente.</div>
+      </div>
+    </div>
+
+    <div class="be-field">
       <label class="be-label">Formato de score</label>
       <select class="be-select" id="be-score-format" onchange="toggleStrengthFields()">
         <option value="weight_reps">Fuerza / Hipertrofia (peso + reps)</option>
@@ -3066,6 +3101,16 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
   document.getElementById('be-leaderboard').checked = !!b.leaderboard_key;
+  document.getElementById('be-rated').checked = !!b.is_rated;
+  document.getElementById('be-rating-key').value = b.rating_test_key||'';
+  document.getElementById('be-rating-direction').value = b.rating_direction||'higher';
+  document.getElementById('be-r-gym').value = b.rating_gym||0;
+  document.getElementById('be-r-eng').value = b.rating_eng||0;
+  document.getElementById('be-r-bbl').value = b.rating_bbl||0;
+  document.getElementById('be-r-str').value = b.rating_str||0;
+  document.getElementById('be-r-spd').value = b.rating_spd||0;
+  document.getElementById('be-r-cap').value = b.rating_cap||0;
+  toggleRatedFields();
   document.getElementById('be-score-type').value = b.score_type||'';
   document.getElementById('be-base-movement').value = b.base_movement||'';
   document.getElementById('be-percentage').value = b.percentage||'';
@@ -3093,6 +3138,11 @@ function openNewBlock(dow, prog, week){
   document.getElementById('be-day').value = dow;
   document.getElementById('be-content').value = '';
   document.getElementById('be-coach-note').value = '';
+  document.getElementById('be-rated').checked = false;
+  document.getElementById('be-rating-key').value = '';
+  document.getElementById('be-rating-direction').value = 'higher';
+  ['gym','eng','bbl','str','spd','cap'].forEach(k=>{ const el=document.getElementById('be-r-'+k); if(el) el.value=0; });
+  toggleRatedFields();
   document.getElementById('be-score-type').value = '';
   document.getElementById('be-rx').value = '';
   document.getElementById('be-sc').value = '';
@@ -3132,6 +3182,15 @@ async function saveBlock(){
     coach_note: document.getElementById('be-coach-note').value,
     score_format: document.getElementById('be-score-format')?.value || 'text',
     score_type: document.getElementById('be-score-type').value,
+    is_rated: !!document.getElementById('be-rated')?.checked,
+    rating_test_key: document.getElementById('be-rated')?.checked ? (document.getElementById('be-rating-key')?.value.trim() || null) : null,
+    rating_direction: document.getElementById('be-rated')?.checked ? (document.getElementById('be-rating-direction')?.value || 'higher') : null,
+    rating_gym: parseFloat(document.getElementById('be-r-gym')?.value) || 0,
+    rating_eng: parseFloat(document.getElementById('be-r-eng')?.value) || 0,
+    rating_bbl: parseFloat(document.getElementById('be-r-bbl')?.value) || 0,
+    rating_str: parseFloat(document.getElementById('be-r-str')?.value) || 0,
+    rating_spd: parseFloat(document.getElementById('be-r-spd')?.value) || 0,
+    rating_cap: parseFloat(document.getElementById('be-r-cap')?.value) || 0,
     base_movement: document.getElementById('be-base-movement')?.value || null,
     percentage: parseInt(document.getElementById('be-percentage')?.value) || null,
     exercise_id: document.getElementById('be-exercise-id')?.value || null,
@@ -3148,6 +3207,11 @@ async function saveBlock(){
       : null,
   };
   if(!data.name){ alert('El bloque necesita un nombre'); return; }
+  if(data.is_rated){
+    const totalRatingWeight = data.rating_gym + data.rating_eng + data.rating_bbl + data.rating_str + data.rating_spd + data.rating_cap;
+    if(!data.rating_test_key){ alert('Un bloque RATED necesita una clave de test.'); return; }
+    if(totalRatingWeight <= 0){ alert('Un bloque RATED necesita pesos de atributos.'); return; }
+  }
 
   // order_index define el orden dentro del día. Nunca se enviaba,
   // así que los bloques nuevos quedaban sin posición: al final de la
@@ -4168,6 +4232,15 @@ async function replaceBlock(blockId, e){
     coach_note: copiedBlock.coach_note,
     score_type: copiedBlock.score_type,
     score_format: copiedBlock.score_format,
+    is_rated: !!copiedBlock.is_rated,
+    rating_test_key: copiedBlock.rating_test_key || null,
+    rating_direction: copiedBlock.rating_direction || null,
+    rating_gym: copiedBlock.rating_gym || 0,
+    rating_eng: copiedBlock.rating_eng || 0,
+    rating_bbl: copiedBlock.rating_bbl || 0,
+    rating_str: copiedBlock.rating_str || 0,
+    rating_spd: copiedBlock.rating_spd || 0,
+    rating_cap: copiedBlock.rating_cap || 0,
     base_movement: copiedBlock.base_movement,
     percentage: copiedBlock.percentage,
     scaling_rx: copiedBlock.scaling_rx,
@@ -6525,6 +6598,15 @@ async function pasteBlock(dow, prog){
     coach_note: copiedBlock.coach_note,
     score_type: copiedBlock.score_type,
     score_format: copiedBlock.score_format,
+    is_rated: !!copiedBlock.is_rated,
+    rating_test_key: copiedBlock.rating_test_key || null,
+    rating_direction: copiedBlock.rating_direction || null,
+    rating_gym: copiedBlock.rating_gym || 0,
+    rating_eng: copiedBlock.rating_eng || 0,
+    rating_bbl: copiedBlock.rating_bbl || 0,
+    rating_str: copiedBlock.rating_str || 0,
+    rating_spd: copiedBlock.rating_spd || 0,
+    rating_cap: copiedBlock.rating_cap || 0,
     base_movement: copiedBlock.base_movement,
     percentage: copiedBlock.percentage,
     scaling_rx: copiedBlock.scaling_rx,
@@ -6597,6 +6679,12 @@ function showToast(msg, isError){
 }
 
 // ── AUTO WEIGHT ───────────────────────────────────────
+function toggleRatedFields(){
+  const on = !!document.getElementById('be-rated')?.checked;
+  const fields = document.getElementById('be-rated-fields');
+  if(fields) fields.style.display = on ? 'block' : 'none';
+}
+
 function toggleStrengthFields(){
   const fmt = document.getElementById('be-score-format')?.value;
   const fields = document.getElementById('be-strength-fields');
@@ -6826,6 +6914,40 @@ function closeScoreLogger(){
   document.getElementById('score-logger').classList.remove('open');
 }
 
+function parseClockSeconds(raw){
+  if(raw===null || raw===undefined) return null;
+  const s = String(raw).trim();
+  const m = s.match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?$/);
+  if(!m) return null;
+  return m[3]!==undefined ? (+m[1])*3600+(+m[2])*60+(+m[3]) : (+m[1])*60+(+m[2]);
+}
+function ratedNumericFromScore(format, data, displayValue){
+  const clock = parseClockSeconds(data?.time || data?.output || displayValue);
+  if(clock!==null) return clock;
+  if(format==='reps_notes'){
+    const nums = String(data?.reps||'').match(/\d+(?:\.\d+)?/g);
+    return nums?.length ? nums.reduce((s,x)=>s+Number(x),0) : null;
+  }
+  if(format==='weight_reps' || format==='weight_notes' || format==='sets_notes'){
+    const w = Number(data?.weight); if(Number.isFinite(w) && w>0) return w;
+  }
+  if(format==='pace_hr'){
+    const c = parseClockSeconds(data?.output); if(c!==null) return c;
+    const n = String(data?.output||'').match(/-?\d+(?:[.,]\d+)?/); return n ? Number(n[0].replace(',','.')) : null;
+  }
+  const raw = String(data?.amrap || data?.value || displayValue || '');
+  const n = raw.match(/-?\d+(?:[.,]\d+)?/); return n ? Number(n[0].replace(',','.')) : null;
+}
+async function registerRatedResult(scoreId, blockId, format, data, displayValue){
+  const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
+  const b = allB.find(x=>x.id===blockId); if(!b?.is_rated) return;
+  const numeric = ratedNumericFromScore(format, data, displayValue);
+  if(numeric===null || !Number.isFinite(numeric)){ showToast('Score guardado · RATED pendiente: resultado no convertible', true); return; }
+  const {error} = await sb.rpc('register_rated_score', {p_score_id: scoreId, p_score_numeric: numeric});
+  if(error){ console.error('register_rated_score:', error); showToast('Score guardado · error al actualizar rating', true); return; }
+  showToast('✓ Leaderboard + hexágono actualizados');
+}
+
 async function submitScore(){
   const fmt = SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
   const msg = document.getElementById('sl-msg');
@@ -6858,7 +6980,7 @@ async function submitScore(){
   
   msg.textContent = 'Guardando...'; msg.style.color = 'var(--text3)';
   
-  const {error} = await sb.from('scores').insert({
+  const {data: savedScore, error} = await sb.from('scores').insert({
     athlete_id: currentUser.id,
     block_id: currentLoggerBlockId,
     value: displayValue,
@@ -6866,9 +6988,13 @@ async function submitScore(){
     video_url: video || null,
     category: currentCat || 'RX',
     score_data: data
-  });
+  }).select('id').single();
   
   if(error){ msg.textContent = 'Error: ' + error.message; msg.style.color='#ff4444'; return; }
+
+  if(savedScore?.id){
+    await registerRatedResult(savedScore.id, currentLoggerBlockId, currentLoggerFormat, data, displayValue);
+  }
   
   msg.textContent = '✓ Score guardado'; msg.style.color = 'var(--accent)';
   
@@ -7261,7 +7387,7 @@ async function renderAttributes(containerId, athleteId, name){
     // en Supabase en vez del modelo de PRs.
     if(athleteProgram === 'hubmind'){
       const {data: benchmark, error: benchmarkError} = await sb
-        .from('athlete_benchmark_ratings')
+        .from('athlete_live_ratings')
         .select('athlete_id,full_name,event_slug,gym,eng,bbl,str,spd,cap,ovr')
         .eq('athlete_id', uid)
         .eq('event_slug', 'wza-mexico-2026')
@@ -7296,8 +7422,8 @@ async function renderAttributes(containerId, athleteId, name){
         benchmark.full_name || athleteName,
         {
           order: HUB_ATTR_ORDER,
-          subtitle: 'WZA México 2026 · Competitive Rating',
-          sourceLabel: 'WZA México 2026'
+          subtitle: 'WZA baseline + Competition Hub · Live Rating',
+          sourceLabel: 'Competition Hub · RATED'
         }
       );
       return;
