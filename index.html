@@ -6963,6 +6963,45 @@ const ATTR_STD = {
 };
 const ATTR_ORDER = ['fue','oly','gym','aer','mtc','cns'];
 
+// ═══════════════════════════════════════════════════════════
+// HUB MIND — WZA MEXICO 2026 COMPETITIVE PROFILE
+// ═══════════════════════════════════════════════════════════
+const HUB_ATTR_ORDER = ['gym','eng','bbl','str','spd','cap'];
+
+const HUB_ATTR_META = {
+  gym: { label:'Gimnasia', short:'GYM' },
+  eng: { label:'Motor', short:'ENG' },
+  bbl: { label:'Barbell', short:'BBL' },
+  str: { label:'Fuerza-resistencia', short:'STR' },
+  spd: { label:'Velocidad', short:'SPD' },
+  cap: { label:'Work Capacity', short:'CAP' }
+};
+
+// Convierte una fila de athlete_benchmark_ratings a la misma
+// estructura que espera el renderer del hexágono.
+function buildHubAttributes(row){
+  const attrs = {};
+
+  HUB_ATTR_ORDER.forEach(key => {
+    const meta = HUB_ATTR_META[key];
+    const raw = row?.[key];
+    const rating = raw===null || raw===undefined
+      ? null
+      : Math.max(1, Math.min(99, Math.round(Number(raw))));
+
+    attrs[key] = {
+      key,
+      label: meta.label,
+      short: meta.short,
+      rating,
+      parts: [],
+      missing: rating===null ? [`Sin resultado para ${meta.label.toLowerCase()}`] : []
+    };
+  });
+
+  return attrs;
+}
+
 // Normaliza nombres para emparejar: sin acentos, sin plurales sueltos, minúsculas
 function attrNorm(s){
   return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -7054,9 +7093,11 @@ function computeAttributes(prs, consistency){
   return out;
 }
 
-// OVR: promedio de los ejes que sí tienen datos
-function computeOVR(attrs){
-  const vals = ATTR_ORDER.map(k=>attrs[k]?.rating).filter(v=>typeof v==='number');
+// OVR: promedio de los ejes que sí tienen datos.
+// `order` permite reutilizar el mismo renderer para Hub Mind.
+function computeOVR(attrs, order){
+  const keys = order || ATTR_ORDER;
+  const vals = keys.map(k=>attrs[k]?.rating).filter(v=>typeof v==='number');
   if(!vals.length) return null;
   return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
 }
@@ -7085,16 +7126,17 @@ function attrTone(r){
 // ── SVG del hexágono ────────────────────────────────────────────────
 function renderHexagon(attrs, opts){
   const o = opts || {};
+  const order = o.order || ATTR_ORDER;
   const size = o.size || 260;
   const cx = size/2, cy = size/2;
   const R = size*0.36;
-  const N = 6;
+  const N = order.length;
   // Arranca arriba y gira en sentido horario
   const ang = i => (Math.PI*2*i/N) - Math.PI/2;
   const pt = (i, r) => [cx + Math.cos(ang(i))*r, cy + Math.sin(ang(i))*r];
   const poly = (r) => Array.from({length:N},(_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
 
-  const vals = ATTR_ORDER.map(k => attrs[k]?.rating);
+  const vals = order.map(k => attrs[k]?.rating);
   const shape = vals.map((v,i) => {
     const r = R * Math.max(0.08, (v===null?8:v)/99);
     return pt(i,r).map(x=>x.toFixed(1)).join(',');
@@ -7107,7 +7149,7 @@ function renderHexagon(attrs, opts){
     return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`;
   }).join('');
 
-  const labels = ATTR_ORDER.map((k,i)=>{
+  const labels = order.map((k,i)=>{
     const a = attrs[k];
     const [x,y] = pt(i, R+26);
     const tone = attrTone(a?.rating);
@@ -7138,20 +7180,31 @@ function renderHexagon(attrs, opts){
 }
 
 // Tarjeta completa: OVR + hexágono + desglose
-function renderAttrCard(attrs, name){
-  const ovr = computeOVR(attrs);
-  const gaps = ATTR_ORDER.flatMap(k => attrs[k].missing);
-  const rows = ATTR_ORDER.map(k=>{
+function renderAttrCard(attrs, name, opts){
+  const o = opts || {};
+  const order = o.order || ATTR_ORDER;
+  const ovr = computeOVR(attrs, order);
+  const gaps = order.flatMap(k => attrs[k]?.missing || []);
+
+  const rows = order.map(k=>{
     const a = attrs[k];
     const tone = attrTone(a.rating);
-    const src = a.parts.slice(0,3).map(p=>p.name).join(' · ');
+    const src = a.parts?.slice(0,3).map(p=>p.name).join(' · ') || '';
+
+    let sourceText = src;
+    if(!sourceText && o.sourceLabel) sourceText = o.sourceLabel;
+    if(!sourceText && a.key==='cns') sourceText = 'Scores de las últimas 8 semanas';
+    if(!sourceText) sourceText = '—';
+
     return `<div class="attr-row">
       <div class="attr-row-bar"><span style="width:${a.rating===null?0:a.rating}%;background:${tone}"></span></div>
       <div class="attr-row-name">${a.label}</div>
-      <div class="attr-row-src">${src || (a.key==='cns' ? 'Scores de las últimas 8 semanas' : '—')}</div>
+      <div class="attr-row-src">${sourceText}</div>
       <div class="attr-row-val" style="color:${tone}">${a.rating===null?'—':a.rating}</div>
     </div>`;
   }).join('');
+
+  const subtitle = o.subtitle || 'Calibrado a nivel Games = 99';
 
   return `<div class="attr-card">
     <div class="attr-head">
@@ -7161,12 +7214,12 @@ function renderAttrCard(attrs, name){
       </div>
       <div class="attr-head-txt">
         <div class="attr-head-name">${name||'Perfil de atributos'}</div>
-        <div class="attr-head-sub">Calibrado a nivel Games = 99</div>
+        <div class="attr-head-sub">${subtitle}</div>
       </div>
     </div>
-    ${renderHexagon(attrs)}
+    ${renderHexagon(attrs, {order})}
     <div class="attr-rows">${rows}</div>
-    ${gaps.length ? `<div class="attr-gaps">Ejes sin datos: ${gaps.join(' · ')}. Registra esos PRs para completar el perfil.</div>` : ''}
+    ${gaps.length ? `<div class="attr-gaps">Ejes sin datos: ${gaps.join(' · ')}.</div>` : ''}
   </div>`;
 }
 
@@ -7174,15 +7227,95 @@ function renderAttrCard(attrs, name){
 async function renderAttributes(containerId, athleteId, name){
   const el = document.getElementById(containerId);
   if(!el) return;
+
   const uid = athleteId || currentUser.id;
   el.innerHTML = '<div class="attr-loading">Calculando atributos...</div>';
+
   try {
-    const [prs, cns] = await Promise.all([ loadPRs(uid), computeConsistency(uid) ]);
+    // En la vista del coach currentProfile pertenece al coach, no al atleta.
+    // Por eso resolvemos el programa del atleta seleccionado antes de decidir
+    // qué motor de estadísticas usar.
+    let athleteProgram = null;
+    let athleteName = name || null;
+
+    if(uid === currentUser?.id && currentProfile){
+      athleteProgram = currentProfile.program;
+      athleteName = athleteName || currentProfile.full_name;
+    }
+
+    if(!athleteProgram){
+      const {data: athleteProfile, error: profileError} = await sb
+        .from('profiles')
+        .select('full_name,program')
+        .eq('id', uid)
+        .maybeSingle();
+
+      if(profileError) throw profileError;
+
+      athleteProgram = athleteProfile?.program || null;
+      athleteName = athleteName || athleteProfile?.full_name || 'Perfil de atleta';
+    }
+
+    // ── HUB MIND ─────────────────────────────────────────────
+    // Usa el benchmark estandarizado WZA México 2026 almacenado
+    // en Supabase en vez del modelo de PRs.
+    if(athleteProgram === 'hubmind'){
+      const {data: benchmark, error: benchmarkError} = await sb
+        .from('athlete_benchmark_ratings')
+        .select('athlete_id,full_name,event_slug,gym,eng,bbl,str,spd,cap,ovr')
+        .eq('athlete_id', uid)
+        .eq('event_slug', 'wza-mexico-2026')
+        .maybeSingle();
+
+      if(benchmarkError) throw benchmarkError;
+
+      if(!benchmark){
+        el.innerHTML = `
+          <div class="attr-card">
+            <div class="attr-head">
+              <div class="attr-ovr">
+                <div class="attr-ovr-num" style="color:var(--border2)">—</div>
+                <div class="attr-ovr-lbl">OVR</div>
+              </div>
+              <div class="attr-head-txt">
+                <div class="attr-head-name">${athleteName}</div>
+                <div class="attr-head-sub">WZA México 2026 Benchmark</div>
+              </div>
+            </div>
+            <div style="padding:34px 8px 24px;text-align:center;font-size:11px;color:var(--text3);line-height:1.7">
+              Aún no hay resultados suficientes del benchmark WZA México 2026.
+            </div>
+          </div>`;
+        return;
+      }
+
+      const attrs = buildHubAttributes(benchmark);
+
+      el.innerHTML = renderAttrCard(
+        attrs,
+        benchmark.full_name || athleteName,
+        {
+          order: HUB_ATTR_ORDER,
+          subtitle: 'WZA México 2026 · Competitive Rating',
+          sourceLabel: 'WZA México 2026'
+        }
+      );
+      return;
+    }
+
+    // ── OTROS PROGRAMAS ──────────────────────────────────────
+    // Conserva el modelo original basado en PRs + consistencia.
+    const [prs, cns] = await Promise.all([
+      loadPRs(uid),
+      computeConsistency(uid)
+    ]);
+
     const attrs = computeAttributes(prs, cns);
-    el.innerHTML = renderAttrCard(attrs, name);
+    el.innerHTML = renderAttrCard(attrs, athleteName);
+
   } catch(e){
     el.innerHTML = `<div class="attr-loading">No se pudieron calcular los atributos.</div>`;
-    console.log('atributos:', e.message);
+    console.error('renderAttributes:', e);
   }
 }
 
