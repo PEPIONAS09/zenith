@@ -676,6 +676,72 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ov-check span{font-size:13px;font-weight:600;color:var(--text)}
 #ov-move-field{transition:opacity .15s}
 
+/* ═══ OLYMPUS — series ══════════════════════════════ */
+.oly-wrap{margin-top:10px}
+.oly-loading{padding:20px;text-align:center;font-size:11px;color:var(--text3)}
+.oly-head{margin-bottom:14px}
+.oly-progress{display:flex;align-items:center;gap:10px}
+.oly-bar{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.oly-bar span{display:block;height:100%;background:var(--accent-fill);
+  border-radius:2px;transition:width .35s cubic-bezier(.2,.8,.2,1)}
+.oly-count{font-family:var(--font-n);font-size:10px;color:var(--text3);
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.oly-ex{margin-bottom:16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:5px;overflow:hidden}
+.oly-ex-head{display:flex;justify-content:space-between;align-items:baseline;
+  gap:10px;padding:12px 14px 8px}
+.oly-ex-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.01em}
+.oly-ex-meta{font-family:var(--font-n);font-size:10px;color:var(--accent);white-space:nowrap}
+.oly-ex-note{padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.5}
+.oly-cols{display:grid;grid-template-columns:26px 1fr 62px 56px 52px 40px;gap:6px;
+  padding:6px 14px;font-size:8.5px;font-weight:700;letter-spacing:0.08em;
+  text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+.oly-set{display:grid;grid-template-columns:26px 1fr 62px 56px 52px 40px;gap:6px;
+  align-items:center;padding:8px 14px;border-bottom:1px solid var(--border)}
+.oly-set:last-child{border-bottom:none}
+.oly-set.done{background:rgba(232,255,0,0.05)}
+.oly-sn{font-family:var(--font-n);font-size:12px;font-weight:500;color:var(--text2);text-align:center}
+.oly-prev{font-family:var(--font-n);font-size:10.5px;color:var(--text3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oly-first{font-style:italic;opacity:.7}
+.oly-in{background:var(--bg3);border:1px solid var(--border2);border-radius:3px;
+  padding:8px 6px;font-family:var(--font-n);font-size:14px;color:var(--text);
+  text-align:center;outline:none;width:100%;min-width:0}
+.oly-in:focus{border-color:var(--accent-fill)}
+.oly-rir{font-size:12px;padding:8px 2px}
+.oly-set.done .oly-in{border-color:rgba(232,255,0,.3)}
+.oly-ok{background:var(--bg4);border:1px solid var(--border2);border-radius:3px;
+  padding:8px 0;font-size:14px;color:var(--text2);cursor:pointer;line-height:1}
+.oly-set.done .oly-ok{background:var(--accent-fill);border-color:var(--accent-fill);
+  color:var(--on-accent);font-weight:700}
+/* Descanso flotante */
+.oly-rest{position:fixed;left:12px;right:12px;bottom:78px;z-index:520;
+  display:none;align-items:center;gap:10px;padding:12px 16px;
+  background:var(--bg2);border:1px solid var(--accent-fill);border-radius:6px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.oly-rest.on{display:flex}
+.oly-rest-lbl{font-size:9px;font-weight:700;letter-spacing:0.14em;
+  text-transform:uppercase;color:var(--text3)}
+.oly-rest-t{flex:1;font-family:var(--font-n);font-size:26px;font-weight:500;
+  color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.oly-rest-b{background:var(--bg3);border:1px solid var(--border2);border-radius:3px;
+  padding:8px 12px;font-family:var(--font-m);font-size:10px;font-weight:600;
+  color:var(--text2);cursor:pointer;white-space:nowrap}
+.oly-rest-b.skip{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent)}
+/* Constructor del coach */
+.oly-draft{padding:12px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:4px;margin-bottom:8px;display:flex;flex-direction:column;gap:7px}
+.oly-draft-row{display:grid;grid-template-columns:1fr 1fr 1fr 38px;gap:6px}
+.oly-del{background:none;border:1px solid var(--border2);border-radius:3px;
+  color:#ff6b6b;cursor:pointer;font-size:13px}
+.oly-add{width:100%;margin-top:8px;padding:11px;background:var(--bg3);
+  border:1px dashed var(--border2);border-radius:4px;color:var(--accent);
+  font-family:var(--font-m);font-size:11px;font-weight:600;cursor:pointer}
+@media(min-width:900px){
+  .oly-rest{left:auto;right:32px;bottom:32px;width:340px}
+}
+[data-theme="light"] .oly-set.done{background:rgba(74,85,0,.07)}
+
 /* ═══ ÍNDICE DE LEADERBOARDS ════════════════════════ */
 .lbi-week{padding:16px 20px 8px;font-size:10px;font-weight:700;letter-spacing:0.14em;
   text-transform:uppercase;color:var(--accent)}
@@ -1797,6 +1863,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- SCORE LOGGER -->
+<div class="oly-rest" id="oly-rest">
+  <div class="oly-rest-lbl">Descanso</div>
+  <div class="oly-rest-t" id="oly-rest-t">0:00</div>
+  <button class="oly-rest-b" onclick="addRest(30)">+30s</button>
+  <button class="oly-rest-b skip" onclick="skipRest()">Saltar</button>
+</div>
+
 <div class="lb-screen" id="lbi-screen">
   <div class="lb-head">
     <button class="lb-close" onclick="closeLeaderboardIndex()">✕</button>
@@ -2218,7 +2291,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <div class="be-field">
       <label class="be-label">Programa</label>
-      <select class="be-select" id="be-program">
+      <select class="be-select" id="be-program" onchange="syncOlyField()">
         <option value="games">Games</option>
         <option value="compete">Compete</option>
         <option value="olympus">Olympus</option>
@@ -2315,6 +2388,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       </div>
     </div>
 
+    <div class="be-field" id="be-oly-field" style="display:none">
+      <label class="be-label">Ejercicios (Olympus)</label>
+      <div class="be-hint">Cada ejercicio con sus series, reps objetivo y descanso.
+        El atleta registra peso, reps y RIR serie por serie.</div>
+      <div id="be-oly-list"></div>
+      <button type="button" class="oly-add" onclick="addOlyEx()">+ Agregar ejercicio</button>
+    </div>
     <div class="be-field">
       <label class="be-label">Formato de score</label>
       <select class="be-select" id="be-score-format" onchange="toggleStrengthFields()">
@@ -2645,6 +2725,202 @@ function buildCoachActions(b, isCoach, completedBlocks){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  OLYMPUS — rastreo serie por serie
+//
+//  El resto de los programas registran UN score por bloque. Olympus
+//  no: cada ejercicio lleva sus series, y cada serie su peso, reps y
+//  RIR. Lo que hace que sirva no es el registro sino la comparación
+//  contra la última vez — sin eso es un diario, no sobrecarga.
+//
+//  La prescripción vive en blocks.sets_config (jsonb):
+//    [{name, sets, reps, rest, note}]
+// ═══════════════════════════════════════════════════════════════
+let olySets = {};          // {block_id: {"ej|serie": {weight, reps, rir}}}
+let olyPrev = {};          // última sesión por nombre de ejercicio
+let olyRestTimer = null;
+
+function parseSetsConfig(b){
+  if(!b.sets_config) return null;
+  try {
+    const v = typeof b.sets_config === 'string' ? JSON.parse(b.sets_config) : b.sets_config;
+    return Array.isArray(v) && v.length ? v : null;
+  } catch(e){ return null; }
+}
+
+function isOlympusBlock(b){
+  return b.program_slug === 'olympus' && parseSetsConfig(b);
+}
+
+async function loadOlySets(blockId){
+  const {data} = await sb.from('olympus_sets').select('*')
+    .eq('athlete_id', currentUser.id).eq('block_id', blockId);
+  const m = {};
+  (data||[]).forEach(s => m[`${s.exercise_name}|${s.set_number}`] = s);
+  olySets[blockId] = m;
+  return m;
+}
+
+// La sesión anterior del MISMO ejercicio, sin importar el bloque:
+// así la comparación sobrevive al cambio de semana.
+async function loadOlyPrev(nombres, blockId){
+  if(!nombres.length) return {};
+  const {data} = await sb.from('olympus_sets')
+    .select('exercise_name, set_number, weight, reps, rir, completed_at, block_id')
+    .eq('athlete_id', currentUser.id)
+    .in('exercise_name', nombres)
+    .neq('block_id', blockId)
+    .order('completed_at', {ascending:false});
+  const prev = {};
+  (data||[]).forEach(s=>{
+    const k = `${s.exercise_name}|${s.set_number}`;
+    if(!prev[k]) prev[k] = s;      // el más reciente gana
+  });
+  olyPrev = {...olyPrev, ...prev};
+  return prev;
+}
+
+function buildOlympusSection(b){
+  const ejercicios = parseSetsConfig(b);
+  if(!ejercicios) return '';
+  return `<div class="oly-wrap" id="oly-${b.id}">
+    <div class="oly-loading">Cargando tus series...</div>
+  </div>`;
+}
+
+async function renderOlympus(b){
+  const cont = document.getElementById('oly-'+b.id);
+  if(!cont) return;
+  const ejercicios = parseSetsConfig(b);
+  const hechos = await loadOlySets(b.id);
+  await loadOlyPrev(ejercicios.map(e=>e.name), b.id);
+
+  const total = ejercicios.reduce((n,e)=>n+(e.sets||0),0);
+  const listos = Object.keys(hechos).length;
+
+  cont.innerHTML = `
+    <div class="oly-head">
+      <div class="oly-progress">
+        <div class="oly-bar"><span style="width:${total?Math.round(listos/total*100):0}%"></span></div>
+        <div class="oly-count">${listos} / ${total} series</div>
+      </div>
+    </div>
+    ${ejercicios.map((e,ei)=>{
+      const nombre = (e.name||'Ejercicio').replace(/"/g,'&quot;');
+      const filas = Array.from({length: e.sets||1}, (_,si)=>{
+        const n = si+1;
+        const k = `${e.name}|${n}`;
+        const hecho = hechos[k];
+        const ant = olyPrev[k];
+        return `<div class="oly-set${hecho?' done':''}" id="set-${b.id}-${ei}-${n}">
+          <div class="oly-sn">${n}</div>
+          <div class="oly-prev">${ant
+            ? `${ant.weight ?? '—'} × ${ant.reps ?? '—'}${ant.rir!=null?` · RIR ${ant.rir}`:''}`
+            : '<span class="oly-first">primera vez</span>'}</div>
+          <input class="oly-in" type="number" inputmode="decimal" placeholder="kg"
+            id="w-${b.id}-${ei}-${n}" value="${hecho?.weight ?? ''}">
+          <input class="oly-in" type="number" inputmode="numeric" placeholder="${e.reps ?? 'reps'}"
+            id="r-${b.id}-${ei}-${n}" value="${hecho?.reps ?? ''}">
+          <select class="oly-in oly-rir" id="rir-${b.id}-${ei}-${n}">
+            <option value="">RIR</option>
+            ${[0,1,2,3,4].map(v=>`<option value="${v}"${hecho?.rir===v?' selected':''}>${v}</option>`).join('')}
+          </select>
+          <button class="oly-ok" onclick="logSet('${b.id}',${ei},${n},'${nombre}',${e.rest||90},event)">
+            ${hecho?'✓':'▸'}
+          </button>
+        </div>`;
+      }).join('');
+      return `<div class="oly-ex">
+        <div class="oly-ex-head">
+          <div class="oly-ex-name">${e.name||'Ejercicio'}</div>
+          <div class="oly-ex-meta">${e.sets||1} × ${e.reps||'?'}${e.rest?` · ${e.rest}s`:''}</div>
+        </div>
+        ${e.note ? `<div class="oly-ex-note">${e.note}</div>` : ''}
+        <div class="oly-cols"><span></span><span>Anterior</span><span>Peso</span><span>Reps</span><span>RIR</span><span></span></div>
+        ${filas}
+      </div>`;
+    }).join('')}`;
+}
+
+async function logSet(blockId, ei, n, nombre, descanso, e){
+  if(e) e.stopPropagation();
+  const w = document.getElementById(`w-${blockId}-${ei}-${n}`).value;
+  const r = document.getElementById(`r-${blockId}-${ei}-${n}`).value;
+  const rir = document.getElementById(`rir-${blockId}-${ei}-${n}`).value;
+  if(!r){ showToast('Falta el número de reps', true); return; }
+
+  const fila = {
+    athlete_id: currentUser.id, block_id: blockId,
+    exercise_name: nombre, set_number: n,
+    weight: w === '' ? null : parseFloat(w),
+    reps: parseInt(r),
+    rir: rir === '' ? null : parseInt(rir),
+    completed_at: new Date().toISOString()
+  };
+  const {error} = await sb.from('olympus_sets')
+    .upsert(fila, {onConflict: 'athlete_id,block_id,exercise_name,set_number'});
+  if(error){ showToast('No se guardó: '+error.message, true); return; }
+
+  const el = document.getElementById(`set-${blockId}-${ei}-${n}`);
+  if(el){ el.classList.add('done'); el.querySelector('.oly-ok').textContent = '✓'; }
+
+  // Comparación contra la vez pasada: el dato que mueve la aguja
+  const ant = olyPrev[`${nombre}|${n}`];
+  if(ant && ant.weight != null && fila.weight != null){
+    const dw = fila.weight - ant.weight, dr = fila.reps - (ant.reps||0);
+    if(dw > 0 || (dw === 0 && dr > 0)) showToast('↑ Superaste la última vez');
+  }
+  startRest(descanso);
+  actualizarProgreso(blockId);
+}
+
+function actualizarProgreso(blockId){
+  const cont = document.getElementById('oly-'+blockId);
+  if(!cont) return;
+  const t = cont.querySelectorAll('.oly-set').length;
+  const d = cont.querySelectorAll('.oly-set.done').length;
+  const bar = cont.querySelector('.oly-bar span');
+  const cnt = cont.querySelector('.oly-count');
+  if(bar) bar.style.width = t ? Math.round(d/t*100)+'%' : '0%';
+  if(cnt) cnt.textContent = `${d} / ${t} series`;
+  if(d === t && t > 0) showToast('Bloque completo');
+}
+
+// ── Descanso ──
+function startRest(seg){
+  clearInterval(olyRestTimer);
+  let queda = seg;
+  const box = document.getElementById('oly-rest');
+  box.classList.add('on');
+  const pinta = ()=>{
+    const m = Math.floor(queda/60), s = queda%60;
+    document.getElementById('oly-rest-t').textContent = `${m}:${String(s).padStart(2,'0')}`;
+  };
+  pinta();
+  olyRestTimer = setInterval(()=>{
+    queda--;
+    if(queda <= 0){
+      clearInterval(olyRestTimer);
+      document.getElementById('oly-rest-t').textContent = '¡Vamos!';
+      try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+      setTimeout(()=>box.classList.remove('on'), 2500);
+      return;
+    }
+    pinta();
+  }, 1000);
+}
+function skipRest(){
+  clearInterval(olyRestTimer);
+  document.getElementById('oly-rest').classList.remove('on');
+}
+function addRest(seg){
+  // Sumar 30s sin reiniciar: útil cuando la serie pegó más de lo esperado
+  const t = document.getElementById('oly-rest-t').textContent;
+  const [m,s] = t.split(':').map(Number);
+  if(isNaN(m)) return;
+  startRest(m*60 + (s||0) + seg);
+}
+
 function buildScoreSection(b, isCoach){
   // El coach normalmente no registra scores. Pero si activó "competir
   // como atleta", entra al leaderboard igual que todos.
@@ -2699,7 +2975,7 @@ function renderBlock(b){
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? '<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">' + b.coach_note + '</div></div>' : ''}
-      ${buildScoreSection(b, isCoach)}
+      ${isOlympusBlock(b) && !isCoach ? buildOlympusSection(b) : buildScoreSection(b, isCoach)}
       ${editBtn}
       ${buildCoachActions(b, isCoach, completedBlocks)}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
@@ -2718,6 +2994,10 @@ const _scoresLoaded = new Set();
 function toggleBlock(id){
   const el = document.getElementById('blk-'+id);
   el.classList.toggle('open');
+  if(el.classList.contains('open')){
+    const b = Object.values(allBlocks).flat().find(x=>x.id===id);
+    if(b && isOlympusBlock(b) && currentProfile?.role !== 'coach') renderOlympus(b);
+  }
   if(el.classList.contains('open') && !_scoresLoaded.has(id) && document.getElementById('sclist-'+id)){
     _scoresLoaded.add(id);
     loadBlockScores(id);
@@ -3101,6 +3381,8 @@ function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
   document.getElementById('be-leaderboard').checked = !!b.leaderboard_key;
+  olyDraft = parseSetsConfig(b) ? JSON.parse(JSON.stringify(parseSetsConfig(b))) : [];
+  renderOlyDraft(); syncOlyField();
   document.getElementById('be-rated').checked = !!b.is_rated;
   document.getElementById('be-rating-key').value = b.rating_test_key||'';
   document.getElementById('be-rating-direction').value = b.rating_direction||'higher';
@@ -3136,6 +3418,7 @@ function openNewBlock(dow, prog, week){
   document.getElementById('be-program').value = prog;
   document.getElementById('be-week-num').value = semana;
   document.getElementById('be-day').value = dow;
+  olyDraft = []; renderOlyDraft(); syncOlyField();
   document.getElementById('be-content').value = '';
   document.getElementById('be-coach-note').value = '';
   document.getElementById('be-rated').checked = false;
@@ -3165,6 +3448,37 @@ function lbKey(week, dow, name){
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
   return `w${week}-d${dow}-${slug}`;
+}
+
+// ── Constructor de ejercicios (solo Olympus) ──
+let olyDraft = [];
+
+function renderOlyDraft(){
+  const c = document.getElementById('be-oly-list');
+  if(!c) return;
+  c.innerHTML = olyDraft.map((e,i)=>`
+    <div class="oly-draft">
+      <input class="be-input" placeholder="Nombre del ejercicio" value="${(e.name||'').replace(/"/g,'&quot;')}"
+        oninput="olyDraft[${i}].name=this.value">
+      <div class="oly-draft-row">
+        <input class="be-input" type="number" min="1" placeholder="Series" value="${e.sets||''}"
+          oninput="olyDraft[${i}].sets=parseInt(this.value)||1">
+        <input class="be-input" placeholder="Reps" value="${e.reps||''}"
+          oninput="olyDraft[${i}].reps=this.value">
+        <input class="be-input" type="number" min="0" step="15" placeholder="Descanso s" value="${e.rest||''}"
+          oninput="olyDraft[${i}].rest=parseInt(this.value)||90">
+        <button type="button" class="oly-del" onclick="olyDraft.splice(${i},1);renderOlyDraft()">✕</button>
+      </div>
+      <input class="be-input" placeholder="Nota (tempo, ejecución...)" value="${(e.note||'').replace(/"/g,'&quot;')}"
+        oninput="olyDraft[${i}].note=this.value">
+    </div>`).join('') || '<div class="be-hint">Sin ejercicios todavía.</div>';
+}
+function addOlyEx(){ olyDraft.push({name:'', sets:3, reps:'8-12', rest:90, note:''}); renderOlyDraft(); }
+
+function syncOlyField(){
+  const esOly = document.getElementById('be-program')?.value === 'olympus';
+  const f = document.getElementById('be-oly-field');
+  if(f) f.style.display = esOly ? 'block' : 'none';
 }
 
 async function saveBlock(){
@@ -3199,6 +3513,9 @@ async function saveBlock(){
     scaling_rx: document.getElementById('be-rx').value,
     scaling_sc: document.getElementById('be-sc').value,
     scaling_beg: document.getElementById('be-beg').value,
+    // Solo Olympus usa prescripción estructurada; los demás siguen con texto libre
+    sets_config: document.getElementById('be-program')?.value === 'olympus' && olyDraft.length
+      ? olyDraft.filter(e=>e.name?.trim()) : null,
     // Llave derivada de semana+día+nombre, NO del programa: dos bloques
     // iguales en programas distintos caen en la misma tabla automáticamente.
     leaderboard_key: document.getElementById('be-leaderboard')?.checked
@@ -5122,6 +5439,8 @@ async function openBlockEditorDs(blockId){
   document.getElementById('be-coach-note').value = b.coach_note||'';
   document.getElementById('be-score-format').value = b.score_format||'text';
   document.getElementById('be-leaderboard').checked = !!b.leaderboard_key;
+  olyDraft = parseSetsConfig(b) ? JSON.parse(JSON.stringify(parseSetsConfig(b))) : [];
+  renderOlyDraft(); syncOlyField();
   document.getElementById('be-score-type').value = b.score_type||'';
   document.getElementById('be-base-movement').value = b.base_movement||'';
   document.getElementById('be-percentage').value = b.percentage||'';
