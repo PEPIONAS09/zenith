@@ -676,6 +676,31 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .ov-check span{font-size:13px;font-weight:600;color:var(--text)}
 #ov-move-field{transition:opacity .15s}
 
+/* Olympus en la vista del coach */
+.aol-ses{border-bottom:1px solid var(--border)}
+.aol-head{display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer}
+.aol-name{font-size:12.5px;font-weight:600;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aol-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.aol-ton{text-align:right;flex-shrink:0}
+.aol-tn{font-family:var(--font-n);font-size:15px;font-weight:500;color:var(--accent);
+  font-variant-numeric:tabular-nums;line-height:1}
+.aol-tl{font-size:8px;color:var(--text3);margin-top:2px}
+.aol-dif{font-family:var(--font-n);font-size:9.5px;margin-top:3px;font-weight:500}
+.aol-dif.up{color:#4ade80}
+.aol-dif.down{color:#f87171}
+.aol-chev{font-size:16px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.aol-ses.open .aol-chev{transform:rotate(90deg)}
+.aol-body{display:none;padding:0 20px 14px 20px}
+.aol-ses.open .aol-body{display:block}
+.aol-ej{padding:9px 0;border-top:1px solid var(--border)}
+.aol-ej-n{font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.aol-ej-sets{display:flex;flex-wrap:wrap;gap:6px}
+.aol-set{font-family:var(--font-n);font-size:11px;color:var(--text);
+  background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:4px 8px}
+.aol-set i{color:var(--text3);font-style:normal;margin:0 2px}
+.aol-set b{color:var(--accent);font-weight:500;font-size:9px;margin-left:5px}
+
 /* ═══ OLYMPUS — series ══════════════════════════════ */
 .oly-wrap{margin-top:10px}
 .oly-loading{padding:20px;text-align:center;font-size:11px;color:var(--text3)}
@@ -2196,6 +2221,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <button onclick="openAthWeek()" style="display:block;margin:8px 20px 0;background:var(--accent-fill);color:var(--on-accent);border:none;border-radius:2px;padding:10px 16px;font-family:var(--font-m);font-size:10px;font-weight:500;cursor:pointer;text-transform:uppercase;letter-spacing:0.05em;width:calc(100% - 40px)">▤ Ver programación semanal</button>
     <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Atributos</div></div>
     <div id="ad-attr-hex" style="padding:0 20px"></div>
+    <div id="ad-olympus"></div>
     <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Scores recientes</div></div>
     <div id="ad-scores"></div>
     <div style="height:24px"></div>
@@ -2748,6 +2774,13 @@ function parseSetsConfig(b){
   } catch(e){ return null; }
 }
 
+// Quién entrena y registra: los atletas, y los coaches que activaron
+// "competir". Antes esta regla estaba escrita de tres formas distintas
+// en tres lugares, y por eso Olympus no aparecía para un coach.
+function registraEntrenamiento(){
+  return currentProfile?.role !== 'coach' || !!currentProfile?.competes;
+}
+
 function isOlympusBlock(b){
   return b.program_slug === 'olympus' && parseSetsConfig(b);
 }
@@ -2782,7 +2815,11 @@ async function loadOlyPrev(nombres, blockId){
 
 function buildOlympusSection(b){
   const ejercicios = parseSetsConfig(b);
-  if(!ejercicios) return '';
+  if(!ejercicios){
+    return b.program_slug === 'olympus'
+      ? '<div class="oly-loading">Este bloque de Olympus no tiene ejercicios configurados.</div>'
+      : '';
+  }
   return `<div class="oly-wrap" id="oly-${b.id}">
     <div class="oly-loading">Cargando tus series...</div>
   </div>`;
@@ -2924,7 +2961,7 @@ function addRest(seg){
 function buildScoreSection(b, isCoach){
   // El coach normalmente no registra scores. Pero si activó "competir
   // como atleta", entra al leaderboard igual que todos.
-  if(isCoach && !currentProfile?.competes) return '';
+  if(!registraEntrenamiento()) return '';
   const fmt = SCORE_FORMATS[b.score_format] || SCORE_FORMATS.text;
   const safeName = (b.name||'Bloque').replace(/'/g,"\\'");
   const lb = b.leaderboard_key
@@ -2975,7 +3012,7 @@ function renderBlock(b){
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? '<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">' + b.coach_note + '</div></div>' : ''}
-      ${isOlympusBlock(b) && !isCoach ? buildOlympusSection(b) : buildScoreSection(b, isCoach)}
+      ${isOlympusBlock(b) && registraEntrenamiento() ? buildOlympusSection(b) : buildScoreSection(b, isCoach)}
       ${editBtn}
       ${buildCoachActions(b, isCoach, completedBlocks)}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
@@ -2996,7 +3033,7 @@ function toggleBlock(id){
   el.classList.toggle('open');
   if(el.classList.contains('open')){
     const b = Object.values(allBlocks).flat().find(x=>x.id===id);
-    if(b && isOlympusBlock(b) && currentProfile?.role !== 'coach') renderOlympus(b);
+    if(b && isOlympusBlock(b) && registraEntrenamiento()) renderOlympus(b);
   }
   if(el.classList.contains('open') && !_scoresLoaded.has(id) && document.getElementById('sclist-'+id)){
     _scoresLoaded.add(id);
@@ -3320,6 +3357,7 @@ async function openAthDetail(id){
   document.getElementById('ad-note').value = note?.note||'';
   updateProgUI(a.program||'compete');
   await renderAthScores(id);
+  renderAthOlympus(id);
   markScoresSeen(id);
   renderAttributes('ad-attr-hex', id, athletes.find(a=>a.id===id)?.full_name);
   await renderAthPRs(id);
@@ -4294,6 +4332,70 @@ async function renderAthScores(id){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── OLYMPUS EN LA VISTA DEL COACH ─────────────────────
+// El tonelaje (peso × reps sumado) es la métrica que importa en
+// hipertrofia: es lo que hay que subir semana a semana.
+async function renderAthOlympus(athleteId){
+  const cont = document.getElementById('ad-olympus');
+  if(!cont) return;
+
+  const {data, error} = await sb.from('olympus_sets')
+    .select('*, blocks(name, week_number, day_of_week)')
+    .eq('athlete_id', athleteId)
+    .order('completed_at', {ascending:false});
+
+  if(error || !data?.length){ cont.innerHTML = ''; return; }
+
+  // Agrupar por sesión (bloque)
+  const ses = {};
+  data.forEach(s=>{
+    const k = s.block_id;
+    if(!ses[k]) ses[k] = {nombre: s.blocks?.name || '—', semana: s.blocks?.week_number,
+                          fecha: s.completed_at, sets: []};
+    ses[k].sets.push(s);
+    if(s.completed_at > ses[k].fecha) ses[k].fecha = s.completed_at;
+  });
+  const lista = Object.entries(ses)
+    .sort((a,b)=> b[1].fecha.localeCompare(a[1].fecha));
+
+  const tonelaje = sets => sets.reduce((t,s)=> t + ((s.weight||0) * (s.reps||0)), 0);
+
+  cont.innerHTML = `
+    <div class="ad-sec" style="margin-top:12px"><div class="ad-sec-ttl">Olympus · sesiones</div></div>
+    ${lista.map(([bid, s], i)=>{
+      const ton = tonelaje(s.sets);
+      const ant = lista[i+1] ? tonelaje(lista[i+1][1].sets) : null;
+      const dif = ant ? ((ton-ant)/ant*100) : null;
+      // Agrupar por ejercicio dentro de la sesión
+      const porEj = {};
+      s.sets.forEach(x=> (porEj[x.exercise_name] = porEj[x.exercise_name]||[]).push(x));
+      return `<div class="aol-ses" id="aol-${bid}">
+        <div class="aol-head" onclick="document.getElementById('aol-${bid}').classList.toggle('open')">
+          <div style="flex:1;min-width:0">
+            <div class="aol-name">${s.nombre}</div>
+            <div class="aol-meta">${s.semana?'Sem '+s.semana+' · ':''}${
+              new Date(s.fecha).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})} · ${s.sets.length} series</div>
+          </div>
+          <div class="aol-ton">
+            <div class="aol-tn">${ton.toLocaleString('es-MX')}</div>
+            <div class="aol-tl">kg total</div>
+            ${dif !== null ? `<div class="aol-dif ${dif>=0?'up':'down'}">${dif>=0?'▲':'▼'} ${Math.abs(dif).toFixed(0)}%</div>` : ''}
+          </div>
+          <span class="aol-chev">›</span>
+        </div>
+        <div class="aol-body">
+          ${Object.entries(porEj).map(([ej, sets])=>`
+            <div class="aol-ej">
+              <div class="aol-ej-n">${ej}</div>
+              <div class="aol-ej-sets">${sets.sort((a,b)=>a.set_number-b.set_number).map(x=>
+                `<span class="aol-set">${x.weight ?? '—'}<i>×</i>${x.reps ?? '—'}${
+                  x.rir!=null?`<b>RIR ${x.rir}</b>`:''}</span>`).join('')}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 // ── HISTORIAL DE UN BLOQUE ────────────────────────────
@@ -6721,6 +6823,7 @@ async function executeCopyWeek(){
     coach_note: b.coach_note,
     score_type: b.score_type,
     score_format: b.score_format,
+    sets_config: b.sets_config,   // sin esto, Olympus llega vacío al copiar
     base_movement: b.base_movement,
     percentage: b.percentage,
     scaling_rx: b.scaling_rx,
