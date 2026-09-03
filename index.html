@@ -715,7 +715,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   border-radius:5px;overflow:hidden}
 .oly-ex-head{display:flex;justify-content:space-between;align-items:baseline;
   gap:10px;padding:12px 14px 8px}
-.oly-ex-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.01em}
+.oly-ex-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.01em;
+  display:flex;align-items:center;gap:8px}
+.oly-vid{background:var(--bg4);border:1px solid var(--border2);border-radius:50%;
+  width:24px;height:24px;flex-shrink:0;color:var(--accent);font-size:9px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.oly-vid:active{background:var(--accent-fill);color:var(--on-accent)}
 .oly-ex-meta{font-family:var(--font-n);font-size:10px;color:var(--accent);white-space:nowrap}
 .oly-ex-note{padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.5}
 .oly-cols{display:grid;grid-template-columns:26px 1fr 62px 56px 52px 40px;gap:6px;
@@ -2781,6 +2786,26 @@ function registraEntrenamiento(){
   return currentProfile?.role !== 'coach' || !!currentProfile?.competes;
 }
 
+// Empareja el ejercicio del bloque con la biblioteca por nombre.
+// Vincular por nombre y no por id significa que basta con subir el
+// video UNA vez a la biblioteca para que aparezca en las 87 sesiones.
+function normEj(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+}
+function buscarEnBiblioteca(nombre){
+  const n = normEj(nombre);
+  if(!n) return null;
+  let ex = allExercises.find(e => normEj(e.name) === n);
+  if(ex) return ex;
+  // Coincidencia parcial: "Press de banca con barra" encuentra "Press de banca"
+  ex = allExercises.filter(e => {
+    const en = normEj(e.name);
+    return en.length > 5 && (n.includes(en) || en.includes(n));
+  }).sort((a,b)=> normEj(b.name).length - normEj(a.name).length)[0];
+  return ex || null;
+}
+
 function isOlympusBlock(b){
   return b.program_slug === 'olympus' && parseSetsConfig(b);
 }
@@ -2815,11 +2840,9 @@ async function loadOlyPrev(nombres, blockId){
 
 function buildOlympusSection(b){
   const ejercicios = parseSetsConfig(b);
-  if(!ejercicios){
-    return b.program_slug === 'olympus'
-      ? '<div class="oly-loading">Este bloque de Olympus no tiene ejercicios configurados.</div>'
-      : '';
-  }
+  // Un bloque de Olympus sin ejercicios es legítimo: el cardio usa
+  // score normal, no series. Cae al registro estándar.
+  if(!ejercicios) return null;
   return `<div class="oly-wrap" id="oly-${b.id}">
     <div class="oly-loading">Cargando tus series...</div>
   </div>`;
@@ -2828,6 +2851,11 @@ function buildOlympusSection(b){
 async function renderOlympus(b){
   const cont = document.getElementById('oly-'+b.id);
   if(!cont) return;
+  // El atleta puede no haber abierto la biblioteca todavía
+  if(!allExercises.length){
+    const {data} = await sb.from('exercises').select('*').order('name');
+    allExercises = data || [];
+  }
   const ejercicios = parseSetsConfig(b);
   const hechos = await loadOlySets(b.id);
   await loadOlyPrev(ejercicios.map(e=>e.name), b.id);
@@ -2867,9 +2895,14 @@ async function renderOlympus(b){
           </button>
         </div>`;
       }).join('');
+      const bib = buscarEnBiblioteca(e.name);
+      const vid = (e.video || bib?.youtube_url)
+        ? `<button class="oly-vid" onclick="event.stopPropagation();${
+            bib ? `openExDetail('${bib.id}')` : `window.open('${e.video}','_blank')`}">▶</button>`
+        : '';
       return `<div class="oly-ex">
         <div class="oly-ex-head">
-          <div class="oly-ex-name">${e.name||'Ejercicio'}</div>
+          <div class="oly-ex-name">${e.name||'Ejercicio'}${vid}</div>
           <div class="oly-ex-meta">${e.sets||1} × ${e.reps||'?'}${e.rest?` · ${e.rest}s`:''}</div>
         </div>
         ${e.note ? `<div class="oly-ex-note">${e.note}</div>` : ''}
@@ -3012,7 +3045,7 @@ function renderBlock(b){
         <div class="pct-cell"><div class="pct-lbl">Score</div><div class="pct-val" style="font-size:10px">${b.score_type||'—'}</div></div>
       </div>
       ${b.coach_note ? '<div class="coach-note"><div class="cn-lbl">Coach</div><div class="cn-text">' + b.coach_note + '</div></div>' : ''}
-      ${isOlympusBlock(b) && registraEntrenamiento() ? buildOlympusSection(b) : buildScoreSection(b, isCoach)}
+      ${(isOlympusBlock(b) && registraEntrenamiento() && buildOlympusSection(b)) || buildScoreSection(b, isCoach)}
       ${editBtn}
       ${buildCoachActions(b, isCoach, completedBlocks)}
       <div class="done-banner ${completedBlocks['${b.id}']?'show':''}" id="done-${b.id}">
