@@ -1850,6 +1850,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <input class="be-input" id="ex-inp-url" type="text" placeholder="https://youtube.com/watch?v=...">
     </div>
     <div class="be-field">
+      <label class="be-label">Otros nombres</label>
+      <input class="be-input" id="ex-inp-alias" type="text"
+        placeholder="Sentadilla con barra, Squat trasero">
+      <div class="be-hint">Separados por coma. Sirve para que un programa en español
+        encuentre este video aunque esté guardado en inglés.</div>
+    </div>
+    <div class="be-field">
       <label class="be-label">Descripción</label>
       <textarea class="be-input" id="ex-inp-desc" style="min-height:80px" placeholder="Descripción del movimiento..."></textarea>
     </div>
@@ -2796,14 +2803,23 @@ function normEj(s){
 function buscarEnBiblioteca(nombre){
   const n = normEj(nombre);
   if(!n) return null;
+
+  // 1 · Nombre exacto
   let ex = allExercises.find(e => normEj(e.name) === n);
   if(ex) return ex;
-  // Coincidencia parcial: "Press de banca con barra" encuentra "Press de banca"
-  ex = allExercises.filter(e => {
-    const en = normEj(e.name);
-    return en.length > 5 && (n.includes(en) || en.includes(n));
-  }).sort((a,b)=> normEj(b.name).length - normEj(a.name).length)[0];
-  return ex || null;
+
+  // 2 · Alias. La biblioteca está en inglés y los programas pueden
+  //     estar en español: sin alias no empareja nada.
+  ex = allExercises.find(e =>
+    (e.aliases || []).some(a => normEj(a) === n));
+  if(ex) return ex;
+
+  // 3 · Coincidencia parcial, sobre nombre y alias
+  const cands = allExercises.filter(e => {
+    const opciones = [e.name, ...(e.aliases || [])].map(normEj);
+    return opciones.some(o => o.length > 5 && (n.includes(o) || o.includes(n)));
+  });
+  return cands.sort((a,b)=> normEj(b.name).length - normEj(a.name).length)[0] || null;
 }
 
 function isOlympusBlock(b){
@@ -6210,6 +6226,8 @@ function openEditExercise(){
   document.getElementById('ex-inp-name').value = currentExercise.name;
   document.getElementById('ex-inp-cat').value = currentExercise.category;
   document.getElementById('ex-inp-url').value = currentExercise.youtube_url || '';
+  const al = document.getElementById('ex-inp-alias');
+  if(al) al.value = (currentExercise.aliases || []).join(', ');
   document.getElementById('ex-inp-desc').value = currentExercise.description || '';
   document.getElementById('ex-inp-kp').value = currentExercise.key_points || '';
   document.getElementById('ex-delete-btn').style.display = 'block';
@@ -6226,6 +6244,8 @@ async function saveExercise(){
     name: document.getElementById('ex-inp-name').value.trim(),
     category: document.getElementById('ex-inp-cat').value,
     youtube_url: document.getElementById('ex-inp-url').value.trim(),
+    aliases: (document.getElementById('ex-inp-alias')?.value || '')
+      .split(',').map(s=>s.trim()).filter(Boolean),
     description: document.getElementById('ex-inp-desc').value.trim(),
     key_points: document.getElementById('ex-inp-kp').value.trim(),
     created_by: currentUser.id,
