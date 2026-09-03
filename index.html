@@ -2912,9 +2912,10 @@ async function renderOlympus(b){
         </div>`;
       }).join('');
       const bib = buscarEnBiblioteca(e.name);
-      const vid = (e.video || bib?.youtube_url)
-        ? `<button class="oly-vid" onclick="event.stopPropagation();${
-            bib ? `openExDetail('${bib.id}')` : `window.open('${e.video}','_blank')`}">▶</button>`
+      const videoUrl = bib?.youtube_url || e.video || '';
+      const safeVideoUrl = videoUrl.replace(/'/g, "\\'");
+      const vid = videoUrl
+        ? `<button class="oly-vid" onclick="openDemoVideo('${safeVideoUrl}',event)">▶</button>`
         : '';
       return `<div class="oly-ex">
         <div class="oly-ex-head">
@@ -6077,7 +6078,18 @@ const EX_CATEGORIES = ['Todos','Powerlifting','Oly Lifting','Gymnastics','Upper 
 
 function getYouTubeId(url){
   if(!url) return null;
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?]+)/);
+  try {
+    const u = new URL(String(url).trim());
+    const host = u.hostname.replace(/^www\./,'').replace(/^m\./,'');
+    if(host === 'youtu.be') return u.pathname.split('/').filter(Boolean)[0] || null;
+    if(host === 'youtube.com' || host.endsWith('.youtube.com')){
+      const v = u.searchParams.get('v');
+      if(v) return v;
+      const parts = u.pathname.split('/').filter(Boolean);
+      if(['embed','shorts','live'].includes(parts[0]) && parts[1]) return parts[1];
+    }
+  } catch(e) {}
+  const match = String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([^&\n?/#]+)/);
   return match ? match[1] : null;
 }
 
