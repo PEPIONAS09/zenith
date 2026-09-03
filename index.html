@@ -1533,6 +1533,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <path fill="currentColor" d=" M 430.40 509.83 Q 430.23 505.64 430.59 504.85 Q 432.45 500.84 435.86 493.66 C 437.01 491.23 439.44 490.79 442.16 490.79 Q 485.73 490.88 553.97 490.80 C 558.29 490.79 561.13 490.88 561.23 495.45 Q 561.27 497.19 559.91 499.18 Q 558.71 500.92 554.74 508.75 Q 552.93 512.34 548.50 512.34 Q 462.33 512.39 434.00 512.31 Q 432.15 512.31 430.74 510.68 A 1.47 1.46 23.4 0 1 430.40 509.83 Z"
 /></svg>
     <div class="topbar-r">
+      <button id="notif-btn" onclick="openNotifications()" aria-label="Notificaciones" style="position:relative;width:32px;height:32px;border-radius:50%;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);cursor:pointer;font-size:15px">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ff4444;color:white;font:700 9px/16px var(--font-m);text-align:center"></span></button>
       <div style="position:relative">
         <div class="avatar" id="user-avatar" onclick="onAvatarClick()" style="overflow:hidden;padding:0">—</div>
         <div class="chat-badge" id="score-badge" style="pointer-events:none"></div>
@@ -1771,6 +1772,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="timer-controls">
     <button class="timer-btn timer-btn-reset" onclick="resetTimer()">↺</button>
     <button class="timer-btn timer-btn-start" id="timer-start-btn" onclick="toggleTimer()">START</button>
+  </div>
+</div>
+
+<!-- BODY COMPOSITION EDITOR -->
+<div id="bodycomp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:610;align-items:center;justify-content:center;padding:18px">
+  <div style="width:min(520px,100%);max-height:92vh;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div><div style="font-family:var(--font-d);font-weight:800;font-size:19px">COMPOSICIÓN CORPORAL</div><div id="bc-athlete-name" style="font-size:10px;color:var(--text3);margin-top:3px"></div></div><button onclick="closeBodyCompEditor()" class="co-close">✕</button></div>
+    <input type="hidden" id="bc-athlete-id">
+    <div class="be-field"><label class="be-label">Fecha</label><input id="bc-date" type="date" class="be-input"></div>
+    <div class="be-field"><label class="be-label">Fuente</label><input id="bc-source" class="be-input" value="InBody" placeholder="InBody, Tanita, SECA..."></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="be-field"><label class="be-label">Peso · kg</label><input id="bc-weight" type="number" step="0.1" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Grasa corporal · %</label><input id="bc-pbf" type="number" step="0.1" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Masa muscular esquelética · kg</label><input id="bc-smm" type="number" step="0.1" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Masa libre de grasa · kg</label><input id="bc-ffm" type="number" step="0.1" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Grasa visceral · nivel</label><input id="bc-vfat" type="number" step="0.1" class="be-input"></div>
+      <div class="be-field"><label class="be-label">BMR · kcal</label><input id="bc-bmr" type="number" step="1" class="be-input"></div>
+    </div>
+    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin:8px 0">Segmental · opcional</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="be-field"><label class="be-label">Brazo izq · kg lean</label><input id="bc-la" type="number" step="0.01" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Brazo der · kg lean</label><input id="bc-ra" type="number" step="0.01" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Pierna izq · kg lean</label><input id="bc-ll" type="number" step="0.01" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Pierna der · kg lean</label><input id="bc-rl" type="number" step="0.01" class="be-input"></div>
+    </div>
+    <button class="be-save" onclick="saveBodyComp()">Guardar medición</button>
+    <div id="bc-msg" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;min-height:14px"></div>
+  </div>
+</div>
+
+<!-- SCORE FEEDBACK EDITOR -->
+<div id="feedback-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:620;align-items:center;justify-content:center;padding:18px">
+  <div style="width:min(430px,100%);background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-family:var(--font-d);font-weight:800;font-size:18px">FEEDBACK</div><div id="fb-title" style="font-size:10px;color:var(--text3);margin-top:3px"></div></div><button onclick="closeScoreFeedback()" class="co-close">✕</button></div>
+    <input type="hidden" id="fb-score-id"><input type="hidden" id="fb-athlete-id"><input type="hidden" id="fb-reaction">
+    <div style="display:flex;gap:8px;margin:18px 0 12px" id="fb-reactions">
+      <button type="button" onclick="selectFeedbackReaction('🔥',this)" style="flex:1;padding:10px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;font-size:20px;cursor:pointer">🔥</button><button type="button" onclick="selectFeedbackReaction('👏',this)" style="flex:1;padding:10px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;font-size:20px;cursor:pointer">👏</button><button type="button" onclick="selectFeedbackReaction('💪',this)" style="flex:1;padding:10px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;font-size:20px;cursor:pointer">💪</button><button type="button" onclick="selectFeedbackReaction('👀',this)" style="flex:1;padding:10px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;font-size:20px;cursor:pointer">👀</button><button type="button" onclick="selectFeedbackReaction('✅',this)" style="flex:1;padding:10px 0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;font-size:20px;cursor:pointer">✅</button>
+    </div>
+    <textarea id="fb-comment" class="be-textarea" rows="4" placeholder="Buen pacing. La próxima intenta sostener las transiciones..."></textarea>
+    <button class="be-save" onclick="saveScoreFeedback()">Enviar al atleta</button>
+    <div id="fb-msg" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;min-height:14px"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:615;align-items:flex-start;justify-content:center;padding:72px 16px 16px">
+  <div style="width:min(480px,100%);max-height:75vh;overflow:auto;background:var(--bg2);border:1px solid var(--border2);border-radius:6px">
+    <div style="position:sticky;top:0;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-d);font-weight:800">NOTIFICACIONES</div><button class="co-close" onclick="closeNotifications()">✕</button></div>
+    <div id="notif-list"><div class="empty-note">Cargando...</div></div>
   </div>
 </div>
 
@@ -2662,6 +2712,7 @@ function setupUI(){
   renderHomeComps();
   loadPRsToCache();
   initChat();
+  initNotifications();
   refreshScoreBadge();
   setInterval(refreshScoreBadge, 60000);
   if(isDesktop()) initDesktop();
@@ -3117,6 +3168,9 @@ async function loadBlockScores(blockId){
   const list = document.getElementById('sclist-'+blockId);
   if(!list || !data) return;
   if(!data.length){ list.innerHTML = ''; return; }
+  const {data: feedbackRows} = await sb.from('score_feedback').select('score_id,reaction,comment,created_at').in('score_id', data.map(x=>x.id)).order('created_at',{ascending:false});
+  const feedbackByScore = {};
+  (feedbackRows||[]).forEach(f=>{ if(!feedbackByScore[f.score_id]) feedbackByScore[f.score_id]=f; });
   list.innerHTML = data.map(s=>`
     <div class="sw-wrap" data-score-id="${s.id}">
       <button class="sw-del" onclick="deleteScore('${s.id}','${blockId}')">Borrar</button>
@@ -3126,6 +3180,7 @@ async function loadBlockScores(blockId){
           <span class="semeta">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</span>
         </div>
         ${s.notes ? `<span style="font-size:10px;color:var(--text3);font-style:italic">${s.notes}</span>` : ''}
+        ${feedbackByScore[s.id] ? `<div style="margin-top:5px;padding:6px 8px;background:var(--bg4);border-left:2px solid var(--accent);font-size:10px;color:var(--text2)">${feedbackByScore[s.id].reaction||''}${feedbackByScore[s.id].reaction?' ':''}${feedbackByScore[s.id].comment||'Tu coach reaccionó a este score'}</div>` : ''}
       </div>
     </div>`).join('');
   initSwipe(list);
@@ -4327,6 +4382,12 @@ async function renderAthScores(id){
   if(error){ cont.innerHTML = '<div class="empty-note">No se pudieron cargar.</div>'; return; }
   if(!data?.length){ cont.innerHTML = '<div class="empty-note">Sin scores registrados aún.</div>'; return; }
 
+  const {data: feedbackRows} = await sb.from('score_feedback')
+    .select('score_id,reaction,comment,created_at')
+    .in('score_id', data.map(s=>s.id)).order('created_at',{ascending:false});
+  const feedbackByScore = {};
+  (feedbackRows||[]).forEach(f=>{ if(!feedbackByScore[f.score_id]) feedbackByScore[f.score_id]=f; });
+
   // Resumen: adherencia real, días distintos entrenados
   const hoy = Date.now();
   const dias = s => (hoy - new Date(s.logged_at)) / 86400000;
@@ -4372,6 +4433,8 @@ async function renderAthScores(id){
               ${s.notes ? `<div class="asc-note">${s.notes}</div>` : ''}
               ${s.video_url ? `<a class="asc-vid" href="${s.video_url}" target="_blank" rel="noopener"
                  onclick="event.stopPropagation()">▶ ver video</a>` : ''}
+              ${feedbackByScore[s.id] ? `<div style="font-size:10px;color:var(--accent);margin-top:5px">${feedbackByScore[s.id].reaction||''}${feedbackByScore[s.id].reaction?' ':''}${feedbackByScore[s.id].comment||'Feedback enviado'}</div>` : ''}
+              <button onclick="event.stopPropagation();openScoreFeedback('${s.id}','${id}','${nombre}')" style="margin-top:6px;background:none;border:1px solid var(--border2);border-radius:3px;padding:5px 9px;font:600 9px var(--font-m);color:var(--text2);cursor:pointer">${feedbackByScore[s.id]?'＋ otro feedback':'♡ reaccionar / comentar'}</button>
             </div>
             <div class="asc-right">
               <div class="asc-val">${s.value}</div>
@@ -7492,6 +7555,98 @@ async function submitScore(){
   setTimeout(()=>closeScoreLogger(), 1200);
 }
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  OLYMPUS · COMPOSICIÓN CORPORAL
+//  El hexágono es un ÍNDICE DE PROGRESO personal, no un diagnóstico.
+//  La primera medición ancla la mayoría de ejes en 50; después se mueve
+//  según el cambio del propio atleta. Esto permite mezclar InBody/SECA/
+//  Tanita sin fingir que todos usan la misma escala propietaria.
+// ═══════════════════════════════════════════════════════════════════
+const OLY_BC_ORDER = ['mus','ffm','fat','vis','bal','bmr'];
+const OLY_BC_META = {
+  mus:{label:'Masa muscular',short:'MUS'}, ffm:{label:'Masa libre de grasa',short:'FFM'},
+  fat:{label:'Control de grasa',short:'FAT'}, vis:{label:'Grasa visceral',short:'VIS'},
+  bal:{label:'Balance segmental',short:'BAL'}, bmr:{label:'Metabolismo basal',short:'BMR'}
+};
+function clampRating(x){ return Math.max(1,Math.min(99,Math.round(x))); }
+function pctDelta(now,base){ return (now!=null && base>0) ? ((now-base)/base)*100 : null; }
+function bodyCompBalance(r){
+  const pairs=[[r.left_arm_lean_kg,r.right_arm_lean_kg],[r.left_leg_lean_kg,r.right_leg_lean_kg]];
+  const diffs=pairs.filter(([a,b])=>a>0&&b>0).map(([a,b])=>Math.abs(a-b)/((a+b)/2)*100);
+  if(!diffs.length) return null;
+  const avg=diffs.reduce((a,b)=>a+b,0)/diffs.length;
+  return clampRating(99-avg*4);
+}
+function buildOlympusBodyAttrs(first,last){
+  const mk=(key,val,source)=>({key,label:OLY_BC_META[key].label,short:OLY_BC_META[key].short,rating:val,parts:[],missing:val==null?[`Sin ${OLY_BC_META[key].label.toLowerCase()}`]:[],source});
+  const mus=pctDelta(last.skeletal_muscle_mass_kg,first.skeletal_muscle_mass_kg);
+  const ffm=pctDelta(last.fat_free_mass_kg,first.fat_free_mass_kg);
+  const bmr=pctDelta(last.bmr_kcal,first.bmr_kcal);
+  const fat=(last.body_fat_pct!=null && first.body_fat_pct!=null)?(first.body_fat_pct-last.body_fat_pct):null;
+  const vis=(last.visceral_fat_level!=null && first.visceral_fat_level!=null)?(first.visceral_fat_level-last.visceral_fat_level):null;
+  return {
+    mus:mk('mus',mus==null?null:clampRating(50+mus*8),'Cambio de SMM vs baseline'),
+    ffm:mk('ffm',ffm==null?null:clampRating(50+ffm*6),'Cambio de FFM vs baseline'),
+    fat:mk('fat',fat==null?null:clampRating(50+fat*6),'↓ % grasa vs baseline'),
+    vis:mk('vis',vis==null?null:clampRating(50+vis*6),'↓ visceral vs baseline'),
+    bal:mk('bal',bodyCompBalance(last),'Simetría brazos/piernas'),
+    bmr:mk('bmr',bmr==null?null:clampRating(50+bmr*4),'Cambio de BMR vs baseline')
+  };
+}
+async function loadOlympusBodyComp(athleteId){
+  const {data,error}=await sb.from('body_composition_assessments').select('*').eq('athlete_id',athleteId).order('measured_at',{ascending:true}).order('created_at',{ascending:true});
+  if(error) throw error; return data||[];
+}
+function openBodyCompEditor(athleteId,athleteName){
+  document.getElementById('bc-athlete-id').value=athleteId;
+  document.getElementById('bc-athlete-name').textContent=athleteName||'Atleta Olympus';
+  document.getElementById('bc-date').value=new Date().toISOString().slice(0,10);
+  ['bc-weight','bc-pbf','bc-smm','bc-ffm','bc-vfat','bc-bmr','bc-la','bc-ra','bc-ll','bc-rl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bc-msg').textContent=''; document.getElementById('bodycomp-overlay').style.display='flex';
+}
+function closeBodyCompEditor(){ document.getElementById('bodycomp-overlay').style.display='none'; }
+function nval(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
+async function saveBodyComp(){
+  const athleteId=document.getElementById('bc-athlete-id').value, msg=document.getElementById('bc-msg');
+  const row={athlete_id:athleteId, measured_at:document.getElementById('bc-date').value, source:document.getElementById('bc-source').value.trim()||'InBody',weight_kg:nval('bc-weight'),body_fat_pct:nval('bc-pbf'),skeletal_muscle_mass_kg:nval('bc-smm'),fat_free_mass_kg:nval('bc-ffm'),visceral_fat_level:nval('bc-vfat'),bmr_kcal:nval('bc-bmr'),left_arm_lean_kg:nval('bc-la'),right_arm_lean_kg:nval('bc-ra'),left_leg_lean_kg:nval('bc-ll'),right_leg_lean_kg:nval('bc-rl'),created_by:currentUser.id};
+  if(!row.measured_at){msg.textContent='Falta la fecha';return;} msg.textContent='Guardando...';
+  const {error}=await sb.from('body_composition_assessments').insert(row); if(error){msg.textContent='Error: '+error.message;return;}
+  msg.textContent='✓ Medición guardada';
+  setTimeout(async()=>{closeBodyCompEditor(); if(currentAthId===athleteId) renderAttributes('ad-attr-hex',athleteId,document.getElementById('ad-name')?.textContent);},700);
+}
+
+// ── SCORE FEEDBACK + NOTIFICATIONS ─────────────────────────────
+function openScoreFeedback(scoreId,athleteId,title){
+  document.getElementById('fb-score-id').value=scoreId; document.getElementById('fb-athlete-id').value=athleteId;
+  document.getElementById('fb-title').textContent=title||'Score'; document.getElementById('fb-comment').value=''; document.getElementById('fb-reaction').value=''; document.getElementById('fb-msg').textContent='';
+  document.querySelectorAll('#fb-reactions button').forEach(b=>b.style.borderColor='var(--border2)'); document.getElementById('feedback-overlay').style.display='flex';
+}
+function closeScoreFeedback(){document.getElementById('feedback-overlay').style.display='none';}
+function selectFeedbackReaction(r,btn){document.getElementById('fb-reaction').value=r;document.querySelectorAll('#fb-reactions button').forEach(b=>b.style.borderColor='var(--border2)');btn.style.borderColor='var(--accent)';}
+async function saveScoreFeedback(){
+  const scoreId=document.getElementById('fb-score-id').value,athleteId=document.getElementById('fb-athlete-id').value,reaction=document.getElementById('fb-reaction').value,comment=document.getElementById('fb-comment').value.trim(),msg=document.getElementById('fb-msg');
+  if(!reaction&&!comment){msg.textContent='Elige una reacción o escribe un comentario';return;} msg.textContent='Enviando...';
+  const {error}=await sb.from('score_feedback').insert({score_id:scoreId,athlete_id:athleteId,coach_id:currentUser.id,reaction:reaction||null,comment:comment||null});
+  if(error){msg.textContent='Error: '+error.message;return;} msg.textContent='✓ Enviado';
+  setTimeout(()=>{closeScoreFeedback();renderAthScores(athleteId);},600);
+}
+async function refreshNotifications(){
+  if(!currentUser) return; const {data}=await sb.from('notifications').select('id').eq('user_id',currentUser.id).is('read_at',null); const n=data?.length||0,b=document.getElementById('notif-badge'); if(b){b.style.display=n?'block':'none';b.textContent=n>9?'9+':n;}
+}
+async function openNotifications(){
+  const ov=document.getElementById('notif-overlay'),list=document.getElementById('notif-list'); ov.style.display='flex'; list.innerHTML='<div class="empty-note">Cargando...</div>';
+  const {data,error}=await sb.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(40);
+  if(error){list.innerHTML='<div class="empty-note">No se pudieron cargar.</div>';return;}
+  list.innerHTML=(data||[]).length?(data||[]).map(n=>`<div style="padding:13px 16px;border-bottom:1px solid var(--border);${n.read_at?'opacity:.65':''}"><div style="font-size:12px;font-weight:700;color:var(--text)">${n.title}</div>${n.body?`<div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.45">${n.body}</div>`:''}<div style="font-size:9px;color:var(--text3);margin-top:5px">${new Date(n.created_at).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join(''):'<div class="empty-note">Sin notificaciones.</div>';
+  const unread=(data||[]).filter(n=>!n.read_at).map(n=>n.id); if(unread.length) await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unread); refreshNotifications();
+}
+function closeNotifications(){document.getElementById('notif-overlay').style.display='none';}
+function initNotifications(){
+  refreshNotifications();
+  try{sb.channel('zenith-notifications-'+currentUser.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${currentUser.id}`},p=>{refreshNotifications();showToast(p.new?.title||'Nueva notificación');}).subscribe();}catch(e){console.log('Notifications realtime skipped',e);}
+}
+
 // ═══════════════════════════════════════════════════════════════════
 //  PERFIL DE ATRIBUTOS — hexágono estilo EA FC
 //  Seis ejes derivados de los PRs del atleta + su consistencia.
@@ -7805,6 +7960,7 @@ function renderAttrCard(attrs, name, opts){
     const src = a.parts?.slice(0,3).map(p=>p.name).join(' · ') || '';
 
     let sourceText = src;
+    if(!sourceText && a.source) sourceText = a.source;
     if(!sourceText && o.sourceLabel) sourceText = o.sourceLabel;
     if(!sourceText && a.key==='cns') sourceText = 'Scores de las últimas 8 semanas';
     if(!sourceText) sourceText = '—';
@@ -7867,6 +8023,21 @@ async function renderAttributes(containerId, athleteId, name){
 
       athleteProgram = athleteProfile?.program || null;
       athleteName = athleteName || athleteProfile?.full_name || 'Perfil de atleta';
+    }
+
+    // ── OLYMPUS · BODY COMPOSITION ─────────────────────────
+    if(athleteProgram === 'olympus'){
+      const scans = await loadOlympusBodyComp(uid);
+      const coachBtn = currentProfile?.role === 'coach'
+        ? `<button class="be-save" style="margin:0 0 14px" onclick="openBodyCompEditor('${uid}','${(athleteName||'Atleta').replace(/'/g,"\\'")}')">＋ Registrar InBody / composición</button>` : '';
+      if(!scans.length){
+        el.innerHTML = `<div class="attr-card"><div class="attr-head"><div class="attr-ovr"><div class="attr-ovr-num" style="color:var(--border2)">—</div><div class="attr-ovr-lbl">OVR</div></div><div class="attr-head-txt"><div class="attr-head-name">${athleteName}</div><div class="attr-head-sub">Olympus · Body Composition</div></div></div><div style="padding:28px 8px;text-align:center;font-size:11px;color:var(--text3);line-height:1.7">Aún no hay una medición de composición corporal. La primera medición crea el baseline.</div></div>${coachBtn}`;
+        return;
+      }
+      const first=scans[0], last=scans[scans.length-1], attrs=buildOlympusBodyAttrs(first,last);
+      const deltaTxt=scans.length>1?`${scans.length} mediciones · baseline ${new Date(first.measured_at+'T00:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}`:'Baseline registrado · necesitamos otra medición para ver tendencia';
+      el.innerHTML=renderAttrCard(attrs,athleteName,{order:OLY_BC_ORDER,subtitle:'Olympus · progreso de composición corporal',sourceLabel:'vs primera medición'}) + `<div style="font-size:10px;color:var(--text3);padding:0 4px 12px">${deltaTxt}. Índice de progreso, no diagnóstico médico.</div>` + coachBtn;
+      return;
     }
 
     // ── HUB MIND ─────────────────────────────────────────────
