@@ -1796,6 +1796,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div class="be-field"><label class="be-label">Brazo der · kg lean</label><input id="bc-ra" type="number" step="0.01" class="be-input"></div>
       <div class="be-field"><label class="be-label">Pierna izq · kg lean</label><input id="bc-ll" type="number" step="0.01" class="be-input"></div>
       <div class="be-field"><label class="be-label">Pierna der · kg lean</label><input id="bc-rl" type="number" step="0.01" class="be-input"></div>
+      <div class="be-field"><label class="be-label">Tronco · kg lean</label><input id="bc-trunk" type="number" step="0.01" class="be-input"></div>
     </div>
     <button class="be-save" onclick="saveBodyComp()">Guardar medición</button>
     <div id="bc-msg" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px;min-height:14px"></div>
@@ -7563,11 +7564,11 @@ async function submitScore(){
 //  según el cambio del propio atleta. Esto permite mezclar InBody/SECA/
 //  Tanita sin fingir que todos usan la misma escala propietaria.
 // ═══════════════════════════════════════════════════════════════════
-const OLY_BC_ORDER = ['mus','ffm','fat','vis','bal','bmr'];
+const OLY_BC_ORDER = ['mus','ffm','fat','vis','bal','prog'];
 const OLY_BC_META = {
   mus:{label:'Masa muscular',short:'MUS'}, ffm:{label:'Masa libre de grasa',short:'FFM'},
   fat:{label:'Control de grasa',short:'FAT'}, vis:{label:'Grasa visceral',short:'VIS'},
-  bal:{label:'Balance segmental',short:'BAL'}, bmr:{label:'Metabolismo basal',short:'BMR'}
+  bal:{label:'Balance segmental',short:'BAL'}, prog:{label:'Progreso global',short:'PROG'}
 };
 function clampRating(x){ return Math.max(1,Math.min(99,Math.round(x))); }
 function pctDelta(now,base){ return (now!=null && base>0) ? ((now-base)/base)*100 : null; }
@@ -7582,17 +7583,20 @@ function buildOlympusBodyAttrs(first,last){
   const mk=(key,val,source)=>({key,label:OLY_BC_META[key].label,short:OLY_BC_META[key].short,rating:val,parts:[],missing:val==null?[`Sin ${OLY_BC_META[key].label.toLowerCase()}`]:[],source});
   const mus=pctDelta(last.skeletal_muscle_mass_kg,first.skeletal_muscle_mass_kg);
   const ffm=pctDelta(last.fat_free_mass_kg,first.fat_free_mass_kg);
-  const bmr=pctDelta(last.bmr_kcal,first.bmr_kcal);
   const fat=(last.body_fat_pct!=null && first.body_fat_pct!=null)?(first.body_fat_pct-last.body_fat_pct):null;
   const vis=(last.visceral_fat_level!=null && first.visceral_fat_level!=null)?(first.visceral_fat_level-last.visceral_fat_level):null;
-  return {
+  const out = {
     mus:mk('mus',mus==null?null:clampRating(50+mus*8),'Cambio de SMM vs baseline'),
     ffm:mk('ffm',ffm==null?null:clampRating(50+ffm*6),'Cambio de FFM vs baseline'),
     fat:mk('fat',fat==null?null:clampRating(50+fat*6),'↓ % grasa vs baseline'),
     vis:mk('vis',vis==null?null:clampRating(50+vis*6),'↓ visceral vs baseline'),
-    bal:mk('bal',bodyCompBalance(last),'Simetría brazos/piernas'),
-    bmr:mk('bmr',bmr==null?null:clampRating(50+bmr*4),'Cambio de BMR vs baseline')
+    bal:mk('bal',bodyCompBalance(last),'Simetría brazos/piernas')
   };
+  // PROG resume la dirección global desde el baseline personal.
+  // No es una norma poblacional: 50 = punto de partida del atleta.
+  const vals=[out.mus?.rating,out.ffm?.rating,out.fat?.rating,out.vis?.rating,out.bal?.rating].filter(v=>Number.isFinite(v));
+  out.prog=mk('prog', vals.length ? clampRating(vals.reduce((a,b)=>a+b,0)/vals.length) : null, 'Progreso combinado vs baseline');
+  return out;
 }
 async function loadOlympusBodyComp(athleteId){
   const {data,error}=await sb.from('body_composition_assessments').select('*').eq('athlete_id',athleteId).order('measured_at',{ascending:true}).order('created_at',{ascending:true});
@@ -7602,14 +7606,14 @@ function openBodyCompEditor(athleteId,athleteName){
   document.getElementById('bc-athlete-id').value=athleteId;
   document.getElementById('bc-athlete-name').textContent=athleteName||'Atleta Olympus';
   document.getElementById('bc-date').value=new Date().toISOString().slice(0,10);
-  ['bc-weight','bc-pbf','bc-smm','bc-ffm','bc-vfat','bc-bmr','bc-la','bc-ra','bc-ll','bc-rl'].forEach(id=>document.getElementById(id).value='');
+  ['bc-weight','bc-pbf','bc-smm','bc-ffm','bc-vfat','bc-bmr','bc-la','bc-ra','bc-ll','bc-rl','bc-trunk'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('bc-msg').textContent=''; document.getElementById('bodycomp-overlay').style.display='flex';
 }
 function closeBodyCompEditor(){ document.getElementById('bodycomp-overlay').style.display='none'; }
 function nval(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
 async function saveBodyComp(){
   const athleteId=document.getElementById('bc-athlete-id').value, msg=document.getElementById('bc-msg');
-  const row={athlete_id:athleteId, measured_at:document.getElementById('bc-date').value, source:document.getElementById('bc-source').value.trim()||'InBody',weight_kg:nval('bc-weight'),body_fat_pct:nval('bc-pbf'),skeletal_muscle_mass_kg:nval('bc-smm'),fat_free_mass_kg:nval('bc-ffm'),visceral_fat_level:nval('bc-vfat'),bmr_kcal:nval('bc-bmr'),left_arm_lean_kg:nval('bc-la'),right_arm_lean_kg:nval('bc-ra'),left_leg_lean_kg:nval('bc-ll'),right_leg_lean_kg:nval('bc-rl'),created_by:currentUser.id};
+  const row={athlete_id:athleteId, measured_at:document.getElementById('bc-date').value, source:document.getElementById('bc-source').value.trim()||'InBody',weight_kg:nval('bc-weight'),body_fat_pct:nval('bc-pbf'),skeletal_muscle_mass_kg:nval('bc-smm'),fat_free_mass_kg:nval('bc-ffm'),visceral_fat_level:nval('bc-vfat'),bmr_kcal:nval('bc-bmr'),left_arm_lean_kg:nval('bc-la'),right_arm_lean_kg:nval('bc-ra'),left_leg_lean_kg:nval('bc-ll'),right_leg_lean_kg:nval('bc-rl'),trunk_lean_kg:nval('bc-trunk'),created_by:currentUser.id};
   if(!row.measured_at){msg.textContent='Falta la fecha';return;} msg.textContent='Guardando...';
   const {error}=await sb.from('body_composition_assessments').insert(row); if(error){msg.textContent='Error: '+error.message;return;}
   msg.textContent='✓ Medición guardada';
