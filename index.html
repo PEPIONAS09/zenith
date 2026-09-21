@@ -8107,7 +8107,7 @@ async function renderAttributes(containerId, athleteId, name){
     if(athleteProgram === 'hubmind' || athleteProgram === 'compete'){
       const {data: live, error: liveError} = await sb
         .from('athlete_live_ratings')
-        .select('athlete_id,full_name,event_slug,gym,eng,bbl,str,spd,cap,ovr')
+        .select('athlete_id,full_name,event_slug,gym,eng,bbl,str,spd,cap,ovr,zca_tests_completed')
         .eq('athlete_id', uid)
         .maybeSingle();
       if(liveError) throw liveError;
@@ -8115,7 +8115,7 @@ async function renderAttributes(containerId, athleteId, name){
         el.innerHTML = `<div class="attr-card"><div class="attr-head"><div class="attr-ovr"><div class="attr-ovr-num" style="color:var(--border2)">—</div><div class="attr-ovr-lbl">OVR</div></div><div class="attr-head-txt"><div class="attr-head-name">${athleteName}</div><div class="attr-head-sub">ZENITH Competition Assessment</div></div></div><div style="padding:34px 8px 24px;text-align:center;font-size:11px;color:var(--text3);line-height:1.7">Completa los tests ZCA para construir tu primer hexágono.</div></div>`;
         return;
       }
-      el.innerHTML = renderAttrCard(buildHubAttributes(live), live.full_name||athleteName, {order:HUB_ATTR_ORDER,subtitle:'ZCA + evidencia RATED · Live Rating',sourceLabel:'ZENITH · RATED'});
+      const zcaN=Number(live.zca_tests_completed||0); const status=live.event_slug==='zca-1.0'?'ZCA 1.0 VERIFICADO':(live.event_slug==='wza-mexico-2026'?'WZA + ZCA/RATED':'ZCA PROVISIONAL'); el.innerHTML = renderAttrCard(buildHubAttributes(live), live.full_name||athleteName, {order:HUB_ATTR_ORDER,subtitle:`${status} · ${zcaN}/8 tests ZCA · Live Rating`,sourceLabel:'ZENITH · ZR 1.0'});
       return;
     }
 
