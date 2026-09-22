@@ -1587,7 +1587,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div id="ds-panel-cumplimiento" style="display:none">
       <div style="padding:20px 28px;border-bottom:1px solid var(--border);background:var(--bg2)">
         <div style="font-family:var(--font-d);font-size:22px;letter-spacing:.08em">CUMPLIMIENTO</div>
-        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:4px">Bloques completados por atleta · semana actual de cada programa</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-top:4px">Matriz atleta × bloque · score o check = realizado · descanso no penaliza</div>
       </div>
       <div id="ds-compliance" style="padding:22px 28px"></div>
     </div>
@@ -2826,38 +2826,163 @@ async function loadServerCompletions(){
   if(!error && data){ completedBlocks={}; data.forEach(x=>completedBlocks[x.block_id]=true); localStorage.setItem('z_completed',JSON.stringify(completedBlocks)); }
 }
 
-async function renderComplianceDashboard(){
-  const el=document.getElementById('ds-compliance'); if(!el) return;
-  el.innerHTML='<div class="attr-loading">Calculando cumplimiento...</div>';
-  const {data,error}=await sb.from('coach_weekly_compliance').select('*').order('program_slug').order('completion_pct',{ascending:false});
-  if(error){el.innerHTML='<div class="attr-loading">Primero ejecuta el SQL de cumplimiento.</div>';return;}
-  const rows=data||[];
-  if(!rows.length){el.innerHTML='<div class="attr-loading">Aún no hay atletas con programación activa.</div>';return;}
-  const progs=['olympus','games','compete','hubmind'];
-  el.innerHTML=progs.map(prog=>{
-    const rr=rows.filter(x=>x.program_slug===prog); if(!rr.length)return '';
-    const avg=Math.round(rr.reduce((a,x)=>a+Number(x.completion_pct||0),0)/rr.length);
-    return `<div style="margin-bottom:28px"><div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:10px"><div style="font-family:var(--font-d);font-size:18px;text-transform:uppercase">${prog}</div><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Promedio ${avg}%</div></div>${rr.map(x=>`<div style="display:grid;grid-template-columns:minmax(120px,1.2fr) 3fr 60px;gap:10px;align-items:center;margin:8px 0"><div style="font-size:12px">${x.full_name}</div><div style="height:9px;background:var(--bg3);border-radius:9px;overflow:hidden"><div style="height:100%;width:${Math.min(100,Number(x.completion_pct||0))}%;background:var(--accent-fill)"></div></div><div style="font-family:var(--font-m);font-size:10px;text-align:right">${x.completed_blocks}/${x.scheduled_blocks} · ${Math.round(Number(x.completion_pct||0))}%</div></div>`).join('')}</div>`;
-  }).join('');
+let complianceProgram='compete';
+let complianceStatus='all';
+
+function complianceShortName(name){
+  return String(name||'')
+    .replace(/^◆\s*RATED\s*·\s*/i,'')
+    .replace(/^ZCA 1\.0\s*·\s*/i,'')
+    .replace(/^◆\s*/,'')
+    .trim();
 }
 
-let mobileComplianceProgram='all';
+async function loadComplianceMatrix(programSlug){
+  const week = programWeeks[programSlug] || 1;
+
+  const [pRes,bRes,cRes,sRes] = await Promise.all([
+    sb.from('profiles').select('id,full_name,program').eq('role','athlete').eq('program',programSlug).order('full_name'),
+    sb.from('blocks').select('id,name,day_of_week,order_index,counts_for_compliance,rating_test_key')
+      .eq('program_slug',programSlug).eq('week_number',week)
+      .order('day_of_week').order('order_index'),
+    sb.from('training_completions').select('athlete_id,block_id'),
+    sb.from('scores').select('athlete_id,block_id')
+  ]);
+
+  if(pRes.error) throw pRes.error;
+  if(bRes.error) throw bRes.error;
+  if(cRes.error) throw cRes.error;
+  if(sRes.error) throw sRes.error;
+
+  const athletes=(pRes.data||[]);
+  const athleteIds=new Set(athletes.map(a=>a.id));
+  const blocks=(bRes.data||[]).filter(b=>b.counts_for_compliance !== false);
+  const blockIds=new Set(blocks.map(b=>b.id));
+  const done=new Set();
+
+  (cRes.data||[]).forEach(x=>{
+    if(athleteIds.has(x.athlete_id) && blockIds.has(x.block_id)) done.add(x.athlete_id+'|'+x.block_id);
+  });
+  // A valid submitted result is also evidence that the athlete performed the block.
+  (sRes.data||[]).forEach(x=>{
+    if(athleteIds.has(x.athlete_id) && blockIds.has(x.block_id)) done.add(x.athlete_id+'|'+x.block_id);
+  });
+
+  return {week,athletes,blocks,done};
+}
+
+function complianceToolbar(targetId){
+  const programs=PROGRAMS.map(p=>p.slug);
+  return `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px">
+    <select onchange="complianceProgram=this.value;renderComplianceDashboard()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:2px;font-family:var(--font-m);font-size:10px">
+      ${programs.map(p=>`<option value="${p}" ${p===complianceProgram?'selected':''}>${progMeta(p).label}</option>`).join('')}
+    </select>
+    <select onchange="complianceStatus=this.value;renderComplianceDashboard()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px 10px;border-radius:2px;font-family:var(--font-m);font-size:10px">
+      <option value="all" ${complianceStatus==='all'?'selected':''}>Todos</option>
+      <option value="pending" ${complianceStatus==='pending'?'selected':''}>Con pendientes</option>
+      <option value="complete" ${complianceStatus==='complete'?'selected':''}>Completos</option>
+    </select>
+    <span style="font-family:var(--font-m);font-size:9px;color:var(--text3)">✓ = realizado · score registrado también cuenta</span>
+  </div>`;
+}
+
+async function renderComplianceDashboard(){
+  const el=document.getElementById('ds-compliance'); if(!el) return;
+  el.innerHTML='<div class="attr-loading">Construyendo matriz...</div>';
+  try{
+    const {week,athletes,blocks,done}=await loadComplianceMatrix(complianceProgram);
+    const rows=athletes.map(a=>{
+      const completed=blocks.filter(b=>done.has(a.id+'|'+b.id)).length;
+      return {...a,completed,total:blocks.length};
+    }).filter(a=>{
+      if(complianceStatus==='complete') return a.total>0 && a.completed===a.total;
+      if(complianceStatus==='pending') return a.completed<a.total;
+      return true;
+    });
+
+    const head=blocks.map(b=>`<th title="${b.name}" style="min-width:92px;max-width:130px;padding:9px 6px;font-family:var(--font-m);font-size:8px;color:var(--text3);font-weight:500;text-align:center;vertical-align:bottom;white-space:normal">${complianceShortName(b.name)}</th>`).join('');
+    const body=rows.map(a=>{
+      const cells=blocks.map(b=>{
+        const ok=done.has(a.id+'|'+b.id);
+        return `<td style="text-align:center;padding:10px 5px;border-top:1px solid var(--border);font-family:var(--font-m);font-size:13px;color:${ok?'var(--accent)':'var(--text3)'}">${ok?'✓':'—'}</td>`;
+      }).join('');
+      const pct=a.total?Math.round(a.completed*100/a.total):0;
+      return `<tr><td style="position:sticky;left:0;background:var(--bg);z-index:2;padding:10px 12px;border-top:1px solid var(--border);min-width:150px;font-size:12px;font-weight:600">${a.full_name}</td>${cells}<td style="padding:10px;border-top:1px solid var(--border);white-space:nowrap;font-family:var(--font-m);font-size:10px;text-align:right">${a.completed}/${a.total} · ${pct}%</td></tr>`;
+    }).join('');
+
+    el.innerHTML=complianceToolbar('ds-compliance')+
+      `<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px">
+        <div style="font-family:var(--font-d);font-size:17px;text-transform:uppercase">${progMeta(complianceProgram).label} · Semana ${week}</div>
+        <div style="font-family:var(--font-m);font-size:9px;color:var(--text3)">${athletes.length} atletas · ${blocks.length} bloques que cuentan</div>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border);border-radius:3px">
+        <table style="border-collapse:collapse;width:max-content;min-width:100%">
+          <thead><tr>
+            <th style="position:sticky;left:0;background:var(--bg2);z-index:3;text-align:left;padding:9px 12px;min-width:150px;font-family:var(--font-m);font-size:8px;color:var(--text3)">ATLETA</th>
+            ${head}
+            <th style="padding:9px 10px;font-family:var(--font-m);font-size:8px;color:var(--text3);text-align:right">TOTAL</th>
+          </tr></thead>
+          <tbody>${body || `<tr><td colspan="${blocks.length+2}" style="padding:24px;text-align:center;color:var(--text3)">Sin atletas para este filtro.</td></tr>`}</tbody>
+        </table>
+      </div>`;
+  }catch(err){
+    console.error('compliance matrix',err);
+    el.innerHTML='<div class="empty-note">No se pudo cargar la matriz de cumplimiento: '+String(err.message||err)+'</div>';
+  }
+}
+
+let mobileComplianceProgram='compete';
+let mobileComplianceStatus='all';
 async function openMobileCompliance(){
   document.getElementById('mobile-compliance-overlay')?.classList.add('open');
   await renderMobileCompliance();
 }
 function closeMobileCompliance(){ document.getElementById('mobile-compliance-overlay')?.classList.remove('open'); }
+
 async function renderMobileCompliance(){
-  const el=document.getElementById('mobile-compliance-list'); const f=document.getElementById('mc-filter');
-  if(!el)return; el.innerHTML='<div class="attr-loading">Calculando...</div>';
-  const {data,error}=await sb.from('coach_weekly_compliance').select('*').order('program_slug').order('completion_pct',{ascending:false});
-  if(error){el.innerHTML='<div class="empty-note">No se pudo cargar cumplimiento.</div>';return;}
-  const rows=data||[]; const progs=['all','olympus','games','compete','hubmind'];
-  if(f) f.innerHTML=progs.map(p=>`<button onclick="mobileComplianceProgram='${p}';renderMobileCompliance()" style="white-space:nowrap;border:1px solid ${mobileComplianceProgram===p?'var(--accent)':'var(--border2)'};background:${mobileComplianceProgram===p?'var(--accent-fill)':'none'};color:${mobileComplianceProgram===p?'var(--on-accent)':'var(--text2)'};padding:7px 10px;border-radius:2px;font-family:var(--font-m);font-size:9px;text-transform:uppercase">${p==='all'?'Todos':p}</button>`).join('');
-  const rr=mobileComplianceProgram==='all'?rows:rows.filter(x=>x.program_slug===mobileComplianceProgram);
-  if(!rr.length){el.innerHTML='<div class="empty-note">Sin atletas activos.</div>';return;}
-  el.innerHTML=rr.map(x=>{const pct=Math.round(Number(x.completion_pct||0)); return `<div style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div style="font-size:13px;font-weight:600">${x.full_name}</div><div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;margin-top:3px">${x.program_slug} · Semana ${x.current_week}</div></div><div style="font-family:var(--font-m);font-size:11px">${x.completed_blocks}/${x.scheduled_blocks} · ${pct}%</div></div><div style="height:8px;background:var(--bg3);border-radius:8px;overflow:hidden;margin-top:9px"><div style="height:100%;width:${Math.min(100,pct)}%;background:var(--accent-fill)"></div></div></div>`}).join('');
+  const el=document.getElementById('mobile-compliance-list');
+  const f=document.getElementById('mc-filter');
+  if(!el)return;
+  el.innerHTML='<div class="attr-loading">Calculando...</div>';
+  try{
+    const {week,athletes,blocks,done}=await loadComplianceMatrix(mobileComplianceProgram);
+    if(f) f.innerHTML=
+      `<select onchange="mobileComplianceProgram=this.value;renderMobileCompliance()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:2px;font-family:var(--font-m);font-size:10px">
+        ${PROGRAMS.map(p=>`<option value="${p.slug}" ${p.slug===mobileComplianceProgram?'selected':''}>${p.label}</option>`).join('')}
+      </select>
+      <select onchange="mobileComplianceStatus=this.value;renderMobileCompliance()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:8px;border-radius:2px;font-family:var(--font-m);font-size:10px">
+        <option value="all" ${mobileComplianceStatus==='all'?'selected':''}>Todos</option>
+        <option value="pending" ${mobileComplianceStatus==='pending'?'selected':''}>Con pendientes</option>
+        <option value="complete" ${mobileComplianceStatus==='complete'?'selected':''}>Completos</option>
+      </select>`;
+
+    const rows=athletes.map(a=>{
+      const completed=blocks.filter(b=>done.has(a.id+'|'+b.id)).length;
+      return {...a,completed,total:blocks.length};
+    }).filter(a=>{
+      if(mobileComplianceStatus==='complete') return a.total>0 && a.completed===a.total;
+      if(mobileComplianceStatus==='pending') return a.completed<a.total;
+      return true;
+    });
+
+    el.innerHTML=`<div style="font-family:var(--font-m);font-size:9px;color:var(--text3);margin-bottom:12px">${progMeta(mobileComplianceProgram).label} · Semana ${week} · ${blocks.length} bloques</div>`+
+      (rows.map(a=>{
+        const pct=a.total?Math.round(a.completed*100/a.total):0;
+        const chips=blocks.map(b=>{
+          const ok=done.has(a.id+'|'+b.id);
+          return `<div title="${b.name}" style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-family:var(--font-m);font-size:9px"><span>${complianceShortName(b.name)}</span><span style="color:${ok?'var(--accent)':'var(--text3)'}">${ok?'✓':'—'}</span></div>`;
+        }).join('');
+        return `<div style="padding:12px;border:1px solid var(--border);border-radius:3px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:8px"><strong style="font-size:13px">${a.full_name}</strong><span style="font-family:var(--font-m);font-size:10px">${a.completed}/${a.total} · ${pct}%</span></div>
+          ${chips}
+        </div>`;
+      }).join('') || '<div class="empty-note">Sin atletas para este filtro.</div>');
+  }catch(err){
+    console.error('mobile compliance matrix',err);
+    el.innerHTML='<div class="empty-note">No se pudo cargar cumplimiento.</div>';
+  }
 }
+
 
 // RENDER BLOCKS
 
@@ -3151,7 +3276,7 @@ function renderBlock(b){
   return `<div class="block" id="blk-${b.id}">
     <div class="block-hdr" onclick="toggleBlock('${b.id}')">
       <div class="block-dot" style="background:${b.color}"></div>
-      <div class="block-info"><div class="block-name">${b.name} ${b.is_rated ? '<span style="display:inline-block;margin-left:6px;padding:2px 6px;border:1px solid var(--accent);border-radius:2px;font-family:var(--font-m);font-size:8px;color:var(--accent);letter-spacing:.08em;vertical-align:1px">RATED</span>' : ''}</div><div class="block-meta">${b.meta||''}</div></div>
+      <div class="block-info"><div class="block-name">${b.name}</div><div class="block-meta">${b.meta||''}</div></div>
       <div class="block-chev">▾</div>
     </div>
     <div class="block-body">
@@ -3307,17 +3432,6 @@ async function deleteScore(scoreId, blockId){
   loadBlockScores(blockId);
 }
 
-function renderDayBlocksSeparated(blocks){
-  const normal = (blocks||[]).filter(b => !(b.rating_test_key||'').startsWith('zca1-'));
-  const zca = (blocks||[]).filter(b => (b.rating_test_key||'').startsWith('zca1-'));
-  let html = normal.map(b=>renderBlock(b)).join('');
-  if(zca.length){
-    html += `<div style="margin:20px 0 10px;padding:10px 12px;border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);font-family:var(--font-m);font-size:10px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase">ZCA 1.0 · Assessment — separado de la programación</div>`;
-    html += zca.map(b=>renderBlock(b)).join('');
-  }
-  return html;
-}
-
 function initHome(){
   const blocks = allBlocks[todayDow] || [];
   const c = document.getElementById('home-blocks');
@@ -3326,7 +3440,7 @@ function initHome(){
   if(!blocks.length){ 
     c.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?renderAddBlockBtn(todayDow,prog):'');
   } else {
-    c.innerHTML = renderDayBlocksSeparated(blocks)+(isCoach?renderAddBlockBtn(todayDow,prog):'');
+    c.innerHTML = blocks.map(b=>renderBlock(b)).join('')+(isCoach?renderAddBlockBtn(todayDow,prog):'');
     // Scores removed - only tracking PRs now
   }
 }
@@ -3382,7 +3496,7 @@ function initWeek(){
     if(!blocks.length){
       div.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?`<div style="padding:0 16px">${renderAddBlockBtn(dow,prog)}</div>`:'');
     } else {
-      div.innerHTML=`<div class="blocks">${renderDayBlocksSeparated(blocks)}${isCoach?renderAddBlockBtn(dow,prog):''}</div>`;
+      div.innerHTML=`<div class="blocks">${blocks.map(b=>renderBlock(b)).join('')}${isCoach?renderAddBlockBtn(dow,prog):''}</div>`;
     }
     content.appendChild(div);
     // Scores removed - only tracking PRs now
@@ -4774,7 +4888,7 @@ function renderBlockCoachView(b, index, total){
     <div class="block-hdr" onclick="toggleAthBlock('${b.id}')">
       <div class="block-dot" style="background:${b.color}"></div>
       <div class="block-info">
-        <div class="block-name">${b.name} ${b.is_rated ? '<span style="display:inline-block;margin-left:6px;padding:2px 6px;border:1px solid var(--accent);border-radius:2px;font-family:var(--font-m);font-size:8px;color:var(--accent);letter-spacing:.08em;vertical-align:1px">RATED</span>' : ''} ${athleteOverrides['${b.id}'] ? '<span style="font-size:9px;color:var(--accent);font-family:var(--font-m)">★ override</span>' : ''}</div>
+        <div class="block-name">${b.name} ${athleteOverrides['${b.id}'] ? '<span style="font-size:9px;color:var(--accent);font-family:var(--font-m)">★ override</span>' : ''}</div>
         <div class="block-meta">${athleteOverrides['${b.id}']?.meta || b.meta||''}</div>
       </div>
       <div style="display:flex;gap:4px;align-items:center">
