@@ -7542,6 +7542,110 @@ const SCORE_FORMATS = {
   }
 };
 
+
+// ZCA 1.0 uses a strict, test-specific score contract.
+// This prevents generic sets/reps fields from corrupting assessment data.
+const ZCA_SCORE_FORMATS = {
+  'zca1-broad-jump': {
+    label:'ZCA · Broad Jump',
+    fields:[{id:'distance_cm',label:'Mejor salto',placeholder:'245',unit:'cm',type:'number',min:50,max:400,step:'0.1'}],
+    format:d=>`${d.distance_cm} cm`
+  },
+  'zca1-clean': {
+    label:'ZCA · 1RM Clean',
+    fields:[{id:'weight',label:'1RM válido',placeholder:'225',unit:'lbs',type:'number',min:20,max:600,step:'0.5'}],
+    format:d=>`${d.weight} lbs`
+  },
+  'zca1-back-squat': {
+    label:'ZCA · 1RM Back Squat',
+    fields:[{id:'weight',label:'1RM válido',placeholder:'315',unit:'lbs',type:'number',min:20,max:800,step:'0.5'}],
+    format:d=>`${d.weight} lbs`
+  },
+  'zca1-gym-pull': {
+    label:'ZCA · Gym Pull',
+    fields:[
+      {id:'level',label:'Nivel',type:'select',options:[['L1','L1 · Pull-Ups'],['L2','L2 · Chest-to-Bar'],['L3','L3 · Bar Muscle-Ups'],['L4','L4 · Ring Muscle-Ups']]},
+      {id:'reps',label:'Reps válidas en 2:00',placeholder:'18',unit:'reps',type:'number',min:1,max:40,step:'1'}
+    ],
+    format:d=>`${d.level} · ${d.reps} reps`
+  },
+  'zca1-gym-press': {
+    label:'ZCA · Gym Press',
+    fields:[
+      {id:'level',label:'Nivel',type:'select',options:[['L1','L1 · Hand-Release Push-Ups'],['L2','L2 · Kipping HSPU'],['L3','L3 · Strict HSPU'],['L4','L4 · Strict Wall-Facing HSPU']]},
+      {id:'reps',label:'Reps válidas en 2:00',placeholder:'9',unit:'reps',type:'number',min:1,max:40,step:'1'}
+    ],
+    format:d=>`${d.level} · ${d.reps} reps`
+  },
+  'zca1-handstand-skill': {
+    label:'ZCA · Handstand Skill',
+    fields:[{id:'level',label:'Nivel completado',type:'select',options:[['1','L1 · 30s Handstand Hold'],['2','L2 · 25 ft HSW'],['3','L3 · 50 ft HSW'],['4','L4 · Advanced obstacle']]}],
+    format:d=>`L${d.level}`
+  },
+  'zca1-row-2k': {
+    label:'ZCA · 2K Row',
+    fields:[{id:'time',label:'Tiempo final',placeholder:'7:20',unit:'mm:ss',type:'text'}],
+    format:d=>d.time
+  },
+  'zca1-barbell-cycling': {
+    label:'ZCA · Barbell Cycling',
+    fields:[{id:'time',label:'Tiempo final',placeholder:'5:42',unit:'mm:ss',type:'text'}],
+    format:d=>d.time
+  },
+  'zca1-sprint-capacity': {
+    label:'ZCA · Sprint Capacity',
+    fields:[{id:'time',label:'Tiempo final',placeholder:'4:18',unit:'mm:ss',type:'text'}],
+    format:d=>d.time
+  },
+  'zca1-sustained-capacity': {
+    label:'ZCA · Sustained Capacity',
+    fields:[{id:'reps',label:'Reps totales en 20:00',placeholder:'315',unit:'reps',type:'number',min:1,max:1000,step:'1'}],
+    format:d=>`${d.reps} reps`
+  }
+};
+
+let currentLoggerZcaSpec = null;
+function findLoggerBlock(blockId){
+  return [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks||{}).flat()].find(x=>x.id===blockId) || null;
+}
+function zcaSpecForBlock(blockId){
+  const b=findLoggerBlock(blockId);
+  return b?.rating_test_key ? (ZCA_SCORE_FORMATS[b.rating_test_key] || null) : null;
+}
+function renderScoreField(f){
+  if(f.type==='select'){
+    const opts=(f.options||[]).map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+    return `<div class="sl-field"><label class="sl-label">${f.label}</label><select class="sl-input" id="slf-${f.id}">${opts}</select></div>`;
+  }
+  const attrs=[f.min!=null?`min="${f.min}"`:'',f.max!=null?`max="${f.max}"`:'',f.step?`step="${f.step}"`:''].filter(Boolean).join(' ');
+  return `<div class="sl-field"><label class="sl-label">${f.label}</label><input class="sl-input" id="slf-${f.id}" type="${f.type}" placeholder="${f.placeholder||''}" inputmode="${f.type==='number'?'decimal':'text'}" ${attrs}>${f.unit?`<div class="sl-unit">${f.unit}</div>`:''}</div>`;
+}
+function zcaNumericForBlock(block,data){
+  switch(block?.rating_test_key){
+    case 'zca1-broad-jump': return Number(data.distance_cm);
+    case 'zca1-clean':
+    case 'zca1-back-squat': return Number(data.weight);
+    case 'zca1-gym-pull':
+    case 'zca1-gym-press':
+    case 'zca1-sustained-capacity': return Number(data.reps);
+    case 'zca1-handstand-skill': return Number(data.level);
+    case 'zca1-row-2k':
+    case 'zca1-barbell-cycling':
+    case 'zca1-sprint-capacity': return parseClockSeconds(data.time);
+    default: return null;
+  }
+}
+function validateZcaScore(block,data){
+  const key=block?.rating_test_key;
+  const n=zcaNumericForBlock(block,data);
+  if(!Number.isFinite(n)||n<=0) return 'Captura un resultado válido.';
+  if(key==='zca1-broad-jump' && (n<50||n>400)) return 'Broad Jump debe capturarse en centímetros (50–400 cm).';
+  if((key==='zca1-gym-pull'||key==='zca1-gym-press') && (!/^L[1-4]$/.test(data.level||'')||n>40)) return 'Selecciona L1–L4 y captura entre 1 y 40 reps.';
+  if(key==='zca1-handstand-skill' && ![1,2,3,4].includes(n)) return 'Selecciona un nivel L1–L4.';
+  if(['zca1-row-2k','zca1-barbell-cycling','zca1-sprint-capacity'].includes(key) && parseClockSeconds(data.time)===null) return 'Usa tiempo mm:ss, por ejemplo 7:20.';
+  return null;
+}
+
 let currentCat = 'RX';
 function pickCat(btn){
   document.querySelectorAll('.sl-cat').forEach(b=>b.classList.remove('active'));
@@ -7558,90 +7662,34 @@ async function openScoreLogger(blockId, blockName, format, e){
   e.stopPropagation();
   currentLoggerBlockId = blockId;
   currentLoggerFormat = format || 'text';
-  
+  currentLoggerZcaSpec = zcaSpecForBlock(blockId);
   document.getElementById('sl-title').textContent = blockName;
-  
-  const fmt = SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
-  
-  // Build form fields
-  let fieldsHtml = fmt.fields.map(f => `
-    <div class="sl-field">
-      <label class="sl-label">${f.label}</label>
-      <input class="sl-input" id="slf-${f.id}" type="${f.type}" placeholder="${f.placeholder}" inputmode="${f.type==='number'?'decimal':'text'}">
-      ${f.unit ? `<div class="sl-unit">${f.unit}</div>` : ''}
-    </div>`).join('');
 
-  if(fmt.extra){
-    fieldsHtml += `
-      <div class="sl-field" style="margin-top:4px">
-        <label class="sl-label">${fmt.extra.label}</label>
-        <input class="sl-input" id="slf-${fmt.extra.id}" type="text" placeholder="${fmt.extra.placeholder}">
-      </div>`;
+  const fmt = currentLoggerZcaSpec || SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
+  let fieldsHtml = fmt.fields.map(renderScoreField).join('');
+
+  if(fmt.extra && !currentLoggerZcaSpec){
+    fieldsHtml += `<div class="sl-field" style="margin-top:4px"><label class="sl-label">${fmt.extra.label}</label><input class="sl-input" id="slf-${fmt.extra.id}" type="text" placeholder="${fmt.extra.placeholder}"></div>`;
   }
 
-  fieldsHtml += `
-    <div class="sl-field">
-      <label class="sl-label">Categoría</label>
-      <div class="sl-cats">
-        <button type="button" class="sl-cat active" data-cat="RX" onclick="pickCat(this)">RX</button>
-        <button type="button" class="sl-cat" data-cat="INTERMEDIATE" onclick="pickCat(this)">Intermediate</button>
-        <button type="button" class="sl-cat" data-cat="OPEN" onclick="pickCat(this)">Open</button>
-      </div>
-      <div class="sl-cat-hint" id="sl-cat-hint"></div>
-    </div>
-    <div class="sl-field">
-      <label class="sl-label">Notas (opcional)</label>
-      <textarea class="sl-input sl-textarea" id="slf-notes" rows="3"
-        placeholder="Cómo te sentiste, dónde se cayó el ritmo, qué escalaste..."></textarea>
-    </div>
-    <div class="sl-field">
-      <label class="sl-label">Link de video (opcional)</label>
-      <input class="sl-input" id="slf-video" type="url" inputmode="url"
-        placeholder="https://... YouTube, Drive o Instagram">
-      <div class="sl-cat-hint">Súbelo como &laquo;no listado&raquo; si no quieres que sea público.</div>
-    </div>`;
+  if(currentLoggerZcaSpec){
+    fieldsHtml += `<div class="sl-cat-hint" style="margin:4px 0 12px">ZCA 1.0 · captura estandarizada. Un resultado válido por test.</div>`;
+  } else {
+    fieldsHtml += `<div class="sl-field"><label class="sl-label">Categoría</label><div class="sl-cats"><button type="button" class="sl-cat active" data-cat="RX" onclick="pickCat(this)">RX</button><button type="button" class="sl-cat" data-cat="INTERMEDIATE" onclick="pickCat(this)">Intermediate</button><button type="button" class="sl-cat" data-cat="OPEN" onclick="pickCat(this)">Open</button></div><div class="sl-cat-hint" id="sl-cat-hint"></div></div>`;
+  }
 
-  // Load history by block name across all weeks (not just this block_id)
-  // First get all block IDs with the same name in the same program
-  const allB = Object.values(allBlocks).flat();
-  const thisBlock = allB.find(x=>x.id===blockId);
-  const prog = currentProfile?.program || 'compete';
-  
-  let blockIds = [blockId];
+  fieldsHtml += `<div class="sl-field"><label class="sl-label">Notas (opcional)</label><textarea class="sl-input sl-textarea" id="slf-notes" rows="3" placeholder="Contexto útil del intento..."></textarea></div><div class="sl-field"><label class="sl-label">Link de video (opcional)</label><input class="sl-input" id="slf-video" type="url" inputmode="url" placeholder="https://... YouTube, Drive o Instagram"><div class="sl-cat-hint">Súbelo como &laquo;no listado&raquo; si no quieres que sea público.</div></div>`;
+
+  const thisBlock=findLoggerBlock(blockId);
+  const prog=currentProfile?.program||'compete';
+  let blockIds=[blockId];
   if(thisBlock){
-    const {data: sameBlocks} = await sb.from('blocks')
-      .select('id')
-      .eq('program_slug', prog)
-      .eq('name', thisBlock.name);
-    if(sameBlocks) blockIds = sameBlocks.map(b=>b.id);
+    const {data:sameBlocks}=await sb.from('blocks').select('id').eq('program_slug',prog).eq('name',thisBlock.name);
+    if(sameBlocks) blockIds=sameBlocks.map(b=>b.id);
   }
-
-  const {data: history} = await sb.from('scores')
-    .select('*')
-    .eq('athlete_id', currentUser.id)
-    .in('block_id', blockIds)
-    .order('logged_at', {ascending: false})
-    .limit(5);
-
-  const historyHtml = history?.length ? `
-    <div class="sl-history">
-      <div class="sl-history-title">Historial</div>
-      ${history.map(s => `
-        <div class="sl-entry">
-          <div>
-            <div class="sl-entry-val">${s.value}</div>
-            ${s.notes ? `<div class="sl-entry-note">${s.notes}</div>` : ''}
-          </div>
-          <div class="sl-entry-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div>
-        </div>`).join('')}
-    </div>` : '';
-
-  document.getElementById('sl-content').innerHTML = fieldsHtml +
-    `<button class="sl-save" onclick="submitScore()">Guardar score</button>
-     <div class="sl-msg" id="sl-msg"></div>` +
-    historyHtml +
-    '<div style="height:24px"></div>';
-
+  const {data:history}=await sb.from('scores').select('*').eq('athlete_id',currentUser.id).in('block_id',blockIds).order('logged_at',{ascending:false}).limit(5);
+  const historyHtml=history?.length?`<div class="sl-history"><div class="sl-history-title">Historial</div>${history.map(s=>`<div class="sl-entry"><div><div class="sl-entry-val">${s.value}</div>${s.notes?`<div class="sl-entry-note">${s.notes}</div>`:''}</div><div class="sl-entry-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div></div>`).join('')}</div>`:'';
+  document.getElementById('sl-content').innerHTML=fieldsHtml+`<button class="sl-save" onclick="submitScore()">Guardar score</button><div class="sl-msg" id="sl-msg"></div>`+historyHtml+'<div style="height:24px"></div>';
   document.getElementById('score-logger').classList.add('open');
 }
 
@@ -7674,72 +7722,44 @@ function ratedNumericFromScore(format, data, displayValue){
   const n = raw.match(/-?\d+(?:[.,]\d+)?/); return n ? Number(n[0].replace(',','.')) : null;
 }
 async function registerRatedResult(scoreId, blockId, format, data, displayValue){
-  const allB = [...Object.values(allBlocks).flat(), ...Object.values(athWeekBlocks).flat()];
-  const b = allB.find(x=>x.id===blockId); if(!b?.is_rated) return;
-  const numeric = ratedNumericFromScore(format, data, displayValue);
+  const b=findLoggerBlock(blockId); if(!b?.is_rated) return;
+  const numeric=b.rating_test_key?.startsWith('zca1-') ? zcaNumericForBlock(b,data) : ratedNumericFromScore(format,data,displayValue);
   if(numeric===null || !Number.isFinite(numeric)){ showToast('Score guardado · RATED pendiente: resultado no convertible', true); return; }
-  const {error} = await sb.rpc('register_rated_score', {p_score_id: scoreId, p_score_numeric: numeric});
-  if(error){ console.error('register_rated_score:', error); showToast('Score guardado · error al actualizar rating', true); return; }
+  const {error}=await sb.rpc('register_rated_score',{p_score_id:scoreId,p_score_numeric:numeric});
+  if(error){ console.error('register_rated_score:',error); showToast('Score guardado · error al actualizar rating',true); return; }
   showToast('✓ Leaderboard + hexágono actualizados');
 }
 
 async function submitScore(){
-  const fmt = SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
-  const msg = document.getElementById('sl-msg');
-  
-  // Collect field values
-  const data = {};
-  let hasValue = false;
-  
-  for(const f of fmt.fields){
-    const el = document.getElementById('slf-' + f.id);
-    if(el) { data[f.id] = el.value.trim(); if(data[f.id]) hasValue = true; }
-  }
-  if(fmt.extra){
-    const el = document.getElementById('slf-' + fmt.extra.id);
-    if(el && el.value.trim()) { data[fmt.extra.id] = el.value.trim(); hasValue = true; }
-  }
-  
-  const notesEl = document.getElementById('slf-notes');
-  const notes = notesEl ? notesEl.value.trim() : '';
-  const videoEl = document.getElementById('slf-video');
-  let video = videoEl ? videoEl.value.trim() : '';
-  if(video && !/^https?:\/\//i.test(video)) video = 'https://' + video;
-  
-  if(!hasValue){ msg.textContent = 'Llena al menos un campo'; msg.style.color='#ff4444'; return; }
-  
-  // Format display value
-  let displayValue = '';
-  try { displayValue = fmt.format(data); } 
-  catch(e) { displayValue = Object.values(data).filter(Boolean).join(' · '); }
-  
-  msg.textContent = 'Guardando...'; msg.style.color = 'var(--text3)';
-  
-  const {data: savedScore, error} = await sb.from('scores').insert({
-    athlete_id: currentUser.id,
-    block_id: currentLoggerBlockId,
-    value: displayValue,
-    notes: notes,
-    video_url: video || null,
-    category: currentCat || 'RX',
-    score_data: data
-  }).select('id').single();
-  
-  if(error){ msg.textContent = 'Error: ' + error.message; msg.style.color='#ff4444'; return; }
+  const block=findLoggerBlock(currentLoggerBlockId);
+  const fmt=currentLoggerZcaSpec || SCORE_FORMATS[currentLoggerFormat] || SCORE_FORMATS.text;
+  const msg=document.getElementById('sl-msg');
+  const data={}; let hasValue=false;
+  for(const f of fmt.fields){ const el=document.getElementById('slf-'+f.id); if(el){ data[f.id]=el.value.trim(); if(data[f.id]) hasValue=true; } }
+  if(fmt.extra && !currentLoggerZcaSpec){ const el=document.getElementById('slf-'+fmt.extra.id); if(el&&el.value.trim()){data[fmt.extra.id]=el.value.trim();hasValue=true;} }
+  let notes=(document.getElementById('slf-notes')?.value||'').trim();
+  let video=(document.getElementById('slf-video')?.value||'').trim(); if(video&&!/^https?:\/\//i.test(video)) video='https://'+video;
+  if(!hasValue){msg.textContent='Llena el resultado.';msg.style.color='#ff4444';return;}
 
-  if(savedScore?.id){
-    await registerRatedResult(savedScore.id, currentLoggerBlockId, currentLoggerFormat, data, displayValue);
+  if(currentLoggerZcaSpec){
+    const validation=validateZcaScore(block,data); if(validation){msg.textContent=validation;msg.style.color='#ff4444';return;}
+    // Gym level is machine-readable in notes because zr_score_zca reads L1-L4 there.
+    if(block.rating_test_key==='zca1-gym-pull'||block.rating_test_key==='zca1-gym-press') notes=`${data.level}${notes?' · '+notes:''}`;
+    // Assessment blocks accept one canonical result per athlete; delete/edit the old score before replacing it.
+    const {data:existing,error:existingErr}=await sb.from('scores').select('id,value').eq('athlete_id',currentUser.id).eq('block_id',currentLoggerBlockId).limit(1);
+    if(existingErr){msg.textContent='No pude validar duplicados: '+existingErr.message;msg.style.color='#ff4444';return;}
+    if(existing?.length){msg.textContent=`Ya existe un resultado ZCA (${existing[0].value}). Bórralo antes de registrar otro.`;msg.style.color='#ff4444';return;}
   }
-  
-  msg.textContent = '✓ Score guardado'; msg.style.color = 'var(--accent)';
-  
-  // Update score list in block
-  _scoresLoaded.add(currentLoggerBlockId);
-  loadBlockScores(currentLoggerBlockId);
-  
-  setTimeout(()=>closeScoreLogger(), 1200);
+
+  let displayValue=''; try{displayValue=fmt.format(data);}catch(e){displayValue=Object.values(data).filter(Boolean).join(' · ');}
+  msg.textContent='Guardando...';msg.style.color='var(--text3)';
+  const {data:savedScore,error}=await sb.from('scores').insert({athlete_id:currentUser.id,block_id:currentLoggerBlockId,value:displayValue,notes,video_url:video||null,category:currentLoggerZcaSpec?'RX':(currentCat||'RX'),score_data:data}).select('id').single();
+  if(error){msg.textContent='Error: '+error.message;msg.style.color='#ff4444';return;}
+  if(savedScore?.id) await registerRatedResult(savedScore.id,currentLoggerBlockId,currentLoggerFormat,data,displayValue);
+  msg.textContent='✓ Score guardado';msg.style.color='var(--accent)';
+  _scoresLoaded.add(currentLoggerBlockId);loadBlockScores(currentLoggerBlockId);
+  setTimeout(()=>closeScoreLogger(),1200);
 }
-
 
 // ═══════════════════════════════════════════════════════════════════
 //  OLYMPUS · COMPOSICIÓN CORPORAL
