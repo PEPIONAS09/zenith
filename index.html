@@ -1484,6 +1484,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .ex-overlay > .ex-cats { border-bottom: 1px solid var(--border); overflow-x: auto }
   .ex-overlay > .ex-list { flex: 1; overflow-y: auto }
 }
+
+/* ═══ DESKTOP 2.1 · WEEK NAV + LEGIBILITY ═══ */
+@media (min-width: 768px){
+  .desktop-sidebar{height:58px;padding:0 28px;gap:2px}
+  .ds-nav-item{font-size:12px;padding:0 18px;letter-spacing:.055em}
+  .ds-week-arrow,.ds-week-today,.ds-week-label{height:36px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);border-radius:4px;cursor:pointer;font-family:var(--font-b)}
+  .ds-week-arrow{width:38px;font-size:18px;padding:0}
+  .ds-week-label{font-size:13px;font-weight:700;min-width:132px;padding:0 14px;color:var(--text)}
+  .ds-week-today{font-size:12px;font-weight:650;padding:0 12px}
+  .ds-week-picker{height:36px;min-width:116px;background:var(--bg2);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:var(--font-b);font-size:13px;padding:0 10px;outline:none}
+  .ds-day-item{font-family:var(--font-b);font-size:13px;padding:9px 17px}
+  .ds-block-name{font-family:var(--font-b);font-size:15px;line-height:1.35;letter-spacing:.015em}
+  .ds-block-meta{font-family:var(--font-b);font-size:12px;line-height:1.4;margin-top:3px}
+  .ds-block-content{font-family:var(--font-b);font-size:15px;line-height:1.7;color:var(--text2)}
+  .ds-coach-note{font-family:var(--font-b);font-size:13px;line-height:1.55}
+  .ds-block-btn{font-family:var(--font-b);font-size:12px;padding:6px 9px}
+  .ds-ath-name{font-family:var(--font-b);font-size:14px}
+  .ds-ath-prog{font-family:var(--font-b);font-size:11px}
+  #ds-panel-programa>div:first-child{padding:18px 30px!important}
+  #ds-content{padding:24px 30px!important;gap:16px!important}
+}
+@media (min-width: 1200px){
+  .desktop-main > *{max-width:1500px}
+}
 </style>
 </head>
 <body>
@@ -1547,9 +1571,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div id="ds-prog-tabs" style="display:flex;height:100%"></div>
     <div class="ds-nav-divider"></div>
     <!-- Week nav -->
-    <button onclick="dsChangeWeek(-1)" style="background:none;border:none;padding:0 10px;height:100%;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">←</button>
-    <div id="ds-week-label" style="font-family:var(--font-m);font-size:9px;color:var(--text3);white-space:nowrap;padding:0 4px">Sem 1</div>
-    <button onclick="dsChangeWeek(1)" style="background:none;border:none;padding:0 10px;height:100%;font-family:var(--font-m);font-size:12px;color:var(--text3);cursor:pointer">→</button>
+    <button class="ds-week-arrow" onclick="dsChangeWeek(-1)" aria-label="Semana anterior">←</button>
+    <button id="ds-week-label" class="ds-week-label" onclick="dsOpenWeekPicker()" title="Ir a una semana">Semana 1</button>
+    <button class="ds-week-arrow" onclick="dsChangeWeek(1)" aria-label="Semana siguiente">→</button>
+    <select id="ds-week-picker" class="ds-week-picker" onchange="dsGoToWeek(this.value)" aria-label="Ir a semana"></select>
+    <button class="ds-week-today" onclick="dsGoCurrentWeek()">Actual</button>
     <div class="ds-nav-divider"></div>
     <!-- Tab views -->
     <button class="ds-nav-item active" id="ds-tab-programa" onclick="switchDsTab('programa')"><span class="ds-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.2" y="3.4" width="15.6" height="17.2" rx="1.5"/><path d="M8.6 3.4V2m6.8 1.4V2M8.2 9.4h7.6M8.2 13.4h7.6M8.2 17.2h4.4"/></svg></span>Programa</button>
@@ -5543,6 +5569,7 @@ let dsWeekOffset = 0;
 let dsCurrentDay = null;
 let dsCurrentAthlete = null;
 let dsCurrentProg = null;
+let dsCurrentTab = 'programa';
 
 const DS_DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DS_DAY_ORDER = [1,2,3,4,5,6,0];
@@ -5572,14 +5599,34 @@ async function initDesktop(){
 }
 
 function switchDsTab(tab){
+  dsCurrentTab = tab;
   ['programa','atletas','cumplimiento','libreria'].forEach(t => {
-    document.getElementById('ds-panel-' + t).style.display = t === tab ? 'block' : 'none';
+    const panel = document.getElementById('ds-panel-' + t);
+    if(panel) panel.style.display = t === tab ? 'block' : 'none';
     const btn = document.getElementById('ds-tab-' + t);
     if(btn) btn.classList.toggle('active', t === tab);
   });
-  if(tab === 'atletas') renderDsAthleteList();
+  if(tab === 'programa') loadDsWeek();
+  if(tab === 'atletas') {
+    if(dsCurrentAthlete) renderDsAthletePage(dsCurrentAthlete);
+    else renderDsAthleteList();
+  }
   if(tab === 'cumplimiento') renderComplianceDashboard();
   if(tab === 'libreria') openExLibraryDesktop();
+}
+
+async function refreshDsWeekContext(){
+  if(dsCurrentTab === 'atletas'){
+    if(dsCurrentAthlete) await renderDsAthletePage(dsCurrentAthlete);
+    else renderDsAthleteList();
+    return;
+  }
+  if(dsCurrentTab === 'cumplimiento'){
+    await renderComplianceDashboard();
+    return;
+  }
+  if(dsCurrentTab === 'libreria') return;
+  await loadDsWeek();
 }
 
 function openExLibraryDesktop(){
@@ -5685,7 +5732,8 @@ async function setDsProg(prog){
   dsWeekOffset = 0;
   dsCurrentDay = null;
   renderDsProgTabs();
-  await loadDsWeek();
+  dsCurrentTab = 'programa';
+  switchDsTab('programa');
   document.getElementById('ds-content').innerHTML = `
     <div class="ds-empty">
       <div class="ds-empty-mark">Z</div>
@@ -5695,16 +5743,47 @@ async function setDsProg(prog){
 }
 
 async function dsChangeWeek(dir){
-  dsWeekOffset += dir;
-  dsCurrentDay = null;
-  await loadDsWeek();
+  const baseWeek = programWeeks[dsCurrentProg] || 1;
+  const nextWeek = Math.max(1, baseWeek + dsWeekOffset + Number(dir || 0));
+  dsWeekOffset = nextWeek - baseWeek;
+  // Keep the selected day while browsing weeks; desktop should feel stable.
+  await refreshDsWeekContext();
+}
+
+async function dsGoToWeek(value){
+  const target = Math.max(1, parseInt(value,10) || 1);
+  const baseWeek = programWeeks[dsCurrentProg] || 1;
+  dsWeekOffset = target - baseWeek;
+  await refreshDsWeekContext();
+}
+
+async function dsGoCurrentWeek(){
+  dsWeekOffset = 0;
+  await refreshDsWeekContext();
+}
+
+function dsOpenWeekPicker(){
+  const picker = document.getElementById('ds-week-picker');
+  if(!picker) return;
+  picker.focus();
+  if(typeof picker.showPicker === 'function') { try { picker.showPicker(); } catch(e){} }
+}
+
+function renderDsWeekPicker(activeWeek){
+  const picker = document.getElementById('ds-week-picker');
+  if(!picker) return;
+  // 15 is the programmed cycle, but keep room for future weeks without another UI change.
+  const maxWeek = Math.max(20, activeWeek + 4);
+  picker.innerHTML = Array.from({length:maxWeek},(_,i)=>i+1)
+    .map(w=>`<option value="${w}" ${w===activeWeek?'selected':''}>Semana ${w}</option>`).join('');
 }
 
 async function loadDsWeek(){
   const baseWeek = programWeeks[dsCurrentProg] || 1;
   const weekNum = Math.max(1, baseWeek + dsWeekOffset);
 
-  document.getElementById('ds-week-label').textContent = 'Sem ' + weekNum + (dsWeekOffset===0?' (actual)':'');
+  document.getElementById('ds-week-label').textContent = 'Semana ' + weekNum + (dsWeekOffset===0?' · actual':'');
+  renderDsWeekPicker(weekNum);
 
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', dsCurrentProg)
