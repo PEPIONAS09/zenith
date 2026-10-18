@@ -7870,8 +7870,8 @@ async function registerRatedResult(scoreId, blockId, format, data, displayValue)
   const {data:cal}=await sb.from('rated_calibrations').select('test_key').eq('test_key',b.rating_test_key).maybeSingle();
   if(cal){
     const {error}=await sb.rpc('register_calibrated_rated_score',{p_score_id:scoreId,p_score_numeric:numeric});
-    if(error){console.error(error);showToast('Score guardado · calibración pendiente: '+error.message,true);return;}
-    showToast('✓ RATED calibrado · hexágono actualizado');
+    if(error){console.error(error);showToast('Score guardado · RATED pendiente: '+error.message,true);return;}
+    showToast('✓ RATED calibrado · perfil listo para actualizar');
     if(currentUser?.id){for(const target of ['ath-attr-hex','ad-attr-hex'])if(document.getElementById(target))await renderAttributes(target,currentUser.id,currentProfile?.full_name||'');}
     return;
   }
