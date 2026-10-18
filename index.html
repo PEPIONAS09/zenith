@@ -7533,7 +7533,7 @@ async function saveRatedCalibration(key,direction){
   if(!ratedCalibrationValid(direction))return false;
   const anchors=ratedCalibrationValues();
   const {error}=await sb.from('rated_calibrations').upsert({test_key:key,direction,anchors},{onConflict:'test_key'});
-  if(error){alert('El WOD se guardó, pero la calibración NO. Ejecuta primero el SQL de RATED 2.0. '+error.message);return false;}
+  if(error){alert('La calibración NO se guardó. Si este test ya tiene resultados, crea una NUEVA clave RATED para cambiar sus referencias. Detalle: '+error.message);return false;}
   return true;
 }
 
@@ -8425,10 +8425,8 @@ async function renderAttributes(containerId, athleteId, name){
         .eq('athlete_id', uid)
         .maybeSingle();
       if(liveError) throw liveError;
-      if(!live){
-        el.innerHTML = `<div class="attr-card"><div class="attr-head"><div class="attr-ovr"><div class="attr-ovr-num" style="color:var(--border2)">—</div><div class="attr-ovr-lbl">OVR</div></div><div class="attr-head-txt"><div class="attr-head-name">${athleteName}</div><div class="attr-head-sub">ZENITH Competition Assessment</div></div></div><div style="padding:34px 8px 24px;text-align:center;font-size:11px;color:var(--text3);line-height:1.7">Registra un resultado RATED o realiza una prueba ZCA para comenzar a construir tu hexágono.</div></div>`;
-        return;
-      }
+      // A calibrated result may exist before any ZCA/live-rating row.
+      // Do not hide valid RATED evidence when the legacy view has no record.
       // Las nuevas pruebas calibradas son independientes de los benchmarks ZCA legacy.
       const {data:calibrated,error:calError}=await sb.from('rated_calibrated_results').select('test_key,score_rating,rating_gym,rating_eng,rating_bbl,rating_str,rating_spd,rating_cap,created_at').eq('athlete_id',uid).order('created_at',{ascending:false});
       if(calError)console.warn('Calibrated ratings unavailable:',calError);
@@ -8437,8 +8435,12 @@ async function renderAttributes(containerId, athleteId, name){
         const rows=[...latest.values()].filter(r=>Number(r['rating_'+k])>0);
         if(rows.length){const sum=rows.reduce((a,r)=>a+Number(r['rating_'+k]),0);calibratedAxes[k]=Math.round(rows.reduce((a,r)=>a+Number(r.score_rating)*Number(r['rating_'+k]),0)/sum);}
       }
-      const effectiveLive={...live,...calibratedAxes};
-      const zcaN=Number(live.zca_tests_completed||0); const status=live.event_slug==='zca-1.0'?'ZCA VERIFICADO':(live.event_slug==='wza-mexico-2026'?'WZA + EVIDENCIA':'PERFIL EN CONSTRUCCIÓN'); const attrs=buildHubAttributes(effectiveLive); const complete=HUB_ATTR_ORDER.every(k=>attrs[k].rating!==null); const serverOVR=complete ? Math.round(HUB_ATTR_ORDER.reduce((a,k)=>a+attrs[k].rating,0)/HUB_ATTR_ORDER.length) : null; el.innerHTML = renderAttrCard(attrs, live.full_name||athleteName, {order:HUB_ATTR_ORDER,ovr:serverOVR,subtitle:`${status} · ${zcaN}/10 pruebas ZCA · ZR 1.0`,sourceLabel:'ZENITH · Live Rating'});
+      if(!live && !Object.keys(calibratedAxes).length){
+        el.innerHTML = `<div class="attr-card"><div class="attr-head"><div class="attr-ovr"><div class="attr-ovr-num">—</div><div class="attr-ovr-lbl">OVR</div></div><div class="attr-head-txt"><div class="attr-head-name">${athleteName}</div><div class="attr-head-sub">ZENITH Competition Assessment</div></div></div><div style="padding:28px 8px;text-align:center;font-size:11px;color:var(--text3)">Sin pruebas calificadas. Registra un RATED calibrado o una evaluación ZCA.</div></div>`;
+        return;
+      }
+      const effectiveLive={...(live||{}),...calibratedAxes};
+      const zcaN=Number(live?.zca_tests_completed||0); const status=live?.event_slug==='zca-1.0'?'ZCA VERIFICADO':(live?.event_slug==='wza-mexico-2026'?'WZA + EVIDENCIA':'PERFIL EN CONSTRUCCIÓN'); const attrs=buildHubAttributes(effectiveLive); const complete=HUB_ATTR_ORDER.every(k=>attrs[k].rating!==null); const serverOVR=complete ? Math.round(HUB_ATTR_ORDER.reduce((a,k)=>a+attrs[k].rating,0)/HUB_ATTR_ORDER.length) : null; el.innerHTML = renderAttrCard(attrs, live?.full_name||athleteName, {order:HUB_ATTR_ORDER,ovr:serverOVR,subtitle:`${status} · ${zcaN}/10 pruebas ZCA · ZR 1.0`,sourceLabel:'ZENITH · Live Rating'});
       return;
     }
 
