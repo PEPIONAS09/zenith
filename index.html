@@ -8370,7 +8370,7 @@ function renderAttrCard(attrs, name, opts){
 }
 
 // Punto de entrada: carga datos y pinta en el contenedor dado
-async function renderAttributes(containerId, athleteId, name){
+async function renderAttributes(containerId, athleteId, name, mode = 'progress'){
   const el = document.getElementById(containerId);
   if(!el) return;
 
@@ -8420,7 +8420,7 @@ async function renderAttributes(containerId, athleteId, name){
     // ── COMPETE + HUB MIND · ZENITH RATED 3.3 PREVIEW ──────
     // Las vistas son de solo lectura; el frontend no modifica resultados.
     if(athleteProgram === 'hubmind' || athleteProgram === 'compete'){
-      const selectedMode = arguments[3] === 'competitive' ? 'competitive' : 'progress';
+      const selectedMode = mode === 'competitive' ? 'competitive' : 'progress';
       const viewName = selectedMode === 'progress'
         ? 'zr_v33_athlete_profile_final_preview'
         : 'zr_v32_live_preview';
@@ -8439,8 +8439,8 @@ async function renderAttributes(containerId, athleteId, name){
       const rawOVR = selectedMode === 'progress' ? rated?.progress_ovr : rated?.competitive_ovr;
       const ovr = rawOVR == null || !Number.isFinite(Number(rawOVR)) ? null : Number(rawOVR);
       const modeSwitch = `<div style="display:flex;gap:8px;margin-bottom:14px" role="group" aria-label="Modo de evaluación">
-        <button type="button" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='progress'?'1':'.5'}" onclick="renderAttributes(${JSON.stringify(containerId)},${JSON.stringify(uid)},${JSON.stringify(athleteName)},'progress')">Progreso</button>
-        <button type="button" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='competitive'?'1':'.5'}" onclick="renderAttributes(${JSON.stringify(containerId)},${JSON.stringify(uid)},${JSON.stringify(athleteName)},'competitive')">Competitivo</button>
+        <button type="button" data-rated-mode="progress" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='progress'?'1':'.5'}" aria-pressed="${selectedMode==='progress'}">Progreso</button>
+        <button type="button" data-rated-mode="competitive" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='competitive'?'1':'.5'}" aria-pressed="${selectedMode==='competitive'}">Competitivo</button>
       </div>`;
       const explanation = selectedMode === 'progress'
         ? 'Indicador experimental de progreso personal. Combina distintas escalas; no usar como ranking competitivo.'
@@ -8451,6 +8451,12 @@ async function renderAttributes(containerId, athleteId, name){
         subtitle:modeLabel+' · '+status+evidence,
         sourceLabel:selectedMode==='progress'?'RATED · historial ponderado 90 días':'ZCA · evidencia calibrada'
       }) + `<div style="font-size:11px;color:var(--text3);padding:12px 4px">${explanation}</div>`;
+      el.querySelectorAll('[data-rated-mode]').forEach(button => {
+        button.addEventListener('click', () => {
+          const nextMode = button.dataset.ratedMode;
+          if(nextMode !== selectedMode) renderAttributes(containerId, uid, athleteName, nextMode);
+        });
+      });
       return;
     }
 
@@ -8465,7 +8471,8 @@ async function renderAttributes(containerId, athleteId, name){
     el.innerHTML = renderAttrCard(attrs, athleteName);
 
   } catch(e){
-    el.innerHTML = `<div class="attr-loading">No se pudieron calcular los atributos.</div>`;
+    el.innerHTML = `<div class="attr-loading" role="alert">No se pudieron cargar los atributos: ${String(e?.message || 'Error desconocido').replace(/[<>&"']/g, '')}</div><button type="button" class="be-save" data-retry-rated>Reintentar</button>`;
+    el.querySelector('[data-retry-rated]')?.addEventListener('click', () => renderAttributes(containerId, uid, athleteName, mode));
     console.error('renderAttributes:', e);
   }
 }
