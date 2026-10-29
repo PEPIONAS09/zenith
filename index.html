@@ -7835,7 +7835,7 @@ async function openScoreLogger(blockId, blockName, format, e){
   }
   const {data:history}=await sb.from('scores').select('*').eq('athlete_id',currentUser.id).in('block_id',blockIds).order('logged_at',{ascending:false}).limit(5);
   const historyHtml=history?.length?`<div class="sl-history"><div class="sl-history-title">Historial</div>${history.map(s=>`<div class="sl-entry"><div><div class="sl-entry-val">${s.value}</div>${s.notes?`<div class="sl-entry-note">${s.notes}</div>`:''}</div><div class="sl-entry-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div></div>`).join('')}</div>`:'';
-  document.getElementById('sl-content').innerHTML=fieldsHtml+`<button class="sl-save onclick="submitScore()">Guardar score</button><div class="sl-msg" id="sl-msg"></div>`+historyHtml+'<div style="height:24px"></div>';
+  document.getElementById('sl-content').innerHTML=fieldsHtml+`<button class="sl-save" onclick="submitScore()">Guardar score</button><div class="sl-msg" id="sl-msg"></div>`+historyHtml+'<div style="height:24px"></div>';
   // Select the corresponding category button and display its scaling hint.
   if(!currentLoggerZcaSpec){
     const categoryButton=[...document.querySelectorAll('#sl-content .sl-cat')]
