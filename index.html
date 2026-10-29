@@ -7789,6 +7789,8 @@ function validateZcaScore(block,data){
 }
 
 let currentCat = 'RX';
+// UI scale -> persisted score category. Preserve historical DB enum values.
+const SCORE_CATEGORY_FROM_SCALE = Object.freeze({rx:'RX',sc:'INTERMEDIATE',beg:'OPEN'});
 function pickCat(btn){
   document.querySelectorAll('.sl-cat').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -7800,7 +7802,9 @@ function pickCat(btn){
 }
 
 async function openScoreLogger(blockId, blockName, format, e){
-  currentCat = 'RX';
+  // Default to the athlete's selected scaling for this block.
+  // ZCA standardized tests retain their canonical RX capture logic.
+  currentCat = SCORE_CATEGORY_FROM_SCALE[currentScale[blockId]] || 'RX';
   e.stopPropagation();
   currentLoggerBlockId = blockId;
   currentLoggerFormat = format || 'text';
@@ -7817,7 +7821,7 @@ async function openScoreLogger(blockId, blockName, format, e){
   if(currentLoggerZcaSpec){
     fieldsHtml += `<div class="sl-cat-hint" style="margin:4px 0 12px">ZCA 1.0 · captura estandarizada. Un resultado válido por test.</div>`;
   } else {
-    fieldsHtml += `<div class="sl-field"><label class="sl-label">Categoría</label><div class="sl-cats"><button type="button" class="sl-cat active" data-cat="RX" onclick="pickCat(this)">RX</button><button type="button" class="sl-cat" data-cat="INTERMEDIATE" onclick="pickCat(this)">Intermediate</button><button type="button" class="sl-cat" data-cat="OPEN" onclick="pickCat(this)">Open</button></div><div class="sl-cat-hint" id="sl-cat-hint"></div></div>`;
+    fieldsHtml += `<div class="sl-field"><label class="sl-label">Categoría</label><div class="sl-cats"><button type="button" class="sl-cat active" data-cat="RX" onclick="pickCat(this)">RX</button><button type="button" class="sl-cat" data-cat="INTERMEDIATE" onclick="pickCat(this)">Scaled</button><button type="button" class="sl-cat" data-cat="OPEN" onclick="pickCat(this)">Beginner</button></div><div class="sl-cat-hint" id="sl-cat-hint"></div></div>`;
   }
 
   fieldsHtml += `<div class="sl-field"><label class="sl-label">Notas (opcional)</label><textarea class="sl-input sl-textarea" id="slf-notes" rows="3" placeholder="Contexto útil del intento..."></textarea></div><div class="sl-field"><label class="sl-label">Link de video (opcional)</label><input class="sl-input" id="slf-video" type="url" inputmode="url" placeholder="https://... YouTube, Drive o Instagram"><div class="sl-cat-hint">Súbelo como &laquo;no listado&raquo; si no quieres que sea público.</div></div>`;
@@ -7831,7 +7835,13 @@ async function openScoreLogger(blockId, blockName, format, e){
   }
   const {data:history}=await sb.from('scores').select('*').eq('athlete_id',currentUser.id).in('block_id',blockIds).order('logged_at',{ascending:false}).limit(5);
   const historyHtml=history?.length?`<div class="sl-history"><div class="sl-history-title">Historial</div>${history.map(s=>`<div class="sl-entry"><div><div class="sl-entry-val">${s.value}</div>${s.notes?`<div class="sl-entry-note">${s.notes}</div>`:''}</div><div class="sl-entry-date">${new Date(s.logged_at).toLocaleDateString('es-MX',{day:'2-digit',month:'short'})}</div></div>`).join('')}</div>`:'';
-  document.getElementById('sl-content').innerHTML=fieldsHtml+`<button class="sl-save" onclick="submitScore()">Guardar score</button><div class="sl-msg" id="sl-msg"></div>`+historyHtml+'<div style="height:24px"></div>';
+  document.getElementById('sl-content').innerHTML=fieldsHtml+`<button class="sl-save onclick="submitScore()">Guardar score</button><div class="sl-msg" id="sl-msg"></div>`+historyHtml+'<div style="height:24px"></div>';
+  // Select the corresponding category button and display its scaling hint.
+  if(!currentLoggerZcaSpec){
+    const categoryButton=[...document.querySelectorAll('#sl-content .sl-cat')]
+      .find(btn=>btn.dataset.cat===currentCat);
+    if(categoryButton) pickCat(categoryButton);
+  }
   document.getElementById('score-logger').classList.add('open');
 }
 
