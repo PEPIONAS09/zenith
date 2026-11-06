@@ -1509,6 +1509,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .desktop-main > *{max-width:1500px}
 }
 </style>
+<style id="zenith-calendar-v2-style">
+.zenith-date-picker{background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-family:var(--font-m);font-size:11px;color-scheme:dark;max-width:170px}
+.day-tabs .day-tab{min-width:67px;white-space:nowrap;font-size:10px;letter-spacing:0}
+@media(max-width:420px){.zenith-date-picker{font-size:10px;max-width:145px}.day-tabs .day-tab{min-width:62px;font-size:9px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1655,7 +1660,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
         <button onclick="changeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-          <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+          <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><input id="zenith-date-main" aria-label="Ir a fecha" type="date" onchange="zenithJumpToDate(this.value,false)" class="zenith-date-picker">
           <button id="copy-week-btn" onclick="openCopyWeek()" style="display:none;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
         </div>
         <button onclick="changeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
@@ -2349,7 +2354,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
     <button onclick="changeAthWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
     <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-      <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div>
+      <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><input id="zenith-date-ath" aria-label="Ir a fecha de atleta" type="date" onchange="zenithJumpToDate(this.value,true)" class="zenith-date-picker">
       <button onclick="openCopyAthWeek()" style="background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
     </div>
     <button onclick="changeAthWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
@@ -2613,6 +2618,44 @@ let currentAthId = null;
 let weekOffset = 0;
 let currentWeekNumber = 1;
 let programWeeks = {};
+// Navegación por fechas reales. La fecha seleccionada no cambia program_weeks ni los scores.
+function zenithWeekMondayISO(offset){
+  const d = new Date(zenithLocalToday()+'T12:00:00Z');
+  const dow = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate()-(dow===0?6:dow-1)+offset*7);
+  return d.toISOString().slice(0,10);
+}
+function zenithDayISO(offset,dow){
+  const d=new Date(zenithWeekMondayISO(offset)+'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate()+(dow===0?6:dow-1));
+  return d.toISOString().slice(0,10);
+}
+function zenithDateLabel(iso){
+  return new Date(iso+'T12:00:00Z').toLocaleDateString('es-MX',{timeZone:'UTC',day:'numeric',month:'short'});
+}
+async function zenithJumpToDate(iso, athlete){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+  const offset=zenithDateWeekIndex(iso)-zenithDateWeekIndex(zenithLocalToday());
+  const day=new Date(iso+'T12:00:00Z').getUTCDay();
+  if(athlete){
+    athWeekOffset=offset;
+    currentAthDay=day;
+    await loadAthWeekBlocks(currentAthWeekProfile);
+    renderAthWeek(currentAthWeekProfile);
+  }else{
+    weekOffset=offset;
+    const prog=currentProfile?.program||'compete';
+    const base=programWeeks[prog]||1;
+    currentWeekNumber=zenithCalendar[prog]?.enabled ? base+offset : Math.max(1,base+offset);
+    await loadBlocks(prog,currentWeekNumber);
+    initWeek();
+    showDay(day);
+  }
+}
+function zenithSyncPicker(id,offset,dow){
+  const el=document.getElementById(id);
+  if(el) el.value=zenithDayISO(offset,dow);
+}
 // ZENITH 2.0: calendario real, con fallback al sistema anterior hasta activar cada programa.
 let zenithCalendar = {};
 function zenithLocalToday(){
@@ -3555,6 +3598,7 @@ function initWeek(){
   const baseWeek = programWeeks[prog] || 1;
   const weekNum = Math.max(1, baseWeek + weekOffset);
   if(lbl) lbl.textContent = zenithWeekLabel(prog,weekOffset) || ((weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset));
+  zenithSyncPicker('zenith-date-main',weekOffset,activeDow);
   // Show copy week button for coaches
   const copyBtn = document.getElementById('copy-week-btn');
   if(copyBtn) copyBtn.style.display = (currentProfile?.role === 'coach') ? 'block' : 'none';
@@ -3562,7 +3606,7 @@ function initWeek(){
   order.forEach(dow=>{
     const tab = document.createElement('button');
     tab.className='day-tab'+(dow===activeDow?' active':'');
-    tab.textContent=dayNames[dow]+(dow===activeDow?' ·':'');
+    tab.textContent=dayNames[dow]+' '+zenithDateLabel(zenithDayISO(weekOffset,dow));
     tab.onclick=()=>showDay(dow);
     tab.id='dtab-'+dow;
     tabBar.appendChild(tab);
@@ -3570,7 +3614,7 @@ function initWeek(){
     div.id='dayc-'+dow; div.style.display=dow===activeDow?'block':'none';
     const blocks=allBlocks[dow]||[];
     if(!blocks.length){
-      div.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>'+(isCoach?`<div style="padding:0 16px">${renderAddBlockBtn(dow,prog)}</div>`:'');
+      div.innerHTML='<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Sin sesión publicada</div><div class="rest-line"></div></div>'+(isCoach?`<div style="padding:0 16px">${renderAddBlockBtn(dow,prog)}</div>`:'');
     } else {
       div.innerHTML=`<div class="blocks">${blocks.map(b=>renderBlock(b)).join('')}${isCoach?renderAddBlockBtn(dow,prog):''}</div>`;
     }
@@ -3586,6 +3630,7 @@ function showDay(dow){
   document.querySelectorAll('[id^=dayc-]').forEach(d=>d.style.display='none');
   document.getElementById('dtab-'+dow).classList.add('active');
   document.getElementById('dayc-'+dow).style.display='block';
+  zenithSyncPicker('zenith-date-main',weekOffset,dow);
   setTimeout(updateReplaceBtns, 20);
 }
 
@@ -4899,6 +4944,7 @@ async function loadAthWeekBlocks(a){
 
 async function changeAthWeek(dir){
   athWeekOffset += dir;
+  currentAthDay = 1;
   await loadAthWeekBlocks(currentAthWeekProfile);
   renderAthWeek(currentAthWeekProfile);
 }
@@ -4924,11 +4970,12 @@ function renderAthWeek(a){
   const order = [1,2,3,4,5,6,0];
   const activeDow = currentAthDay !== null ? currentAthDay : (athWeekOffset === 0 ? todayDow : 1);
   const prog = a?.program || athleteProgs[a?.id] || 'compete';
+  zenithSyncPicker('zenith-date-ath',athWeekOffset,activeDow);
 
   order.forEach(dow=>{
     const tab = document.createElement('button');
     tab.className = 'day-tab' + (dow === activeDow ? ' active' : '');
-    tab.textContent = dayNames[dow] + (dow === activeDow ? ' ·' : '');
+    tab.textContent = dayNames[dow] + ' ' + zenithDateLabel(zenithDayISO(athWeekOffset,dow));
     tab.onclick = () => showAthDay(dow);
     tab.id = 'athtab-' + dow;
     tabBar.appendChild(tab);
@@ -4939,7 +4986,7 @@ function renderAthWeek(a){
     const blocks = athWeekBlocks[dow] || [];
 
     if(!blocks.length){
-      div.innerHTML = '<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Descanso</div><div class="rest-line"></div></div>' +
+      div.innerHTML = '<div class="rest-view"><div class="rest-line"></div><div class="rest-txt">Sin sesión publicada</div><div class="rest-line"></div></div>' +
         `<div style="padding:0 16px">${renderAddBlockBtn(dow, prog)}</div>`;
     } else {
       const blocksHtml = blocks.map((b,i) => renderBlockCoachView(b, i, blocks.length)).join('');
@@ -4958,7 +5005,8 @@ function openBlockEditorAth(blockId, e){
   const b = allB.find(x=>x.id===blockId);
   if(!b) return;
   // Set currentWeekNumber to athlete's current week
-  currentWeekNumber = Math.max(1, 1 + athWeekOffset);
+  const prog = currentAthWeekProfile?.program || athleteProgs[currentAthWeekProfile?.id] || 'compete';
+  currentWeekNumber = Math.max(1, (programWeeks[prog]||1) + athWeekOffset);
   openBlockEditor(blockId, e);
 }
 
