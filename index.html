@@ -2613,6 +2613,42 @@ let currentAthId = null;
 let weekOffset = 0;
 let currentWeekNumber = 1;
 let programWeeks = {};
+// ZENITH 2.0: calendario real, con fallback al sistema anterior hasta activar cada programa.
+let zenithCalendar = {};
+function zenithLocalToday(){
+  const parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/Mexico_City',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const v = Object.fromEntries(parts.map(p=>[p.type,p.value]));
+  return `${v.year}-${v.month}-${v.day}`;
+}
+function zenithDateWeekIndex(iso){
+  const d = new Date(iso+'T12:00:00Z');
+  const dow = d.getUTCDay();
+  d.setUTCDate(d.getUTCDate()-(dow===0?6:dow-1));
+  return Math.floor(d.getTime()/604800000);
+}
+function zenithWeekForDate(program, iso){
+  const c=zenithCalendar[program];
+  if(!c || !c.enabled) return null;
+  const week=Number(c.anchor_week)+zenithDateWeekIndex(iso)-zenithDateWeekIndex(c.anchor_monday);
+  // Preserve the real index even outside the programmed cycle; no automatic wrap.
+  return week;
+}
+async function zenithSyncCalendar(){
+  // Missing table or network error: retain legacy programWeeks rather than hiding workouts.
+  const {data,error}=await sb.from('zenith_program_calendar').select('*');
+  if(error){ console.info('ZENITH calendar not enabled:',error.message); return; }
+  zenithCalendar=Object.fromEntries((data||[]).map(c=>[c.program_slug,c]));
+  const today=zenithLocalToday();
+  Object.keys(zenithCalendar).forEach(prog=>{
+    const week=zenithWeekForDate(prog,today);
+    if(week!==null) programWeeks[prog]=week;
+  });
+}
+function zenithWeekLabel(program, offset){
+  const c=zenithCalendar[program];
+  return c?.enabled ? getMainWeekDates(offset) : null;
+}
+
 let completedBlocks = JSON.parse(localStorage.getItem('z_completed')||'{}');
 let copiedBlock = null;
 let selectedColor = '#1D9E75';
@@ -2698,6 +2734,7 @@ async function init(){
   // Load program weeks from Supabase
   const {data: pwData} = await sb.from('program_weeks').select('*');
   if(pwData) pwData.forEach(pw => programWeeks[pw.program_slug] = pw.current_week);
+  await zenithSyncCalendar();
   currentWeekNumber = programWeeks[prog] || 1;
   weekOffset = 0;
   await loadServerCompletions();
@@ -2707,7 +2744,7 @@ async function init(){
 }
 
 async function loadBlocks(programSlug, weekNum){
-  const week = weekNum || currentWeekNumber || 1;
+  const week = weekNum ?? currentWeekNumber ?? 1;
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', programSlug)
     .eq('week_number', week)
@@ -3499,7 +3536,7 @@ async function changeWeek(dir){
   weekOffset += dir;
   const prog = currentProfile?.program || 'compete';
   const baseWeek = programWeeks[prog] || 1;
-  currentWeekNumber = Math.max(1, baseWeek + weekOffset);
+  currentWeekNumber = zenithCalendar[prog]?.enabled ? baseWeek + weekOffset : Math.max(1, baseWeek + weekOffset);
   await loadBlocks(prog, currentWeekNumber);
   initWeek();
 }
@@ -3517,7 +3554,7 @@ function initWeek(){
   const lbl = document.getElementById('main-week-label');
   const baseWeek = programWeeks[prog] || 1;
   const weekNum = Math.max(1, baseWeek + weekOffset);
-  if(lbl) lbl.textContent = (weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset);
+  if(lbl) lbl.textContent = zenithWeekLabel(prog,weekOffset) || ((weekOffset === 0 ? 'Semana ' + weekNum + ' (actual) · ' : 'Semana ' + weekNum + ' · ') + getMainWeekDates(weekOffset));
   // Show copy week button for coaches
   const copyBtn = document.getElementById('copy-week-btn');
   if(copyBtn) copyBtn.style.display = (currentProfile?.role === 'coach') ? 'block' : 'none';
@@ -4851,7 +4888,7 @@ async function openAthWeek(){
 async function loadAthWeekBlocks(a){
   const prog = a?.program || athleteProgs[a?.id] || 'compete';
   const baseWeek = programWeeks[prog] || 1;
-  const week = Math.max(1, baseWeek + athWeekOffset);
+  const week = zenithCalendar[prog]?.enabled ? baseWeek + athWeekOffset : Math.max(1, baseWeek + athWeekOffset);
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', prog)
     .eq('week_number', week)
@@ -4881,7 +4918,7 @@ function renderAthWeek(a){
   const athBaseWeek = programWeeks[athProg] || 1;
   const weekNum = Math.max(1, athBaseWeek + athWeekOffset);
   const weekLbl = document.getElementById('ath-week-label');
-  if(weekLbl) weekLbl.textContent = 'Semana ' + weekNum + (athWeekOffset===0?' (actual)':'') + ' · ' + label;
+  if(weekLbl) weekLbl.textContent = zenithCalendar[athProg]?.enabled ? label : ('Semana ' + weekNum + (athWeekOffset===0?' (actual)':'') + ' · ' + label);
 
   const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const order = [1,2,3,4,5,6,0];
@@ -5224,6 +5261,7 @@ async function refreshApp(){
   const prog = currentProfile?.program || 'compete';
   const {data: pwData} = await sb.from('program_weeks').select('*');
   if(pwData) pwData.forEach(pw => programWeeks[pw.program_slug] = pw.current_week);
+  await zenithSyncCalendar();
   currentWeekNumber = programWeeks[prog] || 1;
   weekOffset = 0;
   await loadBlocks(prog, currentWeekNumber);
