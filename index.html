@@ -1525,6 +1525,49 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .zenith-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.zenith-month-weekday{color:#A0A6AE;text-align:center;font-size:10px;padding:6px 0;font-weight:700}.zenith-month-day{position:relative;aspect-ratio:1;min-height:36px;background:#242A32;border:1px solid transparent;color:#F5F6F7;border-radius:8px;font-size:12px;cursor:pointer}.zenith-month-day:hover{border-color:#E8FF18}.zenith-month-day.is-today{border-color:#E8FF18}.zenith-month-day.is-selected{background:#E8FF18;color:#0B0D10;font-weight:800}.zenith-month-day.has-blocks:after{content:'';position:absolute;bottom:4px;left:calc(50% - 2px);width:4px;height:4px;border-radius:50%;background:#E8FF18}.zenith-month-day.is-selected:after{background:#0B0D10}.zenith-month-empty{min-height:36px}.zenith-month-help{font-size:11px;line-height:1.6;color:#A0A6AE;margin:16px 0 0}
 @media(max-width:420px){.zenith-month-dialog{padding:17px}.zenith-month-grid{gap:3px}.zenith-month-day{min-height:34px}.zenith-calendar-trigger{font-size:11px;padding:7px 9px}}
 </style>
+
+<style id="zenith-2-0-mobile-design">
+/* ZENITH 2.0 visual layer: CSS only; no changes to data, scores, or scheduling. */
+@media(max-width:767px){
+  :root{--bg:#0B0D10;--bg2:#14181E;--bg3:#1B2028;--bg4:#242A33;--border:#292F38;--border2:#353D47;--text:#F4F5F6;--text2:#B1B8C1;--text3:#828B97;--accent:#E8FF18;--accent-fill:#E8FF18;--on-accent:#0B0D10}
+  .app{background:var(--bg)}
+  .topbar{background:#0B0D10;padding:16px 18px;border-bottom:1px solid #252B34;min-height:70px}
+  .brand-lockup{height:16px}
+  .topbar-r{gap:10px}
+  .avatar{border:1px solid #3A424C}
+  #screen-week>div:first-child{background:#14181E!important;padding:12px 16px!important;gap:8px;border-color:#292F38!important}
+  #screen-week>div:first-child>button{background:#232933!important;color:#F4F5F6!important;border:1px solid #3A424C!important;border-radius:10px!important;min-height:42px;padding:8px 13px!important;font-size:12px!important;font-weight:650}
+  #main-week-label{color:#929BA7!important;font-size:11px!important;letter-spacing:.02em!important}
+  #zenith-date-main{background:#E8FF18!important;color:#0B0D10!important;border:1px solid #E8FF18!important;border-radius:10px!important;min-height:42px;font-size:13px!important;font-weight:800!important}
+  #copy-week-btn{color:#B6C87A!important;font-size:10px!important;margin-top:4px}
+  .day-tabs{background:#11151A;border-color:#292F38;gap:0;scroll-snap-type:x proximity}
+  .day-tab{min-width:84px!important;padding:15px 12px!important;font-size:11px!important;font-weight:700!important;color:#A0A8B2!important;scroll-snap-align:start;border-bottom-width:3px!important}
+  .day-tab.active{color:#E8FF18!important;border-bottom-color:#E8FF18!important;background:#1B211B}
+  .week-scroll{background:#0B0D10}
+  .blocks{padding:16px!important;gap:11px!important}
+  .block{background:#171B21!important;border:1px solid #303741!important;border-radius:13px!important;box-shadow:0 2px 12px #0002}
+  .block.open{border-color:#6C7650!important}
+  .block-hdr{padding:17px 16px!important;min-height:78px}
+  .block-dot{width:9px;height:9px}
+  .block-name{font-size:12px!important;font-weight:800!important;line-height:1.35;letter-spacing:.025em}
+  .block-meta{font-size:11px!important;color:#A0A8B2!important;margin-top:5px}
+  .block-body{background:#12161C!important;border-color:#303741!important}
+  .block-text{color:#D4D9DF!important;font-size:12px!important;line-height:1.75}
+  .bottom-nav{background:#11151A!important;border-top:1px solid #303741!important;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .nav-btn{color:#929AA5!important;min-height:63px;padding:10px 4px!important;font-weight:700!important;font-size:10px!important}
+  .nav-btn.active{color:#E8FF18!important}
+  .nav-btn.active .nav-icon svg{stroke:#E8FF18}
+  .hero{background:#14181E!important;border-color:#303741!important}
+  .hero-name{color:#F4F5F6}
+  .sec-title{background:#14181E;border-color:#303741}
+  .zenith-month-overlay{padding:12px!important}
+  .zenith-month-dialog{border-radius:18px!important;padding:16px!important;max-height:calc(100dvh - 24px)!important}
+  .zenith-month-header h2{font-size:21px!important;margin-bottom:10px!important}
+  .zenith-month-nav{margin-bottom:10px!important}
+  .zenith-month-day{min-height:34px!important;border-radius:7px!important}
+  .zenith-month-help{font-size:10px!important;margin-top:12px!important}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -5735,8 +5778,12 @@ function openCopyAthWeek(){
 
 // ── THEME ─────────────────────────────────────────────
 function initTheme(){
-  const saved = localStorage.getItem('z_theme') || 'dark';
-  applyTheme(saved);
+  // ZENITH 2.0: one-time visual migration. Preserve user choice thereafter.
+  if(!localStorage.getItem('z_theme_v2_initialized')){
+    localStorage.setItem('z_theme_v2_initialized','1');
+    localStorage.setItem('z_theme','dark');
+  }
+  applyTheme(localStorage.getItem('z_theme') || 'dark');
 }
 
 function applyTheme(theme){
