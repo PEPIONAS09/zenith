@@ -1514,6 +1514,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .day-tabs .day-tab{min-width:67px;white-space:nowrap;font-size:10px;letter-spacing:0}
 @media(max-width:420px){.zenith-date-picker{font-size:10px;max-width:145px}.day-tabs .day-tab{min-width:62px;font-size:9px}}
 </style>
+
+<style id="zenith-calendar-month-v3">
+.zenith-calendar-trigger{background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:8px;padding:9px 13px;font:600 12px var(--font-m);cursor:pointer;min-height:38px}
+.zenith-calendar-trigger:focus-visible,.zenith-month-dialog button:focus-visible{outline:2px solid #E8FF18;outline-offset:2px}
+.zenith-month-overlay[hidden]{display:none!important}.zenith-month-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.zenith-month-dialog{background:#171B21;color:#F5F6F7;border:1px solid #383E46;border-radius:16px;width:min(100%,420px);max-height:calc(100dvh - 32px);overflow:auto;padding:22px;box-sizing:border-box;box-shadow:0 22px 80px #0009}
+.zenith-month-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.zenith-month-eyebrow{font-size:10px;letter-spacing:.14em;color:#E8FF18;font-weight:700}.zenith-month-header h2{font-size:23px;margin:6px 0 14px;font-weight:800;text-transform:capitalize}.zenith-month-close{font-size:28px!important;border:0!important;background:transparent!important;color:#B5BBC4!important;cursor:pointer}
+.zenith-month-nav{display:flex;justify-content:space-between;align-items:center;margin:0 0 18px}.zenith-month-nav button{background:#242A32;border:1px solid #40464E;color:#F5F6F7;border-radius:8px;min-width:48px;min-height:38px;cursor:pointer;padding:8px 15px}
+.zenith-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.zenith-month-weekday{color:#A0A6AE;text-align:center;font-size:10px;padding:6px 0;font-weight:700}.zenith-month-day{position:relative;aspect-ratio:1;min-height:36px;background:#242A32;border:1px solid transparent;color:#F5F6F7;border-radius:8px;font-size:12px;cursor:pointer}.zenith-month-day:hover{border-color:#E8FF18}.zenith-month-day.is-today{border-color:#E8FF18}.zenith-month-day.is-selected{background:#E8FF18;color:#0B0D10;font-weight:800}.zenith-month-day.has-blocks:after{content:'';position:absolute;bottom:4px;left:calc(50% - 2px);width:4px;height:4px;border-radius:50%;background:#E8FF18}.zenith-month-day.is-selected:after{background:#0B0D10}.zenith-month-empty{min-height:36px}.zenith-month-help{font-size:11px;line-height:1.6;color:#A0A6AE;margin:16px 0 0}
+@media(max-width:420px){.zenith-month-dialog{padding:17px}.zenith-month-grid{gap:3px}.zenith-month-day{min-height:34px}.zenith-calendar-trigger{font-size:11px;padding:7px 9px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1660,7 +1671,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
         <button onclick="changeWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-          <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><input id="zenith-date-main" aria-label="Ir a fecha" type="date" onchange="zenithJumpToDate(this.value,false)" class="zenith-date-picker">
+          <div id="main-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><button id="zenith-date-main" type="button" onclick="zenithOpenMonth(false)" class="zenith-calendar-trigger" aria-label="Abrir calendario mensual">Calendario</button>
           <button id="copy-week-btn" onclick="openCopyWeek()" style="display:none;background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
         </div>
         <button onclick="changeWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
@@ -2354,7 +2365,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)">
     <button onclick="changeAthWeek(-1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">← Ant</button>
     <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-      <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><input id="zenith-date-ath" aria-label="Ir a fecha de atleta" type="date" onchange="zenithJumpToDate(this.value,true)" class="zenith-date-picker">
+      <div id="ath-week-label" style="font-family:var(--font-m);font-size:10px;color:var(--text3);letter-spacing:0.05em"></div><button id="zenith-date-ath" type="button" onclick="zenithOpenMonth(true)" class="zenith-calendar-trigger" aria-label="Abrir calendario mensual">Calendario</button>
       <button onclick="openCopyAthWeek()" style="background:none;border:none;font-family:var(--font-m);font-size:9px;color:var(--accent);cursor:pointer;letter-spacing:0.05em">⎘ Copiar semana</button>
     </div>
     <button onclick="changeAthWeek(1)" style="background:none;border:1px solid var(--border2);border-radius:2px;padding:5px 12px;font-family:var(--font-m);font-size:10px;color:var(--text2);cursor:pointer">Sig →</button>
@@ -2616,6 +2627,7 @@ let currentProfile = null;
 let currentScale = {};
 let currentAthId = null;
 let weekOffset = 0;
+let zenithMainDay = null;
 let currentWeekNumber = 1;
 let programWeeks = {};
 // Navegación por fechas reales. La fecha seleccionada no cambia program_weeks ni los scores.
@@ -2644,6 +2656,7 @@ async function zenithJumpToDate(iso, athlete){
     renderAthWeek(currentAthWeekProfile);
   }else{
     weekOffset=offset;
+    zenithMainDay=day;
     const prog=currentProfile?.program||'compete';
     const base=programWeeks[prog]||1;
     currentWeekNumber=zenithCalendar[prog]?.enabled ? base+offset : Math.max(1,base+offset);
@@ -2654,8 +2667,80 @@ async function zenithJumpToDate(iso, athlete){
 }
 function zenithSyncPicker(id,offset,dow){
   const el=document.getElementById(id);
-  if(el) el.value=zenithDayISO(offset,dow);
+  if(el){ el.dataset.date=zenithDayISO(offset,dow); el.textContent=zenithDateLabel(el.dataset.date)+"  ▦"; }
 }
+
+// Calendario mensual de navegación. Solo consulta bloques ya cargados; no escribe en Supabase.
+let zenithMonthAthlete=false;
+let zenithMonthCursor='';
+let zenithMonthPreviousFocus=null;
+function zenithMonthSelectedISO(){
+  const id=zenithMonthAthlete?'zenith-date-ath':'zenith-date-main';
+  return document.getElementById(id)?.dataset.date || zenithLocalToday();
+}
+function zenithOpenMonth(athlete){
+  zenithMonthAthlete=Boolean(athlete);
+  const iso=zenithMonthSelectedISO();
+  zenithMonthCursor=iso.slice(0,7);
+  zenithMonthPreviousFocus=document.activeElement;
+  const overlay=document.getElementById('zenith-month-overlay');
+  overlay.hidden=false;
+  zenithRenderMonth();
+  overlay.querySelector('.zenith-month-close').focus();
+}
+function zenithCloseMonth(){
+  document.getElementById('zenith-month-overlay').hidden=true;
+  zenithMonthPreviousFocus?.focus?.();
+}
+function zenithShiftMonth(delta){
+  const [y,m]=zenithMonthCursor.split('-').map(Number);
+  const d=new Date(Date.UTC(y,m-1+delta,1));
+  zenithMonthCursor=d.toISOString().slice(0,7);
+  zenithRenderMonth();
+}
+function zenithMonthToday(){zenithMonthCursor=zenithLocalToday().slice(0,7);zenithRenderMonth();}
+function zenithRenderMonth(){
+  const [year,month]=zenithMonthCursor.split('-').map(Number);
+  const first=new Date(Date.UTC(year,month-1,1));
+  const days=new Date(Date.UTC(year,month,0)).getUTCDate();
+  const leading=(first.getUTCDay()+6)%7;
+  const selected=zenithMonthSelectedISO(),todayISO=zenithLocalToday();
+  document.getElementById('zenith-month-title').textContent=first.toLocaleDateString('es-MX',{timeZone:'UTC',month:'long',year:'numeric'});
+  const grid=document.getElementById('zenith-month-grid');grid.replaceChildren();
+  ['L','M','M','J','V','S','D'].forEach(label=>{const el=document.createElement('div');el.className='zenith-month-weekday';el.textContent=label;grid.append(el);});
+  for(let i=0;i<leading;i++){const el=document.createElement('div');el.className='zenith-month-empty';grid.append(el);}
+  const prog=zenithMonthAthlete?(currentAthWeekProfile?.program||athleteProgs[currentAthWeekProfile?.id]||'compete'):(currentProfile?.program||'compete');
+  const anchor=zenithCalendar[prog];
+  for(let day=1;day<=days;day++){
+    const iso=zenithMonthCursor+'-'+String(day).padStart(2,'0');
+    const dow=new Date(iso+'T12:00:00Z').getUTCDay();
+    const week=zenithWeekForDate(prog,iso);
+    const el=document.createElement('button');el.type='button';el.className='zenith-month-day';el.textContent=day;
+    if(iso===todayISO)el.classList.add('is-today');
+    if(iso===selected)el.classList.add('is-selected');
+    // Mark only the loaded week, never infer publication from a week number alone.
+    const visibleWeek=zenithMonthAthlete?athWeekOffset:weekOffset;
+    if(zenithDateWeekIndex(iso)===zenithDateWeekIndex(zenithWeekMondayISO(visibleWeek))){
+      const loaded=zenithMonthAthlete?athWeekBlocks:allBlocks;
+      if((loaded[dow]||[]).length)el.classList.add('has-blocks');
+    }
+    el.setAttribute('aria-label',iso+(week!==null?' · semana '+week:''));
+    el.onclick=async()=>{zenithCloseMonth();await zenithJumpToDate(iso,zenithMonthAthlete);};
+    grid.append(el);
+  }
+}
+document.addEventListener('keydown',e=>{
+  const overlay=document.getElementById('zenith-month-overlay');
+  if(!overlay||overlay.hidden)return;
+  if(e.key==='Escape'){e.preventDefault();zenithCloseMonth();}
+  if(e.key==='Tab'){
+    const controls=[...overlay.querySelectorAll('button:not([disabled])')];
+    const first=controls[0],last=controls[controls.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
+
 // ZENITH 2.0: calendario real, con fallback al sistema anterior hasta activar cada programa.
 let zenithCalendar = {};
 function zenithLocalToday(){
@@ -3577,6 +3662,7 @@ function getMainWeekDates(offset){
 
 async function changeWeek(dir){
   weekOffset += dir;
+  zenithMainDay = 1;
   const prog = currentProfile?.program || 'compete';
   const baseWeek = programWeeks[prog] || 1;
   currentWeekNumber = zenithCalendar[prog]?.enabled ? baseWeek + weekOffset : Math.max(1, baseWeek + weekOffset);
@@ -3592,7 +3678,7 @@ function initWeek(){
   const order=[1,2,3,4,5,6,0];
   const isCoach = currentProfile?.role === 'coach';
   const prog = currentProfile?.program || 'compete';
-  const activeDow = weekOffset === 0 ? todayDow : 1;
+  const activeDow = zenithMainDay !== null ? zenithMainDay : (weekOffset === 0 ? new Date(zenithLocalToday()+'T12:00:00Z').getUTCDay() : 1);
 
   const lbl = document.getElementById('main-week-label');
   const baseWeek = programWeeks[prog] || 1;
@@ -3626,6 +3712,7 @@ function initWeek(){
 }
 
 function showDay(dow){
+  zenithMainDay=dow;
   document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('[id^=dayc-]').forEach(d=>d.style.display='none');
   document.getElementById('dtab-'+dow).classList.add('active');
@@ -8586,5 +8673,13 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+<div id="zenith-month-overlay" class="zenith-month-overlay" hidden onclick="if(event.target===this)zenithCloseMonth()" role="presentation">
+  <section class="zenith-month-dialog" role="dialog" aria-modal="true" aria-label="Calendario mensual">
+    <div class="zenith-month-header"><div><div class="zenith-month-eyebrow">ZENITH / CALENDARIO</div><h2 id="zenith-month-title"></h2></div><button class="zenith-month-close" onclick="zenithCloseMonth()" aria-label="Cerrar calendario">×</button></div>
+    <div class="zenith-month-nav"><button onclick="zenithShiftMonth(-1)" aria-label="Mes anterior">←</button><button onclick="zenithMonthToday()">Hoy</button><button onclick="zenithShiftMonth(1)" aria-label="Mes siguiente">→</button></div>
+    <div class="zenith-month-grid" id="zenith-month-grid"></div>
+    <p class="zenith-month-help">Selecciona una fecha para abrir su programación. Los días sin bloques no se rellenan automáticamente.</p>
+  </section>
+</div>
 </body>
 </html>
