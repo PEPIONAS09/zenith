@@ -1508,23 +1508,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 @media (min-width: 1200px){
   .desktop-main > *{max-width:1500px}
 }
-
-/* ZENITH 2.0 mobile polish: date focus, readable workouts, and icon-only utilities. */
-.zenith-fab-icon{width:23px;height:23px;display:block;pointer-events:none}
-@media(max-width:767px){
-  .chat-fab,.timer-fab{width:52px!important;height:52px!important;font-size:0!important;box-shadow:0 4px 18px #0006!important}
-  .chat-fab{color:#E8FF18!important}
-  .timer-fab{color:#0B0D10!important}
-  .day-tabs{scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
-  .day-tab{flex-shrink:0;min-width:92px!important}
-  .day-tab:focus-visible{outline:2px solid #E8FF18;outline-offset:-3px}
-  .block-hdr{gap:12px}
-  .block-body{padding-bottom:16px}
-  .block-text{overflow-wrap:anywhere}
-  .rest-view{padding-top:42px!important;padding-bottom:42px!important}
-  .rest-txt{letter-spacing:.16em!important}
-  #screen-week>div:first-child{padding-top:10px!important;padding-bottom:10px!important}
-}
 </style>
 <style id="zenith-calendar-v2-style">
 .zenith-date-picker{background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-family:var(--font-m);font-size:11px;color-scheme:dark;max-width:170px}
@@ -1584,6 +1567,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   .zenith-month-day{min-height:34px!important;border-radius:7px!important}
   .zenith-month-help{font-size:10px!important;margin-top:12px!important}
 }
+</style>
+<style id="zenith-coach-editor-v2">
+.zenith-editor-advanced{border:1px solid var(--border,#343942);border-radius:10px;padding:13px;margin:12px 0 20px;background:var(--bg2,#171b21)}
+.zenith-editor-advanced summary{cursor:pointer;color:var(--text3,#a0a6b0);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.zenith-editor-advanced[open] summary{margin-bottom:14px;color:var(--accent,#e8ff18)}
+#be-date-field{padding:14px;border:1px solid #394049;border-radius:12px;background:#171b21}
+#be-scheduled-date{color-scheme:dark;min-height:48px}
+#block-editor .be-scroll{padding-bottom:100px}
+@media(max-width:600px){#block-editor .be-title{font-size:20px;line-height:1.15}#block-editor .be-header{gap:10px}}
 </style>
 </head>
 <body>
@@ -1855,12 +1847,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- CHAT FAB -->
-<button class="chat-fab" onclick="openChatList()" title="Mensajes" aria-label="Abrir mensajes" style="bottom:88px;left:16px"><svg class="zenith-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/><path d="M8.5 11.5h8"/></svg>
+<button class="chat-fab" onclick="openChatList()" title="Mensajes" style="bottom:88px;left:16px">💬
   <div class="chat-badge" id="chat-badge"></div>
 </button>
 
 <!-- TIMER FAB -->
-<button class="timer-fab" onclick="openTimer()" id="timer-fab" title="Timer" aria-label="Abrir cronómetro" style="bottom:88px"><svg class="zenith-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3M18 6l2-2"/></svg></button>
+<button class="timer-fab" onclick="openTimer()" id="timer-fab" title="Timer" style="bottom:88px">⏱</button>
 
 <!-- TIMER OVERLAY -->
 <div class="timer-overlay" id="timer-overlay">
@@ -2503,7 +2495,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <div class="be-field">
       <label class="be-label">Programa</label>
-      <select class="be-select" id="be-program" onchange="syncOlyField()">
+      <select class="be-select" id="be-program" onchange="syncOlyField();zenithEditorDateFromLegacy()">
         <option value="games">Games</option>
         <option value="compete">Compete</option>
         <option value="olympus">Olympus</option>
@@ -2511,13 +2503,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="hubmind">HubMind</option>
       </select>
     </div>
+    <div class="be-field" id="be-date-field">
+      <label class="be-label" for="be-scheduled-date">Fecha de la sesión</label>
+      <input class="be-input" id="be-scheduled-date" type="date" onchange="zenithEditorDateChanged()">
+      <div id="be-date-feedback" style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5" aria-live="polite">La semana interna se calcula desde el calendario del programa.</div>
+    </div>
+    <details id="be-legacy-location" class="zenith-editor-advanced"><summary>Ubicación interna · avanzada</summary>
     <div class="be-field">
       <label class="be-label">Semana #</label>
-      <input class="be-input" id="be-week-num" type="number" min="1" max="52" value="1" placeholder="1">
+      <input class="be-input" id="be-week-num" onchange="zenithEditorDateFromLegacy()" type="number" min="1" max="52" value="1" placeholder="1">
     </div>
     <div class="be-field">
       <label class="be-label">Día de la semana</label>
-      <select class="be-select" id="be-day">
+      <select class="be-select" id="be-day" onchange="zenithEditorDateFromLegacy()">
         <option value="1">Lunes</option>
         <option value="2">Martes</option>
         <option value="3">Miércoles</option>
@@ -2527,6 +2525,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <option value="0">Domingo (descanso)</option>
       </select>
     </div>
+    </details>
     <div class="be-field">
       <label class="be-label">Color del bloque</label>
       <div class="color-row" id="be-colors">
@@ -3767,25 +3766,15 @@ function initWeek(){
     content.appendChild(div);
     // Scores removed - only tracking PRs now
   });
-  zenithFocusDay(tabBar, tabBar.querySelector('.day-tab.active'), 'instant');
   // Show replace buttons if block is copied
   setTimeout(updateReplaceBtns, 50);
-}
-
-// Keep the selected day visible on narrow screens, including Saturday/Sunday.
-function zenithFocusDay(tabBar, activeTab, behavior='smooth'){
-  if(!tabBar || !activeTab) return;
-  const target = activeTab.offsetLeft - tabBar.offsetLeft - (tabBar.clientWidth - activeTab.offsetWidth)/2;
-  tabBar.scrollTo({left:Math.max(0,target),behavior});
 }
 
 function showDay(dow){
   zenithMainDay=dow;
   document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('[id^=dayc-]').forEach(d=>d.style.display='none');
-  const activeTab = document.getElementById('dtab-'+dow);
-  activeTab.classList.add('active');
-  zenithFocusDay(document.getElementById('day-tabs'), activeTab);
+  document.getElementById('dtab-'+dow).classList.add('active');
   document.getElementById('dayc-'+dow).style.display='block';
   zenithSyncPicker('zenith-date-main',weekOffset,dow);
   setTimeout(updateReplaceBtns, 20);
@@ -3970,6 +3959,44 @@ function backToList(){
   currentAthId = null;
 }
 
+
+/* ZENITH 2.0 — fecha editable sin modificar el esquema histórico de blocks.
+   La fecha es una representación reversible de (program_slug, week_number, day_of_week).
+   Si no existe configuración habilitada, no se permite fingir una fecha. */
+function zenithEditorIsoForLocation(prog, week, dow){
+  const c=zenithCalendar[prog];
+  if(!c?.enabled || !/^\d{4}-\d{2}-\d{2}$/.test(c.anchor_monday||'')) return '';
+  const anchor=new Date(c.anchor_monday+'T12:00:00Z');
+  if(Number.isNaN(anchor.getTime())) return '';
+  anchor.setUTCDate(anchor.getUTCDate()+(Number(week)-Number(c.anchor_week))*7+(Number(dow)===0?6:Number(dow)-1));
+  return anchor.toISOString().slice(0,10);
+}
+function zenithEditorDateFromLegacy(){
+  const prog=document.getElementById('be-program').value;
+  const week=Number(document.getElementById('be-week-num').value);
+  const dow=Number(document.getElementById('be-day').value);
+  const date=zenithEditorIsoForLocation(prog,week,dow);
+  const el=document.getElementById('be-scheduled-date');
+  el.value=date;
+  el.disabled=!date;
+  const hint=document.getElementById('be-date-feedback');
+  hint.textContent=date?`Fecha ${date} · semana interna ${week}. No cambia los resultados existentes.`:'Programa sin calendario activo: usa la ubicación interna avanzada.';
+}
+function zenithEditorDateChanged(){
+  const iso=document.getElementById('be-scheduled-date').value;
+  const prog=document.getElementById('be-program').value;
+  const week=zenithWeekForDate(prog,iso);
+  if(!iso||week===null||!Number.isInteger(week)||week<1){
+    document.getElementById('be-date-feedback').textContent='Fecha fuera del ciclo o calendario inactivo. No se modificó la ubicación.';
+    return;
+  }
+  const d=new Date(iso+'T12:00:00Z');
+  if(Number.isNaN(d.getTime())) return;
+  document.getElementById('be-week-num').value=week;
+  document.getElementById('be-day').value=d.getUTCDay();
+  document.getElementById('be-date-feedback').textContent=`Se guardará en semana ${week}, ${['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][d.getUTCDay()]}.`;
+}
+
 // BLOCK EDITOR
 async function openBlockEditor(blockId, e){ e.stopPropagation();
   // Search in both allBlocks and athWeekBlocks
@@ -3985,6 +4012,7 @@ async function openBlockEditor(blockId, e){ e.stopPropagation();
   document.getElementById('be-program').value = b.program_slug||'compete';
   document.getElementById('be-week-num').value = b.week_number||currentWeekNumber||1;
   document.getElementById('be-day').value = b.day_of_week;
+  zenithEditorDateFromLegacy();
   currentWeekNumber = b.week_number || currentWeekNumber || 1;
   document.getElementById('be-content').value = b.content||'';
   document.getElementById('be-coach-note').value = b.coach_note||'';
@@ -4028,6 +4056,7 @@ function openNewBlock(dow, prog, week){
   document.getElementById('be-program').value = prog;
   document.getElementById('be-week-num').value = semana;
   document.getElementById('be-day').value = dow;
+  zenithEditorDateFromLegacy();
   olyDraft = []; renderOlyDraft(); syncOlyField();
   document.getElementById('be-content').value = '';
   document.getElementById('be-coach-note').value = '';
@@ -4095,6 +4124,18 @@ function syncOlyField(){
 async function saveBlock(){
   const id = document.getElementById('be-block-id').value;
   const prog = document.getElementById('be-program').value;
+  if(window.zenithBlockSaving) return;
+  const dateInput=document.getElementById('be-scheduled-date');
+  if(dateInput && !dateInput.disabled && dateInput.value){
+    const mapped=zenithWeekForDate(prog,dateInput.value);
+    if(mapped===null||mapped<1||mapped!==Number(document.getElementById('be-week-num').value)){
+      alert('La fecha no coincide con la semana interna. Revisa la ubicación antes de guardar.');return;
+    }
+    const weekday=new Date(dateInput.value+'T12:00:00Z').getUTCDay();
+    if(weekday!==Number(document.getElementById('be-day').value)){
+      alert('La fecha no coincide con el día de la semana.');return;
+    }
+  }
   const weekNum = parseInt(document.getElementById('be-week-num')?.value || currentWeekNumber || 1);
   const data = {
     program_slug: prog,
@@ -4139,6 +4180,16 @@ async function saveBlock(){
     const totalRatingWeight = data.rating_gym + data.rating_eng + data.rating_bbl + data.rating_str + data.rating_spd + data.rating_cap;
     if(!data.rating_test_key){ alert('Un bloque RATED necesita una clave de test.'); return; }
     if(!validateRatedDraft()){ alert('Corrige la configuración RATED antes de guardar.'); return; }
+  }
+
+  if(id){
+    const original=[...Object.values(allBlocks).flat(),...Object.values(athWeekBlocks).flat()].find(b=>b.id===id);
+    if(original && (original.program_slug!==prog||Number(original.week_number)!==weekNum||Number(original.day_of_week)!==data.day_of_week)){
+      const {count,error:checkError}=await sb.from('scores').select('id',{count:'exact',head:true}).eq('block_id',id);
+      if(checkError){ alert('No se pudo comprobar si hay resultados vinculados. No se moverá el bloque.');return; }
+      if(count>0){ alert(`Este bloque tiene ${count} resultado(s). Para preservar el historial, no puede moverse de fecha. Crea un bloque nuevo en la fecha destino.`);return; }
+      if(!confirm('Vas a mover este bloque a otra fecha. ¿Confirmas el cambio?')) return;
+    }
   }
 
   // order_index define el orden dentro del día. Nunca se enviaba,
@@ -5152,7 +5203,6 @@ function renderAthWeek(a){
     content.appendChild(div);
     blocks.forEach(b => loadAthBlockScores(b.id, a.id));
   });
-  zenithFocusDay(tabBar, tabBar.querySelector('.day-tab.active'), 'instant');
 }
 
 
@@ -5397,9 +5447,7 @@ function showAthDay(dow){
   currentAthDay = dow;
   document.querySelectorAll('[id^=athtab-]').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('[id^=athdayc-]').forEach(d=>d.style.display='none');
-  const activeTab = document.getElementById('athtab-'+dow);
-  activeTab.classList.add('active');
-  zenithFocusDay(document.getElementById('ath-day-tabs'), activeTab);
+  document.getElementById('athtab-'+dow).classList.add('active');
   document.getElementById('athdayc-'+dow).style.display='block';
   setTimeout(updateReplaceBtns, 20);
 }
