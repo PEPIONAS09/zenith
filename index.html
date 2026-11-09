@@ -1508,6 +1508,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 @media (min-width: 1200px){
   .desktop-main > *{max-width:1500px}
 }
+
+/* ZENITH 2.0 mobile polish: date focus, readable workouts, and icon-only utilities. */
+.zenith-fab-icon{width:23px;height:23px;display:block;pointer-events:none}
+@media(max-width:767px){
+  .chat-fab,.timer-fab{width:52px!important;height:52px!important;font-size:0!important;box-shadow:0 4px 18px #0006!important}
+  .chat-fab{color:#E8FF18!important}
+  .timer-fab{color:#0B0D10!important}
+  .day-tabs{scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .day-tab{flex-shrink:0;min-width:92px!important}
+  .day-tab:focus-visible{outline:2px solid #E8FF18;outline-offset:-3px}
+  .block-hdr{gap:12px}
+  .block-body{padding-bottom:16px}
+  .block-text{overflow-wrap:anywhere}
+  .rest-view{padding-top:42px!important;padding-bottom:42px!important}
+  .rest-txt{letter-spacing:.16em!important}
+  #screen-week>div:first-child{padding-top:10px!important;padding-bottom:10px!important}
+}
 </style>
 <style id="zenith-calendar-v2-style">
 .zenith-date-picker{background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-family:var(--font-m);font-size:11px;color-scheme:dark;max-width:170px}
@@ -1838,12 +1855,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <!-- CHAT FAB -->
-<button class="chat-fab" onclick="openChatList()" title="Mensajes" style="bottom:88px;left:16px">💬
+<button class="chat-fab" onclick="openChatList()" title="Mensajes" aria-label="Abrir mensajes" style="bottom:88px;left:16px"><svg class="zenith-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/><path d="M8.5 11.5h8"/></svg>
   <div class="chat-badge" id="chat-badge"></div>
 </button>
 
 <!-- TIMER FAB -->
-<button class="timer-fab" onclick="openTimer()" id="timer-fab" title="Timer" style="bottom:88px">⏱</button>
+<button class="timer-fab" onclick="openTimer()" id="timer-fab" title="Timer" aria-label="Abrir cronómetro" style="bottom:88px"><svg class="zenith-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3M18 6l2-2"/></svg></button>
 
 <!-- TIMER OVERLAY -->
 <div class="timer-overlay" id="timer-overlay">
@@ -3750,15 +3767,25 @@ function initWeek(){
     content.appendChild(div);
     // Scores removed - only tracking PRs now
   });
+  zenithFocusDay(tabBar, tabBar.querySelector('.day-tab.active'), 'instant');
   // Show replace buttons if block is copied
   setTimeout(updateReplaceBtns, 50);
+}
+
+// Keep the selected day visible on narrow screens, including Saturday/Sunday.
+function zenithFocusDay(tabBar, activeTab, behavior='smooth'){
+  if(!tabBar || !activeTab) return;
+  const target = activeTab.offsetLeft - tabBar.offsetLeft - (tabBar.clientWidth - activeTab.offsetWidth)/2;
+  tabBar.scrollTo({left:Math.max(0,target),behavior});
 }
 
 function showDay(dow){
   zenithMainDay=dow;
   document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('[id^=dayc-]').forEach(d=>d.style.display='none');
-  document.getElementById('dtab-'+dow).classList.add('active');
+  const activeTab = document.getElementById('dtab-'+dow);
+  activeTab.classList.add('active');
+  zenithFocusDay(document.getElementById('day-tabs'), activeTab);
   document.getElementById('dayc-'+dow).style.display='block';
   zenithSyncPicker('zenith-date-main',weekOffset,dow);
   setTimeout(updateReplaceBtns, 20);
@@ -5125,6 +5152,7 @@ function renderAthWeek(a){
     content.appendChild(div);
     blocks.forEach(b => loadAthBlockScores(b.id, a.id));
   });
+  zenithFocusDay(tabBar, tabBar.querySelector('.day-tab.active'), 'instant');
 }
 
 
@@ -5369,7 +5397,9 @@ function showAthDay(dow){
   currentAthDay = dow;
   document.querySelectorAll('[id^=athtab-]').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('[id^=athdayc-]').forEach(d=>d.style.display='none');
-  document.getElementById('athtab-'+dow).classList.add('active');
+  const activeTab = document.getElementById('athtab-'+dow);
+  activeTab.classList.add('active');
+  zenithFocusDay(document.getElementById('ath-day-tabs'), activeTab);
   document.getElementById('athdayc-'+dow).style.display='block';
   setTimeout(updateReplaceBtns, 20);
 }
