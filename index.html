@@ -1622,6 +1622,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
  [data-theme="light"] .timer-fab{background:#E8FF18!important;color:#0B0D10!important}
 }
 </style>
+<style id="zenith-rated-v40-style">
+.rated-v40-details{margin:12px 0 24px;padding:18px;border:1px solid var(--border);background:var(--bg2);border-radius:12px;color:var(--text)}
+.rated-v40-title{font-size:11px;letter-spacing:2px;color:var(--text3);font-weight:800;margin-bottom:14px}
+.rated-v40-compare{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rated-v40-compare>div{min-width:0;background:var(--bg3);padding:12px 6px;text-align:center;border-radius:8px}
+.rated-v40-compare small{display:block;font-size:9px;letter-spacing:.5px;color:var(--text3);margin-bottom:7px}
+.rated-v40-compare strong{font-size:clamp(19px,5vw,29px);color:var(--accent);font-family:var(--font-m)}
+.rated-v40-details p{font-size:11px;line-height:1.6;color:var(--text3);margin:12px 0 0}
+</style>
 </head>
 <body>
 <div class="app">
@@ -8653,6 +8662,33 @@ function renderAttrCard(attrs, name, opts){
   </div>`;
 }
 
+// Mejor resultado RX verificado por test, con ponderación temporal de 90 días.
+// Ejes sin evidencia = null; OVR solo con seis ejes.
+function ratedOfficialSnapshot(rows, asOf){
+  const cutoff=asOf.getTime(), best=new Map();
+  for(const r of rows){
+    const t=new Date(r.scored_at).getTime(), score=Number(r.performance_score);
+    if(!Number.isFinite(t)||t>cutoff||!Number.isFinite(score))continue;
+    const k=String(r.test_key||'');if(!k)continue;
+    const old=best.get(k);
+    if(!old||score>Number(old.performance_score))best.set(k,r);
+  }
+  const axes={};let covered=0;
+  for(const key of HUB_ATTR_ORDER){
+    let sum=0,total=0;
+    for(const r of best.values()){
+      const w=Number(r[key+'_weight']);if(!(w>0))continue;
+      const age=Math.max(0,(cutoff-new Date(r.scored_at).getTime())/86400000);
+      const weight=w*Math.pow(0.5,age/90);
+      sum+=Number(r.performance_score)*weight;total+=weight;
+    }
+    axes[key]=total>0?Math.round(sum/total):null;
+    if(axes[key]!==null)covered++;
+  }
+  const vals=HUB_ATTR_ORDER.map(k=>axes[k]);
+  return {axes,ovr:covered===6?Math.round(vals.reduce((a,b)=>a+b,0)/6):null,covered,tests:best.size};
+}
+
 // Punto de entrada: carga datos y pinta en el contenedor dado
 async function renderAttributes(containerId, athleteId, name, mode = 'progress'){
   const el = document.getElementById(containerId);
@@ -8701,46 +8737,28 @@ async function renderAttributes(containerId, athleteId, name, mode = 'progress')
       return;
     }
 
-    // ── COMPETE + HUB MIND · ZENITH RATED 3.3 PREVIEW ──────
-    // Las vistas son de solo lectura; el frontend no modifica resultados.
+    // ── ZENITH RATED 2.0 · PERFIL ÚNICO OFICIAL ─────────
     if(athleteProgram === 'hubmind' || athleteProgram === 'compete'){
-      const selectedMode = mode === 'competitive' ? 'competitive' : 'progress';
-      const viewName = selectedMode === 'progress'
-        ? 'zr_v33_athlete_profile_final_preview'
-        : 'zr_v32_live_preview';
-      const {data: rated, error: ratedError} = await sb.from(viewName)
-        .select('*').eq('athlete_id',uid).maybeSingle();
-      if(ratedError) throw new Error('No se pudo consultar '+viewName+': '+ratedError.message);
-
-      const attrs = buildHubAttributes(rated || {});
-      const modeLabel = selectedMode === 'progress' ? 'Progreso' : 'Competitivo';
-      const status = selectedMode === 'progress'
-        ? (rated?.display_status || 'NO_DATA')
-        : (rated?.evidence_confidence || 'NO_CALIBRATED_EVIDENCE');
-      const evidence = selectedMode === 'progress'
-        ? (' · '+(rated?.evidence_composition || 'NO_EVIDENCE')+' · '+(rated?.total_results || 0)+' resultados')
-        : (' · '+(rated?.calibrated_tests || 0)+' tests calibrados');
-      const rawOVR = selectedMode === 'progress' ? rated?.progress_ovr : rated?.competitive_ovr;
-      const ovr = rawOVR == null || !Number.isFinite(Number(rawOVR)) ? null : Number(rawOVR);
-      const modeSwitch = `<div style="display:flex;gap:8px;margin-bottom:14px" role="group" aria-label="Modo de evaluación">
-        <button type="button" data-rated-mode="progress" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='progress'?'1':'.5'}" aria-pressed="${selectedMode==='progress'}">Progreso</button>
-        <button type="button" data-rated-mode="competitive" class="be-save" style="flex:1;margin:0;opacity:${selectedMode==='competitive'?'1':'.5'}" aria-pressed="${selectedMode==='competitive'}">Competitivo</button>
-      </div>`;
-      const explanation = selectedMode === 'progress'
-        ? 'Indicador experimental de progreso personal. Combina distintas escalas; no usar como ranking competitivo.'
-        : 'Evaluación basada en pruebas calibradas. Las ejecuciones pendientes de revisión no están certificadas como RX.';
-      el.innerHTML = modeSwitch + renderAttrCard(attrs, athleteName, {
-        order:HUB_ATTR_ORDER,
-        ovr,
-        subtitle:modeLabel+' · '+status+evidence,
-        sourceLabel:selectedMode==='progress'?'RATED · historial ponderado 90 días':'ZCA · evidencia calibrada'
-      }) + `<div style="font-size:11px;color:var(--text3);padding:12px 4px">${explanation}</div>`;
-      el.querySelectorAll('[data-rated-mode]').forEach(button => {
-        button.addEventListener('click', () => {
-          const nextMode = button.dataset.ratedMode;
-          if(nextMode !== selectedMode) renderAttributes(containerId, uid, athleteName, nextMode);
-        });
-      });
+      const {data: evidence, error: ratedError} = await sb.from('zr_v40_official_evidence')
+        .select('score_id,test_key,performance_score,gym_weight,eng_weight,bbl_weight,str_weight,spd_weight,cap_weight,scored_at,evidence_type')
+        .eq('athlete_id',uid).order('scored_at',{ascending:false}).limit(1000);
+      if(ratedError) throw new Error('Falta instalar la vista oficial RATED 2.0: '+ratedError.message);
+      const rows=evidence||[];
+      const now=new Date();
+      const current=ratedOfficialSnapshot(rows,now);
+      const previous=ratedOfficialSnapshot(rows,new Date(now.getTime()-90*86400000));
+      const attrs=buildHubAttributes(current.axes);
+      const status=current.covered===6?'PERFIL COMPLETO':current.covered?'PERFIL PARCIAL':'SIN EVIDENCIA VERIFICADA';
+      el.innerHTML=renderAttrCard(attrs,athleteName,{
+        order:HUB_ATTR_ORDER,ovr:current.ovr,
+        subtitle:'RATED 2.0 · '+status+' · '+current.covered+'/6 ejes · '+current.tests+' tests',
+        sourceLabel:'Evidencia calibrada · RX verificado'
+      })+`<section class="rated-v40-details">
+        <div class="rated-v40-title">EVOLUCIÓN · 90 DÍAS</div>
+        <div class="rated-v40-compare"><div><small>ACTUAL</small><strong>${current.ovr??'—'}</strong></div><div><small>HACE 90 DÍAS</small><strong>${previous.ovr??'—'}</strong></div><div><small>CAMBIO</small><strong>${current.ovr===null||previous.ovr===null?'—':(current.ovr-previous.ovr>0?'+':'')+(current.ovr-previous.ovr)}</strong></div></div>
+        <p>Solo resultados RX verificados y calibrados. Pendientes, Scaled y rechazados no modifican este perfil.</p>
+        ${rows.length===1000?'<p>Historial limitado a 1,000 resultados. Se requiere paginación.</p>':''}
+      </section>`;
       return;
     }
 
