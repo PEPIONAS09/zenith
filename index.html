@@ -2895,12 +2895,12 @@ const PROGRAMS = [
   {slug:'compete', label:'Compete', icon:'<svg class="zen-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z"/></svg>', color:'var(--accent)', fg:'#000'},
   {slug:'olympus', label:'Olympus', icon:'◈', color:'var(--purple)', fg:'#fff'},
   {slug:'games',   label:'Games',   icon:'<svg class="zen-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="12" rx="5"/><path d="M7 11v4m-2-2h4m6-1h.01M18 14h.01"/></svg>', color:'var(--games)',  fg:'#fff'},
-  {slug:'hyrox',   label:'Hyrox',   icon:'▲', color:'var(--hyrox)',  fg:'#000'},
-  {slug:'hubmind', label:'HubMind', icon:'◆', color:'var(--hubmind)',fg:'#fff'},
+  {slug:'hyrox',   label:'Competition Hub Hyrox',   icon:'▲', color:'var(--hyrox)',  fg:'#000'},
+  {slug:'hubmind', label:'Competition Hub CrossFit', icon:'◆', color:'var(--hubmind)',fg:'#fff'},
 ];
 const PROG_BY_SLUG = Object.fromEntries(PROGRAMS.map(p=>[p.slug,p]));
 const progMeta = s => PROG_BY_SLUG[s] || PROG_BY_SLUG.compete;
-const progLabelOf = s => { const p=progMeta(s); return p.icon+' '+p.label; };
+const progLabelOf = s => progMeta(s).label;
 
 function daysUntil(y,m,d){ const t=new Date(y,m-1,d); const n=new Date(); n.setHours(0,0,0,0); return Math.ceil((t-n)/86400000); }
 function getWeek(d){ const u=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const dy=u.getUTCDay()||7; u.setUTCDate(u.getUTCDate()+4-dy); const ys=new Date(Date.UTC(u.getUTCFullYear(),0,1)); return Math.ceil((((u-ys)/86400000)+1)/7); }
@@ -8665,28 +8665,35 @@ function renderAttrCard(attrs, name, opts){
 // Mejor resultado RX verificado por test, con ponderación temporal de 90 días.
 // Ejes sin evidencia = null; OVR solo con seis ejes.
 function ratedOfficialSnapshot(rows, asOf){
-  const cutoff=asOf.getTime(), best=new Map();
+  // Official evidence is already vetted by the database view.
+  // Every eligible attempt contributes; one result per score_id prevents duplicates.
+  const cutoff=asOf.getTime(), eligible=new Map();
   for(const r of rows){
-    const t=new Date(r.scored_at).getTime(), score=Number(r.performance_score);
-    if(!Number.isFinite(t)||t>cutoff||!Number.isFinite(score))continue;
-    const k=String(r.test_key||'');if(!k)continue;
-    const old=best.get(k);
-    if(!old||score>Number(old.performance_score))best.set(k,r);
+    const t=new Date(r.scored_at).getTime();
+    const score=Number(r.performance_score);
+    if(!Number.isFinite(t)||t>cutoff||!Number.isFinite(score)||score<0||score>100)continue;
+    const key=String(r.score_id||'');
+    if(!key)continue;
+    if(!eligible.has(key))eligible.set(key,r);
   }
   const axes={};let covered=0;
   for(const key of HUB_ATTR_ORDER){
     let sum=0,total=0;
-    for(const r of best.values()){
-      const w=Number(r[key+'_weight']);if(!(w>0))continue;
+    for(const r of eligible.values()){
+      const w=Number(r[key+'_weight']);
+      if(!Number.isFinite(w)||w<=0)continue;
       const age=Math.max(0,(cutoff-new Date(r.scored_at).getTime())/86400000);
       const weight=w*Math.pow(0.5,age/90);
-      sum+=Number(r.performance_score)*weight;total+=weight;
+      sum+=Number(r.performance_score)*weight;
+      total+=weight;
     }
     axes[key]=total>0?Math.round(sum/total):null;
     if(axes[key]!==null)covered++;
   }
   const vals=HUB_ATTR_ORDER.map(k=>axes[k]);
-  return {axes,ovr:covered===6?Math.round(vals.reduce((a,b)=>a+b,0)/6):null,covered,tests:best.size};
+  return {axes,ovr:covered===6?Math.round(vals.reduce((a,b)=>a+b,0)/6):null,
+    covered,tests:new Set([...eligible.values()].map(r=>r.test_key).filter(Boolean)).size,
+    results:eligible.size};
 }
 
 // Punto de entrada: carga datos y pinta en el contenedor dado
@@ -8752,7 +8759,7 @@ async function renderAttributes(containerId, athleteId, name, mode = 'progress')
       el.innerHTML=renderAttrCard(attrs,athleteName,{
         order:HUB_ATTR_ORDER,ovr:current.ovr,
         subtitle:'RATED 2.0 · '+status+' · '+current.covered+'/6 ejes · '+current.tests+' tests',
-        sourceLabel:'Evidencia calibrada · RX verificado'
+        sourceLabel:'Resultados oficiales verificados · ponderación por recencia'
       })+`<section class="rated-v40-details">
         <div class="rated-v40-title">EVOLUCIÓN · 90 DÍAS</div>
         <div class="rated-v40-compare"><div><small>ACTUAL</small><strong>${current.ovr??'—'}</strong></div><div><small>HACE 90 DÍAS</small><strong>${previous.ovr??'—'}</strong></div><div><small>CAMBIO</small><strong>${current.ovr===null||previous.ovr===null?'—':(current.ovr-previous.ovr>0?'+':'')+(current.ovr-previous.ovr)}</strong></div></div>
