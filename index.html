@@ -1631,6 +1631,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .rated-v40-compare strong{font-size:clamp(19px,5vw,29px);color:var(--accent);font-family:var(--font-m)}
 .rated-v40-details p{font-size:11px;line-height:1.6;color:var(--text3);margin:12px 0 0}
 </style>
+<style id="zen-coach-v42-style">
+.zen-coach-dashboard{padding:18px 16px 28px;overflow-y:auto;flex:1;min-height:0}
+.zen-coach-title{font-family:var(--font-d);font-size:22px;font-weight:700;margin:6px 0 18px;color:var(--text)}
+.zen-coach-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.zen-coach-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:19px;text-align:left;cursor:pointer;color:var(--text);font-family:var(--font-m)}
+.zen-coach-card strong{display:block;font-size:15px;line-height:1.4;overflow-wrap:anywhere}.zen-coach-card span{display:block;color:var(--text3);font-size:11px;margin-top:8px}
+.zen-coach-card:focus-visible,.zen-coach-tab:focus-visible{outline:2px solid var(--accent)}
+.zen-coach-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.zen-coach-tab{background:var(--bg2);color:var(--text2);border:1px solid var(--border2);border-radius:9px;padding:11px 15px;font-family:var(--font-m);cursor:pointer}
+.zen-coach-tab.active{background:var(--accent-fill);color:var(--on-accent);border-color:var(--accent)}
+.zen-coach-block{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:15px;margin:10px 0}
+.zen-coach-block strong{display:block;color:var(--text);margin-bottom:8px}.zen-coach-block p{color:var(--text2);white-space:pre-wrap;line-height:1.5;margin:8px 0}
+.zen-coach-action{border:1px solid var(--border2);background:transparent;color:var(--text);border-radius:8px;padding:9px 12px;cursor:pointer}
+.zen-coach-action.primary{background:var(--accent-fill);color:var(--on-accent);border-color:var(--accent)}
+/* Athlete context cannot mutate the shared program: only Personalizar is exposed. */
+#ath-week-view button[onclick^="openBlockEditorAth"],#ath-week-view button[onclick^="moveAthBlock"],#ath-week-view button[onclick^="confirmDeleteAthBlock"],#ath-week-view button[onclick^="copyBlock"],#ath-week-view .add-block-btn,#ath-week-view button[onclick^="openCopyAthWeek"]{display:none!important}
+@media(max-width:600px){.zen-coach-cards{grid-template-columns:1fr}.zen-coach-dashboard{padding:14px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -2401,10 +2418,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <button class="co-close" onclick="closeCoach()">✕</button>
     </div>
   </div>
-  <div style="padding:10px 20px;border-bottom:1px solid var(--border);background:var(--bg2)">
-    <div style="font-family:var(--font-m);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Semana actual por programa</div>
-    <div class="week-ctrl" id="week-controls"></div>
-  </div>
+
+  <div id="zen-coach-dashboard" class="zen-coach-dashboard"></div>
+  <div id="zen-coach-roster" style="display:none">
   <div class="ath-search">
   <input id="ath-q" type="search" placeholder="Buscar atleta..." oninput="renderAthList()">
   <select id="ath-filter" onchange="renderAthList()">
@@ -2413,6 +2429,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <span class="ath-count" id="ath-count"></span>
 </div>
 <div class="ath-list" id="ath-list"></div>
+  </div>
 </div>
 
 <!-- MOBILE COACH COMPLIANCE -->
@@ -3862,14 +3879,12 @@ async function openCoach(){
   }
   
   renderAthList();
+  zenCoachHome();
   // Only main coach can control week numbers and see admin buttons
   const actionBtns = document.getElementById('coach-action-btns');
   if(isMainCoach){
-    renderWeekControls();
     if(actionBtns) actionBtns.style.display = 'flex';
   } else {
-    const wc = document.getElementById('week-controls');
-    if(wc) wc.innerHTML = '';
     if(actionBtns){
       // Sub-coach only sees close button
       actionBtns.innerHTML = `<button class="co-close" onclick="closeCoach()">✕ Cerrar</button>`;
@@ -8807,5 +8822,71 @@ if('serviceWorker' in navigator){
     <p class="zenith-month-help">Selecciona una fecha para abrir su programación. Los días sin bloques no se rellenan automáticamente.</p>
   </section>
 </div>
+<script id="zen-coach-v42">
+// Program-first coach navigation. Master blocks are edited only in Programacion;
+// athlete-specific changes continue to use athlete_overrides via Personalizar.
+let zenCoachProgram=null,zenCoachTab='athletes',zenCoachWeekOffset=0;
+function zenEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function zenCoachHome(){
+  zenCoachProgram=null;
+  document.getElementById('zen-coach-roster').style.display='none';
+  const d=document.getElementById('zen-coach-dashboard');d.style.display='block';
+  d.innerHTML='<div class="zen-coach-title">PROGRAMAS</div><div class="zen-coach-cards">'+PROGRAMS.map(p=>{
+    const count=athletes.filter(a=>a.program===p.slug).length;
+    return '<button class="zen-coach-card" onclick="zenCoachOpenProgram(\''+p.slug+'\')" style="border-top:3px solid '+p.color+'"><strong>'+zenEsc(p.label)+'</strong><span>'+count+' atletas · Atletas y programación</span></button>';
+  }).join('')+'</div>';
+}
+function zenCoachOpenProgram(slug){
+  if(!PROGRAMS.some(p=>p.slug===slug))return;
+  zenCoachProgram=slug;zenCoachTab='athletes';zenCoachWeekOffset=0;
+  zenCoachRender();
+}
+function zenCoachRender(){
+  const p=progMeta(zenCoachProgram),d=document.getElementById('zen-coach-dashboard');
+  document.getElementById('zen-coach-roster').style.display='none';d.style.display='block';
+  d.innerHTML='<button class="zen-coach-action" onclick="zenCoachHome()">← Programas</button><div class="zen-coach-title">'+zenEsc(p.label)+'</div><div class="zen-coach-tabs"><button class="zen-coach-tab '+(zenCoachTab==='athletes'?'active':'')+'" onclick="zenCoachSwitch(\'athletes\')">Atletas</button><button class="zen-coach-tab '+(zenCoachTab==='program'?'active':'')+'" onclick="zenCoachSwitch(\'program\')">Programación</button></div><div id="zen-coach-tab-content"></div>';
+  if(zenCoachTab==='athletes')zenCoachAthletes();else zenCoachProgramming();
+}
+function zenCoachSwitch(tab){zenCoachTab=tab;zenCoachRender();}
+function zenCoachAthletes(){
+  const list=athletes.filter(a=>a.program===zenCoachProgram);
+  document.getElementById('zen-coach-tab-content').innerHTML='<div style="color:var(--text3);margin-bottom:14px">'+list.length+' atletas inscritos · La personalización solo afecta al atleta seleccionado.</div><input class="be-input" id="zen-ath-search" type="search" placeholder="Buscar dentro del programa" oninput="zenCoachAthletesList()"><div id="zen-coach-ath-list"></div>';
+  zenCoachAthletesList();
+}
+function zenCoachAthletesList(){
+  const q=(document.getElementById('zen-ath-search')?.value||'').toLocaleLowerCase();
+  const list=athletes.filter(a=>a.program===zenCoachProgram&&String(a.full_name||'').toLocaleLowerCase().includes(q));
+  document.getElementById('zen-coach-ath-list').innerHTML=list.length?list.map(a=>'<button class="zen-coach-card" style="width:100%;margin-top:9px" onclick="openAthDetail(\''+a.id+'\')"><strong>'+zenEsc(a.full_name||'Atleta')+'</strong><span>'+zenEsc(a.goal||'Abrir perfil y programación individual')+'</span></button>').join(''):'<p style="color:var(--text3)">No hay atletas en esta selección.</p>';
+}
+async function zenCoachProgramming(){
+  const d=document.getElementById('zen-coach-tab-content'),slug=zenCoachProgram;
+  const week=Math.max(1,(programWeeks[slug]||1)+zenCoachWeekOffset);
+  d.innerHTML='<p style="color:var(--text3);line-height:1.5">Los cambios realizados aquí modifican el programa maestro compartido por todos sus atletas. Las personalizaciones individuales se mantienen aparte.</p><div style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap"><button class="zen-coach-action" onclick="zenCoachChangeWeek(-1)">← Anterior</button><strong style="color:var(--text)">Semana '+week+'</strong><button class="zen-coach-action" onclick="zenCoachChangeWeek(1)">Siguiente →</button><button class="zen-coach-action" onclick="zenCoachChangeWeek(0)">Hoy</button></div><div id="zen-coach-program-blocks" style="color:var(--text3)">Cargando programación…</div>';
+  const {data,error}=await sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).order('day_of_week').order('order_index');
+  if(zenCoachProgram!==slug||zenCoachTab!=='program')return;
+  const target=document.getElementById('zen-coach-program-blocks');if(!target)return;
+  if(error){target.textContent='No se pudo cargar: '+error.message;return;}
+  const days=[['Lunes',1],['Martes',2],['Miércoles',3],['Jueves',4],['Viernes',5],['Sábado',6],['Domingo',0]];
+  target.innerHTML=days.map(([name,dow])=>{
+    const blocks=(data||[]).filter(b=>Number(b.day_of_week)===dow);
+    return '<section style="margin:16px 0 24px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong style="color:var(--text)">'+name+'</strong><button class="zen-coach-action primary" onclick="zenCoachNewBlock('+dow+')">+ Bloque</button></div>'+ (blocks.length?blocks.map(b=>'<div class="zen-coach-block"><strong>'+zenEsc(b.name)+'</strong><div style="color:var(--text3);font-size:12px">'+zenEsc(b.meta)+'</div><p>'+zenEsc(b.content)+'</p><button class="zen-coach-action" onclick="zenCoachEditBlock(\''+b.id+'\')">Editar programa maestro</button></div>').join(''):'<p style="color:var(--text3)">Sin bloques publicados.</p>')+'</section>';
+  }).join('');
+}
+function zenCoachChangeWeek(dir){zenCoachWeekOffset=dir===0?0:zenCoachWeekOffset+dir;zenCoachProgramming();}
+function zenCoachEditBlock(id){
+  // Existing editor reads from allBlocks / athWeekBlocks; preload the selected master week.
+  const slug=zenCoachProgram,week=Math.max(1,(programWeeks[slug]||1)+zenCoachWeekOffset);
+  sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).then(({data,error})=>{
+    if(error){alert(error.message);return;}
+    allBlocks={...allBlocks,zenCoachMaster:data||[]};
+    const b=(data||[]).find(x=>x.id===id);if(!b)return;
+    openBlockEditor(id,{stopPropagation(){}});
+  });
+}
+function zenCoachNewBlock(dow){
+  currentWeekNumber=Math.max(1,(programWeeks[zenCoachProgram]||1)+zenCoachWeekOffset);
+  openNewBlock(dow,zenCoachProgram,currentWeekNumber);
+}
+</script>
 </body>
 </html>
