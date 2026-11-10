@@ -8761,10 +8761,10 @@ async function renderAttributes(containerId, athleteId, name, mode = 'progress')
 
     // ── ZENITH RATED 2.0 · PERFIL ÚNICO OFICIAL ─────────
     if(athleteProgram === 'hubmind' || athleteProgram === 'compete'){
-      const {data: evidence, error: ratedError} = await sb.from('zr_v40_official_evidence')
+      const {data: evidence, error: ratedError} = await sb.from('zr_v21_official_evidence')
         .select('score_id,test_key,performance_score,gym_weight,eng_weight,bbl_weight,str_weight,spd_weight,cap_weight,scored_at,evidence_type')
         .eq('athlete_id',uid).order('scored_at',{ascending:false}).limit(1000);
-      if(ratedError) throw new Error('Falta instalar la vista oficial RATED 2.0: '+ratedError.message);
+      if(ratedError) throw new Error('Falta instalar RATED 2.1 SQL: '+ratedError.message);
       const rows=evidence||[];
       const now=new Date();
       const current=ratedOfficialSnapshot(rows,now);
@@ -8773,7 +8773,7 @@ async function renderAttributes(containerId, athleteId, name, mode = 'progress')
       const status=current.covered===6?'6 EJES CON EVIDENCIA':current.covered?'PERFIL EN CONSTRUCCIÓN':'SIN EVIDENCIA VERIFICADA';
       el.innerHTML=renderAttrCard(attrs,athleteName,{
         order:HUB_ATTR_ORDER,ovr:current.ovr,
-        subtitle:'RATED 2.0 · '+status+' · '+current.covered+'/6 ejes · '+current.results+' resultados oficiales',
+        subtitle:'RATED 2.1 · '+status+' · '+current.covered+'/6 ejes · '+current.results+' resultados oficiales',
         sourceLabel:'Resultados oficiales verificados · ponderación por recencia'
       })+`<section class="rated-v40-details">
         <div class="rated-v40-title">EVOLUCIÓN · 90 DÍAS</div>
@@ -8844,8 +8844,8 @@ function zenCoachOpenProgram(slug){
 function zenCoachRender(){
   const p=progMeta(zenCoachProgram),d=document.getElementById('zen-coach-dashboard');
   document.getElementById('zen-coach-roster').style.display='none';d.style.display='block';
-  d.innerHTML='<button class="zen-coach-action" onclick="zenCoachHome()">← Programas</button><div class="zen-coach-title">'+zenEsc(p.label)+'</div><div class="zen-coach-tabs"><button class="zen-coach-tab '+(zenCoachTab==='athletes'?'active':'')+'" onclick="zenCoachSwitch(\'athletes\')">Atletas</button><button class="zen-coach-tab '+(zenCoachTab==='program'?'active':'')+'" onclick="zenCoachSwitch(\'program\')">Programación</button></div><div id="zen-coach-tab-content"></div>';
-  if(zenCoachTab==='athletes')zenCoachAthletes();else zenCoachProgramming();
+  d.innerHTML='<button class="zen-coach-action" onclick="zenCoachHome()">← Programas</button><div class="zen-coach-title">'+zenEsc(p.label)+'</div><div class="zen-coach-tabs"><button class="zen-coach-tab '+(zenCoachTab==='athletes'?'active':'')+'" onclick="zenCoachSwitch(\'athletes\')">Atletas</button><button class="zen-coach-tab '+(zenCoachTab==='program'?'active':'')+'" onclick="zenCoachSwitch(\'program\')">Programación</button><button class="zen-coach-tab '+(zenCoachTab==='rated'?'active':'')+'" onclick="zenCoachSwitch(\'rated\')">RATED</button></div><div id="zen-coach-tab-content"></div>';
+  if(zenCoachTab==='athletes')zenCoachAthletes();else if(zenCoachTab==='rated')zenCoachRated();else zenCoachProgramming();
 }
 function zenCoachSwitch(tab){zenCoachTab=tab;zenCoachRender();}
 function zenCoachAthletes(){
@@ -8886,6 +8886,37 @@ function zenCoachEditBlock(id){
 function zenCoachNewBlock(dow){
   currentWeekNumber=Math.max(1,(programWeeks[zenCoachProgram]||1)+zenCoachWeekOffset);
   openNewBlock(dow,zenCoachProgram,currentWeekNumber);
+}
+
+// RATED 2.1: Coach-only approval. SQL RPC is authoritative; browser checks are informational.
+async function zenCoachRated(){
+ const d=document.getElementById('zen-coach-tab-content');if(!d)return;
+ d.innerHTML='<p style="color:var(--text3)">Resultados calibrados pendientes de aprobación. Los registros históricos no se aprueban automáticamente.</p><div id="zen-rated-queue">Cargando resultados...</div>';
+ const [sr,br,vr]=await Promise.all([
+   sb.from('scores').select('id,athlete_id,block_id,value,category,logged_at').order('logged_at',{ascending:false}).limit(1000),
+   sb.from('blocks').select('id,name,program_slug,is_rated,rating_test_key'),
+   sb.from('zr_v21_approval_status').select('score_id,verification_status').limit(2000)
+ ]);
+ const out=document.getElementById('zen-rated-queue');if(!out)return;
+ if(sr.error||br.error||vr.error){out.textContent='No se pudo cargar RATED: '+(sr.error||br.error||vr.error).message;return;}
+ const blocks=new Map((br.data||[]).map(b=>[b.id,b]));
+ const status=new Map((vr.data||[]).map(r=>[r.score_id,r.verification_status]));
+ const eligible=(sr.data||[]).filter(r=>{const b=blocks.get(r.block_id);return b?.is_rated&&b.program_slug===zenCoachProgram;});
+ const pending=eligible.filter(r=>!['VERIFIED','REJECTED'].includes(status.get(r.id)));
+ out.innerHTML='<div style="color:var(--text3);margin:14px 0">'+pending.length+' resultados pendientes en este programa · '+eligible.length+' encontrados (máximo 1,000 scores recientes)</div>'+
+ (pending.length?pending.map(r=>{const b=blocks.get(r.block_id);return '<section class="zen-coach-block"><strong>'+zenEsc(b.name||b.rating_test_key||'RATED')+'</strong><p>Score: '+zenEsc(r.value)+' · '+zenEsc(r.category||'Sin categoría')+' · '+zenEsc(r.logged_at||'Sin fecha')+'</p><p style="font-size:11px;color:var(--text3)">Atleta: '+zenEsc((athletes.find(a=>a.id===r.athlete_id)||{}).full_name||r.athlete_id)+'</p><button class="zen-coach-action primary" onclick="zenRatedVerify(\''+r.id+'\')">Verificar RX</button> <button class="zen-coach-action" onclick="zenRatedReject(\''+r.id+'\')">Rechazar</button></section>';}).join(''):'<p style="color:var(--text3)">No hay resultados pendientes en esta selección.</p>');
+}
+async function zenRatedVerify(scoreId){
+ if(!confirm('¿Confirmas que viste la ejecución RX y cumple todos los estándares? Supabase verificará además la calibración.'))return;
+ const {data,error}=await sb.rpc('zr_v21_verify_result',{p_score_id:scoreId});
+ if(error){alert('Resultado NO oficial: '+error.message);return;}
+ alert('Resultado oficial verificado.');zenCoachRated();
+}
+async function zenRatedReject(scoreId){
+ const reason=prompt('Motivo del rechazo (obligatorio):');if(!reason?.trim())return;
+ const {error}=await sb.rpc('zr_v21_reject_result',{p_score_id:scoreId,p_reason:reason.trim()});
+ if(error){alert('No se pudo rechazar: '+error.message);return;}
+ zenCoachRated();
 }
 </script>
 </body>
