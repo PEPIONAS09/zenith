@@ -8179,7 +8179,7 @@ async function registerRatedResult(scoreId, blockId, format, data, displayValue)
   if(cal){
     const {error}=await sb.rpc('register_calibrated_rated_score',{p_score_id:scoreId,p_score_numeric:numeric});
     if(error){console.error(error);showToast('Score guardado · RATED pendiente: '+error.message,true);return;}
-    showToast('✓ RATED calibrado · perfil listo para actualizar');
+    showToast('RATED calibrado · pendiente de verificación del coach');
     if(currentUser?.id){for(const target of ['ath-attr-hex','ad-attr-hex'])if(document.getElementById(target))await renderAttributes(target,currentUser.id,currentProfile?.full_name||'');}
     return;
   }
@@ -8187,7 +8187,7 @@ async function registerRatedResult(scoreId, blockId, format, data, displayValue)
   if(!b.rating_test_key?.startsWith('zca1-')){showToast('Score guardado · falta calibración RATED',true);return;}
   const {error}=await sb.rpc('register_rated_score',{p_score_id:scoreId,p_score_numeric:numeric});
   if(error){ console.error('register_rated_score:',error); showToast('Score guardado · error al actualizar rating',true); return; }
-  showToast('✓ Score RATED procesado por Supabase');
+  showToast('Score RATED procesado · pendiente de verificación del coach');
   // Refresca el hexágono abierto sin recargar toda la aplicación.
   if(currentUser?.id){
     const targets=[['ad-attr-hex',currentAthId],['ath-attr-hex',currentUser.id]];
@@ -8677,7 +8677,7 @@ function renderAttrCard(attrs, name, opts){
   </div>`;
 }
 
-// Mejor resultado RX verificado por test, con ponderación temporal de 90 días.
+// Todos los resultados RX verificados, con ponderación temporal de 90 días.
 // Ejes sin evidencia = null; OVR solo con seis ejes.
 function ratedOfficialSnapshot(rows, asOf){
   // Official evidence is already vetted by the database view.
@@ -8770,15 +8770,15 @@ async function renderAttributes(containerId, athleteId, name, mode = 'progress')
       const current=ratedOfficialSnapshot(rows,now);
       const previous=ratedOfficialSnapshot(rows,new Date(now.getTime()-90*86400000));
       const attrs=buildHubAttributes(current.axes);
-      const status=current.covered===6?'PERFIL COMPLETO':current.covered?'PERFIL PARCIAL':'SIN EVIDENCIA VERIFICADA';
+      const status=current.covered===6?'6 EJES CON EVIDENCIA':current.covered?'PERFIL EN CONSTRUCCIÓN':'SIN EVIDENCIA VERIFICADA';
       el.innerHTML=renderAttrCard(attrs,athleteName,{
         order:HUB_ATTR_ORDER,ovr:current.ovr,
-        subtitle:'RATED 2.0 · '+status+' · '+current.covered+'/6 ejes · '+current.tests+' tests',
+        subtitle:'RATED 2.0 · '+status+' · '+current.covered+'/6 ejes · '+current.results+' resultados oficiales',
         sourceLabel:'Resultados oficiales verificados · ponderación por recencia'
       })+`<section class="rated-v40-details">
         <div class="rated-v40-title">EVOLUCIÓN · 90 DÍAS</div>
         <div class="rated-v40-compare"><div><small>ACTUAL</small><strong>${current.ovr??'—'}</strong></div><div><small>HACE 90 DÍAS</small><strong>${previous.ovr??'—'}</strong></div><div><small>CAMBIO</small><strong>${current.ovr===null||previous.ovr===null?'—':(current.ovr-previous.ovr>0?'+':'')+(current.ovr-previous.ovr)}</strong></div></div>
-        <p>Solo resultados RX verificados y calibrados. Pendientes, Scaled y rechazados no modifican este perfil.</p>
+        <p>Solo resultados RX verificados y calibrados. Pendientes, Intermediate, Scaled y rechazados no modifican este perfil. Cada resultado elegible aporta según su antigüedad y los pesos de sus atributos.</p>
         ${rows.length===1000?'<p>Historial limitado a 1,000 resultados. Se requiere paginación.</p>':''}
       </section>`;
       return;
