@@ -9163,7 +9163,7 @@ async function zenCHLoadScores(){
  const athlete=document.getElementById('ch-athlete').value,sel=document.getElementById('ch-score');
  sel.innerHTML='<option value="">Cargando resultados…</option>';
  if(!athlete){sel.innerHTML='<option value="">Selecciona un atleta primero</option>';return;}
- const {data,error}=await sb.from('scores').select('id,block_id,value,logged_at').eq('athlete_id',athlete).order('logged_at',{ascending:false}).limit(100);
+ const {data,error}=await sb.from('scores').select('id,block_id,value,logged_at,notes,video_url,category,score_data').eq('athlete_id',athlete).order('logged_at',{ascending:false}).limit(100);
  if(error){sel.innerHTML='<option value="">Error: '+zenCHEscape(error.message)+'</option>';return;}
  const scores=data||[];
  const blockIds=[...new Set(scores.map(x=>x.block_id).filter(Boolean))];
@@ -9174,11 +9174,40 @@ async function zenCHLoadScores(){
  zenCHShowScoreDetail();
 }
 function zenCHShowScoreDetail(){
- const box=document.getElementById('ch-score-detail'),id=document.getElementById('ch-score')?.value;if(!box)return;const entry=window.zenCHScoreDetails?.[id];if(!entry){box.style.display='none';return;}
- const {score,block}=entry;const text=v=>zenCHEscape(v==null||v===''?'No registrado':typeof v==='object'?JSON.stringify(v,null,2):v);
- const url=String(score.video_url||'');const safeUrl=/^https:\/\/[^\s]+$/i.test(url)?url:null;
- box.style.display='block';box.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong style="font-size:15px;color:var(--accent)">Detalle del workout · Solo lectura</strong><span style="font-size:12px;color:var(--text2)">El coach no puede editar</span></div><h4 style="margin:12px 0 6px">${text(block?.name||block?.title||'Workout no encontrado')}</h4><div style="font-size:12px;color:var(--text2)">Resultado: <b style="color:var(--text)">${text(score.value)}</b> · Categoría: ${text(score.category)}</div><div style="margin-top:12px;font-size:12px;color:var(--text2)">PROGRAMACIÓN / INSTRUCCIONES</div><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:5px;font-size:13px">${text(block?.content)}</div><div style="margin-top:12px;font-size:12px;color:var(--text2)">NOTAS DEL ATLETA</div><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:5px;font-size:13px">${text(score.notes)}</div>${safeUrl?`<a href="${zenCHEscape(safeUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;color:var(--accent)">Ver video del resultado</a>`:''}<div style="font-size:12px;color:var(--text2);margin-top:12px">Si la unidad del score no coincide con la programación, descríbelo en el feedback y solicita que el atleta corrija su registro. No apruebes como válido un score ambiguo.</div>`;
+ const box=document.getElementById('ch-score-detail'),id=document.getElementById('ch-score')?.value;
+ if(!box)return;
+ const entry=window.zenCHScoreDetails?.[id];if(!entry){box.style.display='none';return;}
+ const {score,block}=entry;
+ const esc=v=>zenCHEscape(String(v??''));
+ const raw=score.score_data&&typeof score.score_data==='object'?score.score_data:{};
+ const data=Array.isArray(raw)?Object.fromEntries(raw.map((v,i)=>[String(i+1),v])):raw;
+ const fieldLabels={sets:'Series',reps:'Repeticiones',weight:'Peso',time:'Tiempo',amrap:'Rondas + reps',rounds:'Rondas',output:'Potencia / ritmo / calorías',hr:'Frecuencia cardiaca',duration:'Duración',value:'Resultado libre',distance_cm:'Distancia (cm)',level:'Nivel'};
+ const rows=Object.entries(data).filter(([k,v])=>v!==null&&v!==undefined&&String(v).trim()!=='').map(([k,v])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border2)"><span style="color:var(--text2)">${esc(fieldLabels[k]||k.replace(/_/g,' '))}</span><strong style="text-align:right;overflow-wrap:anywhere">${esc(typeof v==='object'?JSON.stringify(v):v)}</strong></div>`).join('');
+ const notes=String(score.notes||'').trim();
+ const url=String(score.video_url||'').trim();const safeUrl=/^https?:\/\/[^\s]+$/i.test(url)?url:null;
+ const declared=String(block?.score_type||'').trim();
+ const looksSets=/\bsets?\b/i.test(String(score.value||''));
+ const expectsReps=/\b(amrap|for reps|total reps|repeticiones|cada rep|every .*rep)\b/i.test(String(block?.content||''));
+ const warning=looksSets&&expectsReps?'<div style="margin-top:12px;padding:12px;border-left:3px solid #f2b84b;background:rgba(242,184,75,.08);font-size:13px">⚠ Revisar unidad: el score menciona series y el workout parece contabilizar repeticiones. Confirma con el atleta antes de validar.</div>':'';
+ box.style.display='block';
+ box.innerHTML=`<div style="font-size:15px;font-weight:700;color:var(--accent)">Workout y registro del atleta</div>
+ <h4 style="margin:12px 0 8px">${esc(block?.name||block?.title||'Workout no encontrado')}</h4>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin:12px 0">
+ <div style="padding:12px;background:var(--bg2);border:1px solid var(--border2)"><div style="font-size:11px;color:var(--text2)">SCORE REGISTRADO</div><strong style="font-size:17px;overflow-wrap:anywhere">${esc(score.value||'Sin resultado')}</strong></div>
+ <div style="padding:12px;background:var(--bg2);border:1px solid var(--border2)"><div style="font-size:11px;color:var(--text2)">CATEGORÍA</div><strong>${esc(score.category||'Sin categoría')}</strong></div>
+ <div style="padding:12px;background:var(--bg2);border:1px solid var(--border2)"><div style="font-size:11px;color:var(--text2)">FECHA</div><strong>${esc(score.logged_at?new Date(score.logged_at).toLocaleDateString('es-MX'):'Sin fecha')}</strong></div></div>
+ <div style="margin-top:14px;font-size:12px;color:var(--text2);font-weight:700">DESGLOSE DEL RESULTADO${declared?' · FORMATO ESPERADO: '+esc(declared):''}</div>
+ <div style="margin-top:6px;font-size:13px">${rows||'<span style="color:var(--text2)">Sin desglose estructurado. Resultado registrado como texto libre.</span>'}</div>
+ ${warning}
+ <div style="margin-top:16px;font-size:12px;color:var(--text2);font-weight:700">WORKOUT / INSTRUCCIONES</div>
+ <div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:7px;font-size:13px;line-height:1.65">${esc(block?.content||'No se encontraron instrucciones para este bloque.')}</div>
+ <div style="margin-top:16px;font-size:12px;color:var(--text2);font-weight:700">NOTAS DEL ATLETA</div>
+ <div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:7px;font-size:13px;line-height:1.6">${notes?esc(notes):'<span style="color:var(--text2)">Sin notas del atleta.</span>'}</div>
+ <div style="margin-top:16px;font-size:12px;color:var(--text2);font-weight:700">EVIDENCIA EN VIDEO</div>
+ ${safeUrl?`<a href="${esc(safeUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:7px;color:var(--accent)">Abrir video del score</a>`:'<div style="margin-top:7px;font-size:13px;color:var(--text2)">Sin video adjunto.</div>'}
+ <div style="margin-top:14px;font-size:12px;color:var(--text2)">Si detectas un error de unidad, formato o ejecución, descríbelo con precisión en tu feedback. La revisión pendiente no modifica automáticamente el score.</div>`;
 }
+
 async function zenCHSubmit(){
  const v=id=>document.getElementById(id).value.trim(),t=v('ch-type'),isSession=t.startsWith('session_'),msg=document.getElementById('ch-message');
  const feedback=v('ch-feedback');
