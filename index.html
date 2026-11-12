@@ -9000,15 +9000,50 @@ async function zenCHRefresh(){
  host.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"><div style="padding:16px;background:var(--bg2);border:1px solid var(--border2)">Pendientes: <b>${pending}</b></div><div style="padding:16px;background:var(--bg2);border:1px solid var(--border2)">Puntos aprobados: <b>${approved}</b></div></div>
  <div style="padding:18px;background:var(--bg2);border:1px solid var(--border2);margin-bottom:20px"><h3 style="margin:0 0 12px">Registrar actividad</h3>
  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
- <select id="ch-program"><option value="hubmind">Competition Hub CrossFit</option><option value="hyrox">Competition Hub HYROX</option></select>
+ <select id="ch-program" onchange="zenCHFilterAthletes()"><option value="hubmind">Competition Hub CrossFit</option><option value="hyrox">Competition Hub HYROX</option></select>
  <select id="ch-type"><option value="score_review">Revisión de score · 1 pt</option><option value="video_feedback">Feedback de video · 5 pts</option><option value="technique_correction">Corrección técnica · 5 pts</option><option value="session_support">Apoyo en sesión · 50 pts</option><option value="session_lead">Dirigir sesión · 100 pts</option></select>
- <input id="ch-athlete" placeholder="UUID del atleta (revisiones)" />
- <input id="ch-score" placeholder="UUID del score (revisiones)" />
+ <select id="ch-athlete" onchange="zenCHLoadScores()"><option value="">Cargando atletas…</option></select>
+ <select id="ch-score"><option value="">Selecciona un atleta primero</option></select>
  <input id="ch-date" type="date" title="Fecha de sesión" />
  <input id="ch-video" placeholder="URL de video (opcional)" />
  </div><textarea id="ch-feedback" rows="3" placeholder="Feedback concreto / evidencia de la actividad" style="display:block;width:100%;margin-top:10px;box-sizing:border-box"></textarea>
  <button onclick="zenCHSubmit()" style="margin-top:10px;background:var(--accent);color:#111;border:0;padding:12px 18px;font-weight:700;cursor:pointer">Enviar a aprobación</button><div id="ch-message" style="margin-top:8px;font-size:12px"></div></div>
  <h3>Actividad reciente</h3><div style="display:grid;gap:10px">${(rows||[]).map(r=>`<div style="padding:14px;border:1px solid var(--border2);background:var(--bg2)"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${zenCHEscape(r.activity_type.replaceAll('_',' '))} · ${zenCHEscape(r.program)}</b><span>${zenCHEscape(r.status)} · ${r.points} pts</span></div><div style="font-size:11px;color:var(--text2);margin-top:6px">${zenCHEscape(r.feedback)} · ${new Date(r.created_at).toLocaleDateString('es-MX')}</div>${zenCHStaffRole==='director'&&r.status==='pending'?`<div style="margin-top:10px"><button onclick="zenCHDecide('${r.id}',true)">✓ Aprobar</button> <button onclick="zenCHDecide('${r.id}',false)">✕ Rechazar</button></div>`:''}</div>`).join('')||'<p>Sin actividades todavía.</p>'}</div>`;
+  zenCHStyleInputs();
+  zenCHLoadAthletes();
+}
+function zenCHStyleInputs(){
+ const host=document.getElementById('zen-ch-content');if(!host)return;
+ host.querySelectorAll('input,select,textarea').forEach(el=>{
+  el.style.cssText+=';background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:11px;min-width:0;width:100%;box-sizing:border-box;font-size:14px;';
+ });
+}
+async function zenCHLoadAthletes(){
+ const select=document.getElementById('ch-athlete');if(!select)return;
+ const {data,error}=await sb.from('profiles').select('id,full_name,program').eq('role','athlete').in('program',['hubmind','hyrox']).order('full_name');
+ if(!document.getElementById('ch-athlete'))return;
+ if(error){select.innerHTML='<option value="">Sin permiso para consultar atletas</option>';return;}
+ window.zenCHAthletes=data||[];
+ zenCHFilterAthletes();
+}
+function zenCHFilterAthletes(){
+ const sel=document.getElementById('ch-athlete');if(!sel)return;
+ const program=document.getElementById('ch-program').value;
+ const athletes=(window.zenCHAthletes||[]).filter(a=>a.program===program);
+ sel.innerHTML='<option value="">Seleccionar atleta ('+athletes.length+')</option>'+athletes.map(a=>'<option value="'+zenCHEscape(a.id)+'">'+zenCHEscape(a.full_name||'Sin nombre')+'</option>').join('');
+ document.getElementById('ch-score').innerHTML='<option value="">Selecciona un atleta primero</option>';
+}
+async function zenCHLoadScores(){
+ const athlete=document.getElementById('ch-athlete').value,sel=document.getElementById('ch-score');
+ sel.innerHTML='<option value="">Cargando resultados…</option>';
+ if(!athlete){sel.innerHTML='<option value="">Selecciona un atleta primero</option>';return;}
+ const {data,error}=await sb.from('scores').select('id,block_id,value,logged_at').eq('athlete_id',athlete).order('logged_at',{ascending:false}).limit(100);
+ if(error){sel.innerHTML='<option value="">Error: '+zenCHEscape(error.message)+'</option>';return;}
+ const scores=data||[];
+ const blockIds=[...new Set(scores.map(x=>x.block_id).filter(Boolean))];
+ let names={};
+ if(blockIds.length){const {data:blocks}=await sb.from('blocks').select('*').in('id',blockIds);(blocks||[]).forEach(b=>{names[b.id]=b.title||b.name||b.exercise||b.type||'Workout';});}
+ sel.innerHTML='<option value="">Seleccionar score ('+scores.length+')</option>'+scores.map(x=>'<option value="'+zenCHEscape(x.id)+'">'+zenCHEscape(names[x.block_id]||'Workout')+' · '+zenCHEscape(x.value||'Sin marca')+' · '+zenCHEscape(x.logged_at?new Date(x.logged_at).toLocaleDateString('es-MX'):'Sin fecha')+'</option>').join('');
 }
 async function zenCHSubmit(){
  const v=id=>document.getElementById(id).value.trim(),t=v('ch-type'),isSession=t.startsWith('session_'),msg=document.getElementById('ch-message');
