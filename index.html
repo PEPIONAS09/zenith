@@ -8981,7 +8981,7 @@ async function zenRatedReject(scoreId){
  zenCoachRated();
 }
 
-// ZENITH 2.4 / Coach Workspace: separated from master programming.
+// ZENITH 2.6 / Coach Workspace: separated from master programming.
 function zenCHEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function zenOpenCHWorkspace(){
  if(!zenCHStaffRole){alert('Sin acceso al workspace');return;}
@@ -9001,21 +9001,30 @@ async function zenCHRefresh(){
  <div style="padding:18px;background:var(--bg2);border:1px solid var(--border2);margin-bottom:20px"><h3 style="margin:0 0 12px">Registrar actividad</h3>
  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
  <select id="ch-program" onchange="zenCHFilterAthletes()"><option value="hubmind">Competition Hub CrossFit</option><option value="hyrox">Competition Hub HYROX</option></select>
- <select id="ch-type"><option value="score_review">Revisión de score · 1 pt</option><option value="video_feedback">Feedback de video · 5 pts</option><option value="technique_correction">Corrección técnica · 5 pts</option><option value="session_support">Apoyo en sesión · 50 pts</option><option value="session_lead">Dirigir sesión · 100 pts</option></select>
+ <select id="ch-type" onchange="zenCHUpdateForm()"><option value="score_review">Revisión de score · 1 pt</option><option value="video_feedback">Feedback de video · 5 pts</option><option value="technique_correction">Corrección técnica · 5 pts</option><option value="session_support">Apoyo en sesión · 50 pts</option><option value="session_lead">Dirigir sesión · 100 pts</option></select>
  <select id="ch-athlete" onchange="zenCHLoadScores()"><option value="">Cargando atletas…</option></select>
  <select id="ch-score"><option value="">Selecciona un atleta primero</option></select>
- <input id="ch-date" type="date" title="Fecha de sesión" />
- <input id="ch-video" placeholder="URL de video (opcional)" />
+ <label id="ch-date-wrap" style="display:none;color:var(--text2);font-size:12px">Fecha de sesión<input id="ch-date" type="date" title="Fecha de sesión" style="display:block;margin-top:5px" /></label>
+ <input id="ch-video" type="url" placeholder="URL de video (si aplica)" />
  </div><textarea id="ch-feedback" rows="3" placeholder="Feedback concreto / evidencia de la actividad" style="display:block;width:100%;margin-top:10px;box-sizing:border-box"></textarea>
- <button onclick="zenCHSubmit()" style="margin-top:10px;background:var(--accent);color:#111;border:0;padding:12px 18px;font-weight:700;cursor:pointer">Enviar a aprobación</button><div id="ch-message" style="margin-top:8px;font-size:12px"></div></div>
+ <div id="ch-guidance" style="font-size:12px;color:var(--text2);margin-top:10px;line-height:1.5"></div><button onclick="zenCHSubmit()" style="margin-top:10px;background:var(--accent);color:#111;border:0;padding:12px 18px;font-weight:700;cursor:pointer">Enviar a aprobación</button><div id="ch-message" style="margin-top:8px;font-size:12px"></div></div>
  <h3>Actividad reciente</h3><div style="display:grid;gap:10px">${(rows||[]).map(r=>`<div style="padding:14px;border:1px solid var(--border2);background:var(--bg2)"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${zenCHEscape(r.activity_type.replaceAll('_',' '))} · ${zenCHEscape(r.program)}</b><span>${zenCHEscape(r.status)} · ${r.points} pts</span></div><div style="font-size:11px;color:var(--text2);margin-top:6px">${zenCHEscape(r.feedback)} · ${new Date(r.created_at).toLocaleDateString('es-MX')}</div>${zenCHStaffRole==='director'&&r.status==='pending'?`<div style="margin-top:10px"><button onclick="zenCHDecide('${r.id}',true)">✓ Aprobar</button> <button onclick="zenCHDecide('${r.id}',false)">✕ Rechazar</button></div>`:''}</div>`).join('')||'<p>Sin actividades todavía.</p>'}</div>`;
   zenCHStyleInputs();
+  zenCHUpdateForm();
   zenCHLoadAthletes();
+}
+function zenCHUpdateForm(){
+ const t=document.getElementById("ch-type")?.value||"score_review";
+ const session=t.startsWith("session_");
+ const date=document.getElementById("ch-date-wrap");if(date)date.style.display=session?"block":"none";
+ for(const id of ["ch-athlete","ch-score"]){const el=document.getElementById(id);if(el){el.disabled=session;el.style.opacity=session?".45":"1";}}
+ const guide=document.getElementById("ch-guidance");
+ if(guide)guide.textContent=session?"Registra la fecha y evidencia de la sesión. La aprobación corresponde al director.":t==="score_review"?"Selecciona un resultado real y describe qué revisaste. Máximo un crédito por coach y resultado.":"Selecciona el atleta y resultado correspondiente. Incluye el enlace del video y feedback técnico específico.";
 }
 function zenCHStyleInputs(){
  const host=document.getElementById('zen-ch-content');if(!host)return;
  host.querySelectorAll('input,select,textarea').forEach(el=>{
-  el.style.cssText+=';background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:11px;min-width:0;width:100%;box-sizing:border-box;font-size:14px;';
+  el.style.cssText+=';background:var(--bg);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:11px;min-width:0;max-width:100%;width:100%;box-sizing:border-box;font-size:14px;' ;
  });
 }
 async function zenCHLoadAthletes(){
@@ -9043,13 +9052,14 @@ async function zenCHLoadScores(){
  const blockIds=[...new Set(scores.map(x=>x.block_id).filter(Boolean))];
  let names={};
  if(blockIds.length){const {data:blocks}=await sb.from('blocks').select('*').in('id',blockIds);(blocks||[]).forEach(b=>{names[b.id]=b.title||b.name||b.exercise||b.type||'Workout';});}
- sel.innerHTML='<option value="">Seleccionar score ('+scores.length+')</option>'+scores.map(x=>'<option value="'+zenCHEscape(x.id)+'">'+zenCHEscape(names[x.block_id]||'Workout')+' · '+zenCHEscape(x.value||'Sin marca')+' · '+zenCHEscape(x.logged_at?new Date(x.logged_at).toLocaleDateString('es-MX'):'Sin fecha')+'</option>').join('');
+ sel.title='Resultados del atleta';sel.innerHTML='<option value="">Seleccionar score ('+scores.length+')</option>'+scores.map(x=>'<option value="'+zenCHEscape(x.id)+'">'+zenCHEscape(names[x.block_id]||'Workout')+' · '+zenCHEscape(x.value||'Sin marca')+' · '+zenCHEscape(x.logged_at?new Date(x.logged_at).toLocaleDateString('es-MX'):'Sin fecha')+'</option>').join('');
 }
 async function zenCHSubmit(){
  const v=id=>document.getElementById(id).value.trim(),t=v('ch-type'),isSession=t.startsWith('session_'),msg=document.getElementById('ch-message');
  if(!v('ch-feedback')){msg.textContent='Agrega una descripción verificable.';return;}
  if(isSession&&!v('ch-date')){msg.textContent='Indica fecha de sesión.';return;}
- if(!isSession&&(!v('ch-athlete')||!v('ch-score'))){msg.textContent='Para revisar un resultado indica UUID de atleta y score.';return;}
+ if(!isSession&&(!v('ch-athlete')||!v('ch-score'))){msg.textContent='Selecciona un atleta y un resultado registrado.';return;}
+ if((t==='video_feedback'||t==='technique_correction')&&!v('ch-video')){msg.textContent='Para feedback o corrección de video, agrega la URL del video.';return;}
  const payload={coach_id:currentUser.id,program:v('ch-program'),activity_type:t,feedback:v('ch-feedback'),video_url:v('ch-video')||null,athlete_id:isSession?null:v('ch-athlete'),score_id:isSession?null:v('ch-score'),session_date:isSession?v('ch-date'):null};
  msg.textContent='Enviando...';const {error}=await sb.from('ch_coach_activity').insert(payload);
  if(error){msg.textContent='Error: '+error.message;return;}await zenCHRefresh();
