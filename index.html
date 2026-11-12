@@ -1648,6 +1648,62 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 #ath-week-view button[onclick^="openBlockEditorAth"],#ath-week-view button[onclick^="moveAthBlock"],#ath-week-view button[onclick^="confirmDeleteAthBlock"],#ath-week-view button[onclick^="copyBlock"],#ath-week-view .add-block-btn,#ath-week-view button[onclick^="openCopyAthWeek"]{display:none!important}
 @media(max-width:600px){.zen-coach-cards{grid-template-columns:1fr}.zen-coach-dashboard{padding:14px}}
 </style>
+<style id="zenith-3-2-desktop-athlete-fix">
+/* ZENITH 3.2 — coach athlete detail desktop: remove broken implicit CSS grid. */
+@media (min-width: 768px) {
+  /* Respect the actual open state; don't render a closed overlay. */
+  body:not(.athlete-desktop) #ath-detail.open { display: flex !important; }
+  body:not(.athlete-desktop) #ath-detail:not(.open) { display: none !important; }
+  body:not(.athlete-desktop) #ath-detail {
+    inset: 32px auto !important;
+    width: min(960px, calc(100vw - 64px)) !important;
+    max-width: 960px !important;
+    height: calc(100dvh - 64px) !important;
+    margin: 0 auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    background: var(--bg) !important;
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    box-shadow: 0 22px 80px rgba(0,0,0,.72);
+  }
+  #ath-detail .ad-header { padding: 18px 26px; gap: 16px; }
+  #ath-detail .ad-name { font-size: clamp(24px,2.5vw,34px); }
+  #ath-detail .prog-switch { padding: 16px 26px; gap: 9px; grid-template-columns: repeat(5,minmax(0,1fr)); }
+  #ath-detail .psw-btn { min-height: 43px; font-size: 11px; }
+  #ath-detail .ad-scroll {
+    display: block !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--bg) !important;
+    padding-bottom: 28px;
+  }
+  #ath-detail .ad-scroll > * { grid-column: auto !important; min-width: 0; }
+  #ath-detail .ad-hero { padding: 22px 28px; background: var(--bg2); }
+  #ath-detail .ad-sec { padding: 24px 28px 8px; }
+  #ath-detail .ad-sec-ttl { font-size: 11px; }
+  #ath-detail .note-area { width: calc(100% - 56px); margin: 0 28px; min-height: 115px; font-size: 14px; padding: 14px 16px; }
+  #ath-detail .note-save-btn { margin: 12px 28px 0; font-size: 11px; min-height: 40px; padding: 10px 18px; }
+  #ath-detail .ad-scroll > button[onclick="openAthWeek()"] { width: calc(100% - 56px) !important; margin: 12px 28px 0 !important; min-height: 46px; font-size: 12px !important; }
+  #ath-detail #ad-attr-hex { padding: 0 28px !important; }
+  #ath-detail #ad-attr-hex > * { max-width: 100%; }
+  #ath-detail .ad-stats { gap: 1px; }
+  #ath-detail .ad-stat { padding: 13px 16px; }
+  #ath-detail .adst-val { font-size: 18px; }
+  #ath-detail .adst-lbl { font-size: 11px; }
+  #ath-detail .asc-sum { margin-inline: 28px; }
+  #ath-detail .asc-row, #ath-detail .asc-whead { padding-inline: 28px; }
+  #ath-detail .shr-block { font-size: 13px; }
+  #ath-detail .shr-val { font-size: 14px; }
+  #ath-detail .shr-date { font-size: 11px; }
+}
+@media (min-width: 768px) and (max-width: 1000px) {
+  #ath-detail .prog-switch { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+</style>
 </head>
 <body>
 <div class="app">
