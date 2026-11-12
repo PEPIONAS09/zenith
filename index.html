@@ -3062,6 +3062,10 @@ async function init(){
   await loadBlocks(prog, currentWeekNumber);
   setupUI();
   document.getElementById('loading').classList.add('hidden');
+  // Reviewer accounts start in their actual workspace, not the athlete dashboard.
+  if(zenCHStaffRole === 'reviewer') {
+    requestAnimationFrame(() => zenOpenCHWorkspace().catch(e => console.error('Coach workspace:', e)));
+  }
 }
 
 async function loadBlocks(programSlug, weekNum){
@@ -9087,7 +9091,7 @@ function zenCHEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;'
 async function zenOpenCHWorkspace(){
  if(!zenCHStaffRole){alert('Sin acceso al workspace');return;}
  let o=document.getElementById('zen-ch-workspace');
- if(!o){o=document.createElement('div');o.id='zen-ch-workspace';o.style.cssText='position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:9999;overflow:auto;padding:24px 16px';document.body.appendChild(o);}
+ if(!o){o=document.createElement('div');o.id='zen-ch-workspace';o.style.cssText='position:fixed;inset:0;background:var(--bg);color:var(--text);z-index:9999;overflow-y:auto;overflow-x:hidden;padding:clamp(16px,3vw,32px);box-sizing:border-box';document.body.appendChild(o);}
  o.style.display='block';
  o.innerHTML=`<div style="max-width:980px;margin:auto"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><div style="font-size:10px;color:var(--accent);letter-spacing:.15em">ZENITH / COMPETITION HUB</div><h2 style="font-size:24px;margin:8px 0">Coach Workspace</h2><div style="color:var(--text2);font-size:12px">${zenCHStaffRole==='director'?'DIRECTOR OPERATIVO':'COACH REVISOR'} · CrossFit / HYROX</div></div><button onclick="document.getElementById('zen-ch-workspace').style.display='none'" style="padding:12px;background:var(--bg2);color:var(--text);border:1px solid var(--border2)">✕ Cerrar</button></div><div id="zen-ch-content" style="margin-top:24px">Cargando...</div></div>`;
  await zenCHRefresh();
@@ -9169,7 +9173,9 @@ async function zenCHLoadScores(){
 }
 async function zenCHSubmit(){
  const v=id=>document.getElementById(id).value.trim(),t=v('ch-type'),isSession=t.startsWith('session_'),msg=document.getElementById('ch-message');
- if(!v('ch-feedback')){msg.textContent='Agrega una descripción verificable.';return;}
+ const feedback=v('ch-feedback');
+ if(feedback.length<35 || feedback.split(/\s+/).filter(Boolean).length<7){msg.textContent='Describe una observación técnica real y una acción concreta (mínimo 35 caracteres y 7 palabras).';return;}
+ if(/^(lol|ok|bien|listo|revisado|perfecto|todo bien|sin comentarios)[.! ]*$/i.test(feedback)){msg.textContent='El feedback debe ser específico y verificable.';return;}
  if(isSession&&!v('ch-date')){msg.textContent='Indica fecha de sesión.';return;}
  if(!isSession&&(!v('ch-athlete')||!v('ch-score'))){msg.textContent='Selecciona un atleta y un resultado registrado.';return;}
  if((t==='video_feedback'||t==='technique_correction')&&!v('ch-video')){msg.textContent='Para feedback o corrección de video, agrega la URL del video.';return;}
