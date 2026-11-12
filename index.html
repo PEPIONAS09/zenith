@@ -3762,6 +3762,13 @@ async function loadBlockScores(blockId){
   const {data: feedbackRows} = await sb.from('score_feedback').select('score_id,reaction,comment,created_at').in('score_id', data.map(x=>x.id)).order('created_at',{ascending:false});
   const feedbackByScore = {};
   (feedbackRows||[]).forEach(f=>{ if(!feedbackByScore[f.score_id]) feedbackByScore[f.score_id]=f; });
+  // Competition Hub: only director-approved feedback is visible to its athlete.
+  const {data:chApproved, error:chFeedbackError} = await sb.from('ch_coach_activity')
+    .select('score_id,feedback,activity_type,reviewed_at')
+    .eq('athlete_id',currentUser.id).eq('status','approved')
+    .in('score_id',data.map(x=>x.id)).order('reviewed_at',{ascending:false});
+  const chByScore={};
+  if(!chFeedbackError) (chApproved||[]).forEach(f=>{(chByScore[f.score_id] ||= []).push(f);});
   list.innerHTML = data.map(s=>`
     <div class="sw-wrap" data-score-id="${s.id}">
       <button class="sw-del" onclick="deleteScore('${s.id}','${blockId}')">Borrar</button>
@@ -3772,6 +3779,7 @@ async function loadBlockScores(blockId){
         </div>
         ${s.notes ? `<span style="font-size:10px;color:var(--text3);font-style:italic">${s.notes}</span>` : ''}
         ${feedbackByScore[s.id] ? `<div style="margin-top:5px;padding:6px 8px;background:var(--bg4);border-left:2px solid var(--accent);font-size:10px;color:var(--text2)">${feedbackByScore[s.id].reaction||''}${feedbackByScore[s.id].reaction?' ':''}${feedbackByScore[s.id].comment||'Tu coach reaccionó a este score'}</div>` : ''}
+        ${(chByScore[s.id]||[]).map(f=>`<div style="margin-top:7px;padding:10px;background:var(--bg4);border-left:3px solid var(--accent);font-size:11px;line-height:1.5"><b style="color:var(--accent)">Feedback de Competition Hub · Aprobado</b><div style="margin-top:5px;white-space:pre-wrap;overflow-wrap:anywhere">${zenCHEscape(f.feedback)}</div></div>`).join('')}
       </div>
     </div>`).join('');
   initSwipe(list);
