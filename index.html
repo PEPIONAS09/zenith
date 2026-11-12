@@ -8981,6 +8981,41 @@ async function zenRatedReject(scoreId){
  zenCoachRated();
 }
 
+
+// ZENITH 2.9 · Director-only staff management. Auth users are created server-side.
+async function zenCHLoadStaff(){
+ const target=document.getElementById('ch-staff-list');if(!target)return;
+ const {data,error}=await sb.from('ch_staff').select('user_id,staff_role,active,created_at').order('created_at',{ascending:false});
+ if(error){target.textContent='No se pudo consultar el equipo: '+error.message;return;}
+ const ids=(data||[]).map(x=>x.user_id);
+ let names=new Map();
+ if(ids.length){const {data:pp}=await sb.from('profiles').select('id,full_name').in('id',ids);(pp||[]).forEach(x=>names.set(x.id,x.full_name));}
+ target.innerHTML=(data||[]).map(x=>`<div style="border:1px solid var(--border);padding:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div><strong>${zenCHEscape(names.get(x.user_id)||'Coach invitado')}</strong><div style="font-size:11px;color:var(--text2)">${x.staff_role==='director'?'Director':'Revisor'} · ${x.active?'Activo':'Inactivo'} · ${zenCHEscape(x.user_id)}</div></div>${x.staff_role==='reviewer'?`<button class="zen-coach-action" onclick="zenCHToggleCoach('${x.user_id}',${!x.active})">${x.active?'Desactivar':'Activar'}</button>`:''}</div>`).join('')||'No hay coaches registrados.';
+}
+async function zenCHInviteCoach(){
+ if(zenCHStaffRole!=='director')return;
+ const email=document.getElementById('ch-invite-email')?.value.trim().toLowerCase();
+ const msg=document.getElementById('ch-invite-msg');
+ if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.textContent='Escribe un correo válido.';return;}
+ msg.textContent='Enviando invitación…';
+ try{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)throw Error('Sesión expirada');
+  const res=await fetch(`${SUPABASE_URL}/functions/v1/ch-invite-coach`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({email})});
+  const out=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error(out.error||'No se pudo invitar al coach');
+  msg.textContent=out.invited?'Invitación enviada. El coach debe revisar su correo.':'Coach existente habilitado como revisor.';
+  document.getElementById('ch-invite-email').value='';await zenCHLoadStaff();
+ }catch(e){msg.textContent='Error: '+e.message;}
+}
+async function zenCHToggleCoach(id,active){
+ if(zenCHStaffRole!=='director')return;
+ if(!confirm(`${active?'Activar':'Desactivar'} acceso del coach?`))return;
+ const {error}=await sb.from('ch_staff').update({active}).eq('user_id',id).eq('staff_role','reviewer');
+ if(error)alert('No se pudo cambiar acceso: '+error.message);
+ await zenCHLoadStaff();
+}
+
 // ZENITH 2.7 / Coach Workspace: separated from master programming.
 function zenCHEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function zenOpenCHWorkspace(){
@@ -9017,9 +9052,11 @@ async function zenCHRefresh(){
  <input id="ch-video" type="url" placeholder="URL de video (si aplica)" />
  </div><textarea id="ch-feedback" rows="3" placeholder="Feedback concreto / evidencia de la actividad" style="display:block;width:100%;margin-top:10px;box-sizing:border-box"></textarea>
  <div id="ch-guidance" style="font-size:12px;color:var(--text2);margin-top:10px;line-height:1.5"></div><button onclick="zenCHSubmit()" style="margin-top:10px;background:var(--accent);color:#111;border:0;padding:12px 18px;font-weight:700;cursor:pointer">Enviar a aprobación</button><div id="ch-message" style="margin-top:8px;font-size:12px"></div></div>
+ ${zenCHStaffRole==='director'?`<div style="padding:18px;background:var(--bg2);border:1px solid var(--border2);margin-bottom:20px"><h3 style="margin:0 0 12px">Gestión de coaches</h3><p style="color:var(--text2);font-size:12px">Invita coaches por email. Recibirán un correo para activar su cuenta y tendrán acceso de revisor, no de programación.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><input id="ch-invite-email" type="email" placeholder="Correo del coach" autocomplete="email" style="flex:1;min-width:180px"/><button class="zen-coach-action primary" onclick="zenCHInviteCoach()">Invitar coach</button></div><div id="ch-invite-msg" style="font-size:12px;margin-top:8px"></div><div id="ch-staff-list" style="display:grid;gap:8px;margin-top:14px">Cargando equipo…</div></div>`:''}
  <h3 style="margin:24px 0 12px">Historial de actividades</h3><div style="font-size:12px;color:var(--text2);margin-bottom:12px">Revisiones y aprobaciones guardadas en Competition Hub. Las actividades aprobadas no se pueden volver a aprobar.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"><button class="zen-coach-action" onclick="zenCHFilterHistory('all')">Todas (${(rows||[]).length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('pending')">Pendientes (${pending})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('approved')">Aprobadas (${(rows||[]).filter(r=>r.status==='approved').length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('rejected')">Rechazadas (${(rows||[]).filter(r=>r.status==='rejected').length})</button></div><div id="ch-history-list" style="display:grid;gap:10px">${(rows||[]).map(r=>`<div data-ch-status="${zenCHEscape(r.status)}">${historyCard(r)}</div>`).join('')||'<p>Sin actividades todavía.</p>'}</div>`;
   zenCHStyleInputs();
   zenCHUpdateForm();
+ if(zenCHStaffRole==='director') zenCHLoadStaff();
   zenCHLoadAthletes();
 }
 function zenCHFilterHistory(status){document.querySelectorAll('#ch-history-list [data-ch-status]').forEach(el=>{el.style.display=status==='all'||el.dataset.chStatus===status?'':'none';});}
