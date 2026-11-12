@@ -8888,23 +8888,81 @@ function zenCoachNewBlock(dow){
   openNewBlock(dow,zenCoachProgram,currentWeekNumber);
 }
 
-// RATED 2.1: Coach-only approval. SQL RPC is authoritative; browser checks are informational.
+// RATED 2.2: separate historical evidence from actionable reviews.
+const ZEN_RATED_START='2026-11-10T00:00:00';
+let zenRatedRows=[],zenRatedView='pending',zenRatedSearch='',zenRatedPage=0;
+const ZEN_RATED_PAGE_SIZE=15;
+function zenRatedDate(value){
+ if(!value)return 'Fecha no registrada';
+ const dt=new Date(value);return Number.isNaN(dt.getTime())?'Fecha no válida':dt.toLocaleString('es-MX',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function zenRatedName(id){
+ const a=athletes.find(x=>x.id===id);
+ return a?.full_name||a?.name||'Atleta sin nombre vinculado';
+}
+function zenRatedCategory(row){return String(row.category||'').trim().toUpperCase();}
+function zenRatedState(row){
+ if(row.status==='VERIFIED')return 'official';
+ if(row.status==='REJECTED')return 'rejected';
+ if(!row.logged_at||String(row.logged_at).slice(0,19)<ZEN_RATED_START)return 'history';
+ if(zenRatedCategory(row)!=='RX'||!row.test_key||!row.calibrated)return 'blocked';
+ return 'pending';
+}
 async function zenCoachRated(){
  const d=document.getElementById('zen-coach-tab-content');if(!d)return;
- d.innerHTML='<p style="color:var(--text3)">Resultados calibrados pendientes de aprobación. Los registros históricos no se aprueban automáticamente.</p><div id="zen-rated-queue">Cargando resultados...</div>';
- const [sr,br,vr]=await Promise.all([
-   sb.from('scores').select('id,athlete_id,block_id,value,category,logged_at').order('logged_at',{ascending:false}).limit(1000),
-   sb.from('blocks').select('id,name,program_slug,is_rated,rating_test_key'),
-   sb.from('zr_v21_approval_status').select('score_id,verification_status').limit(2000)
+ const slug=zenCoachProgram;
+ d.innerHTML='<p style="color:var(--text3)">Solo resultados nuevos, RX y calibrados pueden solicitar verificación. La decisión final la toma Supabase.</p><div id="zen-rated-queue">Cargando resultados…</div>';
+ const [sr,br,vr,cr]=await Promise.all([
+  sb.from('scores').select('id,athlete_id,block_id,value,category,logged_at').order('logged_at',{ascending:false}).limit(1000),
+  sb.from('blocks').select('id,name,program_slug,is_rated,rating_test_key'),
+  sb.from('zr_v21_approval_status').select('score_id,verification_status').limit(2000),
+  sb.from('rated_calibrated_results').select('score_id').limit(2000)
  ]);
+ if(zenCoachProgram!==slug||zenCoachTab!=='rated')return;
  const out=document.getElementById('zen-rated-queue');if(!out)return;
- if(sr.error||br.error||vr.error){out.textContent='No se pudo cargar RATED: '+(sr.error||br.error||vr.error).message;return;}
- const blocks=new Map((br.data||[]).map(b=>[b.id,b]));
- const status=new Map((vr.data||[]).map(r=>[r.score_id,r.verification_status]));
- const eligible=(sr.data||[]).filter(r=>{const b=blocks.get(r.block_id);return b?.is_rated&&b.program_slug===zenCoachProgram;});
- const pending=eligible.filter(r=>!['VERIFIED','REJECTED'].includes(status.get(r.id)));
- out.innerHTML='<div style="color:var(--text3);margin:14px 0">'+pending.length+' resultados pendientes en este programa · '+eligible.length+' encontrados (máximo 1,000 scores recientes)</div>'+
- (pending.length?pending.map(r=>{const b=blocks.get(r.block_id);return '<section class="zen-coach-block"><strong>'+zenEsc(b.name||b.rating_test_key||'RATED')+'</strong><p>Score: '+zenEsc(r.value)+' · '+zenEsc(r.category||'Sin categoría')+' · '+zenEsc(r.logged_at||'Sin fecha')+'</p><p style="font-size:11px;color:var(--text3)">Atleta: '+zenEsc((athletes.find(a=>a.id===r.athlete_id)||{}).full_name||r.athlete_id)+'</p><button class="zen-coach-action primary" onclick="zenRatedVerify(\''+r.id+'\')">Verificar RX</button> <button class="zen-coach-action" onclick="zenRatedReject(\''+r.id+'\')">Rechazar</button></section>';}).join(''):'<p style="color:var(--text3)">No hay resultados pendientes en esta selección.</p>');
+ const err=sr.error||br.error||vr.error||cr.error;
+ if(err){out.textContent='No se pudo cargar RATED: '+err.message;return;}
+ const blocks=new Map((br.data||[]).map(x=>[x.id,x]));
+ const statuses=new Map((vr.data||[]).map(x=>[x.score_id,x.verification_status]));
+ const calibrated=new Set((cr.data||[]).map(x=>x.score_id));
+ zenRatedRows=(sr.data||[]).filter(x=>{const b=blocks.get(x.block_id);return b?.is_rated&&b.program_slug===slug;}).map(x=>{
+  const b=blocks.get(x.block_id);
+  return {...x,block_name:b.name||b.rating_test_key||'RATED',test_key:b.rating_test_key,status:statuses.get(x.id)||'',calibrated:calibrated.has(x.id)};
+ });
+ zenRatedView='pending';zenRatedSearch='';zenRatedPage=0;zenRatedDraw();
+}
+function zenRatedSelect(view){zenRatedView=view;zenRatedPage=0;zenRatedDraw();}
+function zenRatedFilter(value){zenRatedSearch=String(value||'');zenRatedPage=0;zenRatedDraw(false);}
+function zenRatedGo(page){zenRatedPage=page;zenRatedDraw();}
+function zenRatedDraw(resetInput=true){
+ const out=document.getElementById('zen-rated-queue');if(!out)return;
+ const counts={pending:0,official:0,rejected:0,history:0,blocked:0};
+ zenRatedRows.forEach(x=>counts[zenRatedState(x)]++);
+ const tabs=[['pending','Pendientes'],['official','Oficiales'],['blocked','No elegibles'],['rejected','Rechazados'],['history','Históricos']];
+ const q=zenRatedSearch.toLocaleLowerCase().trim();
+ const visible=zenRatedRows.filter(x=>zenRatedState(x)===zenRatedView&&(!q||[zenRatedName(x.athlete_id),x.block_name,x.value,x.test_key].some(y=>String(y||'').toLocaleLowerCase().includes(q))));
+ const maxPage=Math.max(0,Math.ceil(visible.length/ZEN_RATED_PAGE_SIZE)-1);
+ zenRatedPage=Math.min(zenRatedPage,maxPage);
+ const page=visible.slice(zenRatedPage*ZEN_RATED_PAGE_SIZE,(zenRatedPage+1)*ZEN_RATED_PAGE_SIZE);
+ const explanation={pending:'Nuevos resultados RX calibrados pendientes de revisión del coach.',official:'Resultados aprobados por el coach y registrados en Supabase.',blocked:'Resultados nuevos que no cumplen los requisitos preliminares. No se pueden aprobar.',rejected:'Resultados rechazados con una decisión registrada.',history:'Resultados anteriores al 10 de noviembre de 2026. Se conservan como historial, sin aprobación automática.'};
+ out.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin:18px 0">'+tabs.map(([k,label])=>'<button class="zen-coach-tab '+(zenRatedView===k?'active':'')+'" onclick="zenRatedSelect(\''+k+'\')">'+label+' ('+counts[k]+')</button>').join('')+'</div>'+
+ '<p style="color:var(--text3);line-height:1.5">'+explanation[zenRatedView]+'</p>'+
+ '<input id="zen-rated-search" class="be-input" type="search" placeholder="Buscar atleta, workout o resultado" value="'+zenEsc(zenRatedSearch)+'" oninput="zenRatedFilter(this.value)" style="width:100%;margin:10px 0">'+
+ '<div style="color:var(--text3);font-size:12px;margin:12px 0">'+visible.length+' resultados · Página '+(zenRatedPage+1)+' de '+(maxPage+1)+'</div>'+
+ (page.length?page.map(x=>{
+  const state=zenRatedState(x),reasons=[];
+  if(state==='blocked'){
+   if(zenRatedCategory(x)!=='RX')reasons.push('Categoría distinta de RX');
+   if(!x.test_key)reasons.push('Test sin identificador');
+   if(!x.calibrated)reasons.push('Sin resultado calibrado');
+  }
+  return '<section class="zen-coach-block"><strong>'+zenEsc(x.block_name)+'</strong><p style="margin:8px 0">'+zenEsc(zenRatedName(x.athlete_id))+' · '+zenEsc(x.value)+' · '+zenEsc(x.category||'Sin categoría')+'</p><div style="color:var(--text3);font-size:12px">'+zenEsc(zenRatedDate(x.logged_at))+'</div>'+
+   (reasons.length?'<p style="color:var(--text3);font-size:12px">No elegible: '+zenEsc(reasons.join(' · '))+'</p>':'')+
+   (state==='pending'?'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="zen-coach-action primary" onclick="zenRatedVerify(\''+x.id+'\')">Verificar RX</button><button class="zen-coach-action" onclick="zenRatedReject(\''+x.id+'\')">Rechazar</button></div>':'')+'</section>';
+ }).join(''):'<p style="color:var(--text3);padding:20px 0">No hay resultados en esta sección.</p>')+
+ '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:18px"><button class="zen-coach-action" '+(zenRatedPage===0?'disabled':'')+' onclick="zenRatedGo('+(zenRatedPage-1)+')">← Anterior</button><button class="zen-coach-action" '+(zenRatedPage>=maxPage?'disabled':'')+' onclick="zenRatedGo('+(zenRatedPage+1)+')">Siguiente →</button></div>'+
+ (zenRatedRows.length>=1000?'<p style="color:var(--text3);font-size:11px">Se muestran hasta 1,000 scores recientes. Para volúmenes mayores se requiere paginación en servidor.</p>':'');
+ if(!resetInput){const el=document.getElementById('zen-rated-search');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}}
 }
 async function zenRatedVerify(scoreId){
  if(!confirm('¿Confirmas que viste la ejecución RX y cumple todos los estándares? Supabase verificará además la calibración.'))return;
