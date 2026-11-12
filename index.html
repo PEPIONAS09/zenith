@@ -2221,12 +2221,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
   </div>
   <div class="lb-body">
-    <div class="mp-sec">
+    <div class="mp-sec" id="mp-program-section">
       <div class="mp-lbl">Mi programa</div>
       <div class="mp-hint">Define qué programación ves tú en Inicio y Semana. No afecta a tus atletas.</div>
       <div class="mp-progs" id="mp-progs"></div>
     </div>
-    <div class="mp-sec">
+    <div class="mp-sec" id="mp-compete-section">
       <div class="mp-lbl">Competir</div>
       <div class="mp-hint">Actívalo para registrar tus propios scores y aparecer en el leaderboard junto a tus atletas. Sigues siendo coach.</div>
       <label class="mp-toggle">
@@ -2234,10 +2234,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <span>Competir como atleta</span>
       </label>
     </div>
-    <div class="mp-msg" id="mp-msg"></div>
+    <div class="mp-sec"><div class="mp-lbl">Técnica</div><button class="zen-coach-action primary" onclick="closeMyProfile();zenOpenTech()">🎥 Solicitar revisión técnica</button></div><div class="mp-msg" id="mp-msg"></div>
   </div>
 </div>
 
+<div class="lb-screen" id="tech-screen">
+ <div class="lb-head"><button class="lb-close" onclick="zenCloseTech()">✕</button><div><div class="lb-eyebrow">COMPETITION HUB</div><div class="lb-title">Revisión técnica</div></div></div>
+ <div class="lb-body" style="padding:22px;max-width:850px;margin:auto">
+  <p style="color:var(--text2);line-height:1.6">Solicita feedback de un movimiento independiente de tus resultados. Comparte un enlace privado a tu video (Drive, YouTube no listado u otro servicio accesible al coach).</p>
+  <div id="tech-athlete-form" style="display:grid;gap:12px"><input id="tech-movement" maxlength="120" placeholder="Movimiento (ej. Butterfly pull-ups)"><input id="tech-url" type="url" placeholder="https:// enlace al video"><textarea id="tech-question" rows="3" maxlength="1500" placeholder="¿Qué quieres mejorar? Describe tu duda."></textarea><button class="zen-coach-action primary" onclick="zenSubmitTech()">Solicitar revisión</button><div id="tech-msg" style="color:var(--text2);font-size:12px"></div></div>
+  <h3 style="margin:28px 0 12px">Solicitudes de técnica</h3><div id="tech-list">Cargando…</div>
+ </div>
+</div>
 <div class="lb-screen" id="sh-screen">
   <div class="lb-head">
     <button class="lb-close" onclick="closeScoreHistory()">✕</button>
@@ -3157,6 +3165,9 @@ function onAvatarClick(){
 async function openMyProfile(){
   const scr = document.getElementById('mp-screen');
   scr.classList.add('open');
+  const director = zenCHStaffRole === 'director';
+  document.getElementById('mp-program-section').style.display = director ? '' : 'none';
+  document.getElementById('mp-compete-section').style.display = director || zenCHStaffRole === 'reviewer' ? '' : 'none';
   const prog = currentProfile?.program || 'compete';
   document.getElementById('mp-progs').innerHTML = PROGRAMS.map(p=>
     `<button class="mp-prog${p.slug===prog?' active':''}" onclick="setMyProgram('${p.slug}')"
@@ -3168,6 +3179,7 @@ async function openMyProfile(){
 function closeMyProfile(){ document.getElementById('mp-screen').classList.remove('open'); }
 
 async function setMyProgram(slug){
+  if(zenCHStaffRole !== 'director'){ alert('Solo el director puede cambiar programas.'); return; }
   const msg = document.getElementById('mp-msg');
   msg.textContent = 'Guardando...'; msg.style.color = 'var(--text3)';
   const {error} = await sb.from('profiles').update({program: slug}).eq('id', currentUser.id);
@@ -8397,11 +8409,28 @@ async function refreshNotifications(){
   if(!currentUser) return; const {data}=await sb.from('notifications').select('id').eq('user_id',currentUser.id).is('read_at',null); const n=data?.length||0,b=document.getElementById('notif-badge'); if(b){b.style.display=n?'block':'none';b.textContent=n>9?'9+':n;}
 }
 async function openNotifications(){
-  const ov=document.getElementById('notif-overlay'),list=document.getElementById('notif-list'); ov.style.display='flex'; list.innerHTML='<div class="empty-note">Cargando...</div>';
-  const {data,error}=await sb.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(40);
-  if(error){list.innerHTML='<div class="empty-note">No se pudieron cargar.</div>';return;}
-  list.innerHTML=(data||[]).length?(data||[]).map(n=>`<div style="padding:13px 16px;border-bottom:1px solid var(--border);${n.read_at?'opacity:.65':''}"><div style="font-size:12px;font-weight:700;color:var(--text)">${n.title}</div>${n.body?`<div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.45">${n.body}</div>`:''}<div style="font-size:9px;color:var(--text3);margin-top:5px">${new Date(n.created_at).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>`).join(''):'<div class="empty-note">Sin notificaciones.</div>';
-  const unread=(data||[]).filter(n=>!n.read_at).map(n=>n.id); if(unread.length) await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unread); refreshNotifications();
+ const ov=document.getElementById('notif-overlay'),list=document.getElementById('notif-list');ov.style.display='flex';list.innerHTML='<div class="empty-note">Cargando…</div>';
+ const [nr,fr,tr]=await Promise.all([
+   sb.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(30),
+   sb.from('ch_coach_activity').select('id,score_id,feedback,created_at').eq('athlete_id',currentUser.id).eq('status','approved').order('created_at',{ascending:false}).limit(15),
+   sb.from('ch_technique_requests').select('id,movement,coach_feedback,status,updated_at').eq('athlete_id',currentUser.id).eq('status','reviewed').order('updated_at',{ascending:false}).limit(15)
+ ]);
+ const items=[];
+ (nr.data||[]).forEach(n=>items.push({date:n.created_at,title:n.title,body:n.body||'',id:n.id,kind:'notification',read:!!n.read_at}));
+ (fr.data||[]).forEach(f=>items.push({date:f.created_at,title:'✓ Score revisado por Competition Hub',body:f.feedback||'Tu coach revisó tu resultado.',kind:'score',score:f.score_id}));
+ (tr.data||[]).forEach(t=>items.push({date:t.updated_at,title:'🎥 Técnica revisada: '+t.movement,body:t.coach_feedback||'',kind:'tech'}));
+ items.sort((a,b)=>new Date(b.date)-new Date(a.date));
+ list.innerHTML=items.length?items.slice(0,45).map(n=>`<div ${n.kind==='tech'?'onclick="closeNotifications();zenOpenTech()"':n.kind==='score'?'onclick="closeNotifications();zenOpenReviewedScores()"':''} style="padding:15px 16px;border-bottom:1px solid var(--border);${n.kind!=='notification'?'cursor:pointer;':''}${n.read?'opacity:.65':''}"><div style="font-size:13px;font-weight:700;color:var(--text)">${zenCHEscape(n.title)}</div><div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5">${zenCHEscape(n.body)}</div><div style="font-size:10px;color:var(--text3);margin-top:6px">${new Date(n.date).toLocaleString('es-MX')}</div>${n.kind==='score'?'<span style="font-size:11px;color:var(--accent)">Ver resultados revisados →</span>':''}</div>`).join(''):'<div class="empty-note">Sin notificaciones.</div>';
+ const unread=(nr.data||[]).filter(n=>!n.read_at).map(n=>n.id);if(unread.length)await sb.from('notifications').update({read_at:new Date().toISOString()}).in('id',unread);refreshNotifications();
+}
+async function zenOpenReviewedScores(){
+ const {data,error}=await sb.from('ch_coach_activity').select('score_id,feedback,created_at').eq('athlete_id',currentUser.id).eq('status','approved').order('created_at',{ascending:false}).limit(30);
+ if(error){alert(error.message);return;}
+ const ids=[...new Set((data||[]).map(x=>x.score_id).filter(Boolean))];let scores=[];
+ if(ids.length){const r=await sb.from('scores').select('id,block_id,value,logged_at').in('id',ids);scores=r.data||[];}
+ let names=new Map();const bids=[...new Set(scores.map(x=>x.block_id).filter(Boolean))];if(bids.length){const r=await sb.from('blocks').select('id,name').in('id',bids);(r.data||[]).forEach(x=>names.set(x.id,x.name));}
+ const el=document.createElement('div');el.id='zen-reviewed-scores';el.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:10010;overflow:auto;padding:24px;box-sizing:border-box;color:var(--text)';
+ el.innerHTML=`<div style="max-width:700px;margin:auto"><button class="zen-coach-action" onclick="document.getElementById('zen-reviewed-scores').remove()">← Volver</button><h2>Mis resultados revisados</h2>${(data||[]).map(f=>{const sc=scores.find(x=>x.id===f.score_id);return `<div style="border:1px solid var(--border2);padding:16px;margin:12px 0"><b>${zenCHEscape(names.get(sc?.block_id)||'Workout')}</b><div style="color:var(--accent);margin:6px 0">${zenCHEscape(sc?.value||'Resultado registrado')}</div><div style="color:var(--text2);font-size:12px">${zenCHEscape(sc?.logged_at||'')}</div><p style="white-space:pre-wrap">${zenCHEscape(f.feedback)}</p></div>`}).join('')||'Sin revisiones aprobadas.'}</div>`;document.body.appendChild(el);
 }
 function closeNotifications(){document.getElementById('notif-overlay').style.display='none';}
 function initNotifications(){
@@ -9131,7 +9160,8 @@ async function zenCHRefresh(){
  </div><div id="ch-score-detail" style="display:none;margin-top:12px;padding:16px;background:var(--bg);border:1px solid var(--border2);border-radius:8px;line-height:1.6"></div><textarea id="ch-feedback" rows="3" placeholder="Feedback concreto / evidencia de la actividad" style="display:block;width:100%;margin-top:10px;box-sizing:border-box"></textarea>
  <div id="ch-guidance" style="font-size:12px;color:var(--text2);margin-top:10px;line-height:1.5"></div><button onclick="zenCHSubmit()" style="margin-top:10px;background:var(--accent);color:#111;border:0;padding:12px 18px;font-weight:700;cursor:pointer">Enviar a aprobación</button><div id="ch-message" style="margin-top:8px;font-size:12px"></div></div>
  ${zenCHStaffRole==='director'?`<div style="padding:18px;background:var(--bg2);border:1px solid var(--border2);margin-bottom:20px"><h3 style="margin:0 0 12px">Gestión de coaches</h3><p style="color:var(--text2);font-size:12px">Crea coaches nuevos o administra los existentes. Puedes cambiar contraseñas, activar, desactivar o quitar permisos sin borrar sus datos. Comparte las contraseñas por un canal privado.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"><input id="ch-invite-email" type="email" placeholder="Correo del coach" autocomplete="email" style="flex:1;min-width:180px"/><input id="ch-invite-password" type="password" placeholder="Contraseña temporal (12+ caracteres)" autocomplete="new-password" style="flex:1;min-width:210px"/><button class="zen-coach-action primary" onclick="zenCHInviteCoach()">Crear coach</button></div><div id="ch-invite-msg" style="font-size:12px;margin-top:8px"></div><div id="ch-staff-list" style="display:grid;gap:8px;margin-top:14px">Cargando equipo…</div></div>`:''}
- <h3 style="margin:24px 0 12px">Historial de actividades</h3><div style="font-size:12px;color:var(--text2);margin-bottom:12px">Revisiones y aprobaciones guardadas en Competition Hub. Las actividades aprobadas no se pueden volver a aprobar.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"><button class="zen-coach-action" onclick="zenCHFilterHistory('all')">Todas (${(rows||[]).length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('pending')">Pendientes (${pending})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('approved')">Aprobadas (${(rows||[]).filter(r=>r.status==='approved').length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('rejected')">Rechazadas (${(rows||[]).filter(r=>r.status==='rejected').length})</button></div><div id="ch-history-list" style="display:grid;gap:10px">${(rows||[]).map(r=>`<div data-ch-status="${zenCHEscape(r.status)}">${historyCard(r)}</div>`).join('')||'<p>Sin actividades todavía.</p>'}</div>`;
+ <div style="padding:18px;border:1px solid var(--border2);margin:16px 0;background:var(--bg2)"><h3 style="margin:0 0 10px">Revisión técnica de videos</h3><p style="font-size:12px;color:var(--text2)">Solicitudes independientes de los scores. Las respuestas se envían al atleta; los puntos por actividad siguen requiriendo aprobación.</p><button class="zen-coach-action primary" onclick="zenOpenTech()">Abrir solicitudes de videos</button></div>
+ <h3 style="margin:24px 0 12px">Historial de actividades</h3><div style="font-size:12px;color:var(--text2);margin-bottom:12px">Mostrando pendientes y actividades de los últimos 7 días. El historial completo permanece guardado.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"><button class="zen-coach-action" onclick="zenCHFilterHistory('all')">Todas (${(rows||[]).length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('pending')">Pendientes (${pending})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('approved')">Aprobadas (${(rows||[]).filter(r=>r.status==='approved').length})</button><button class="zen-coach-action" onclick="zenCHFilterHistory('rejected')">Rechazadas (${(rows||[]).filter(r=>r.status==='rejected').length})</button></div><div id="ch-history-list" style="display:grid;gap:10px">${(rows||[]).filter(r=>r.status==='pending'||Date.now()-new Date(r.created_at).getTime()<7*86400000).map(r=>`<div data-ch-status="${zenCHEscape(r.status)}">${historyCard(r)}</div>`).join('')||'<p>Sin actividades todavía.</p>'}</div>`;
   zenCHStyleInputs();
   zenCHUpdateForm();
  if(zenCHStaffRole==='director') zenCHLoadStaff();
@@ -9234,6 +9264,20 @@ async function zenCHDecide(id,approve){
  if(error){alert(error.message);return;}await zenCHRefresh();
 }
 
+
+// ZENITH 3.8 / independent technique requests. No score mutations.
+function zenCloseTech(){document.getElementById('tech-screen').classList.remove('open');}
+async function zenOpenTech(){document.getElementById('tech-screen').classList.add('open');await zenLoadTech();}
+async function zenLoadTech(){
+ const staff=!!zenCHStaffRole,form=document.getElementById('tech-athlete-form'),host=document.getElementById('tech-list');form.style.display=staff?'none':'grid';
+ const q=sb.from('ch_technique_requests').select('*').order('created_at',{ascending:false}).limit(40);
+ const {data,error}=await (staff?q:q.eq('athlete_id',currentUser.id));
+ if(error){host.textContent='No se pudo cargar. Verifica que instalaste el SQL 3.8: '+error.message;return;}
+ const ids=[...new Set((data||[]).map(x=>x.athlete_id))],names=new Map();if(staff&&ids.length){const r=await sb.from('profiles').select('id,full_name').in('id',ids);(r.data||[]).forEach(x=>names.set(x.id,x.full_name));}
+ host.innerHTML=(data||[]).map(r=>`<div style="padding:16px;margin:12px 0;background:var(--bg2);border:1px solid var(--border2);border-radius:8px"><div style="display:flex;justify-content:space-between;gap:8px"><b>${zenCHEscape(r.movement)}</b><span style="color:var(--accent);font-size:12px">${r.status==='reviewed'?'Revisado':'Pendiente'}</span></div>${staff?`<p style="color:var(--text2)">Atleta: ${zenCHEscape(names.get(r.athlete_id)||'Atleta')}</p>`:''}<p style="white-space:pre-wrap;color:var(--text2)">${zenCHEscape(r.question||'Sin pregunta adicional')}</p><a href="${zenCHEscape(r.video_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Ver video ↗</a>${r.coach_feedback?`<div style="margin-top:12px;padding:12px;border-left:3px solid var(--accent);white-space:pre-wrap">${zenCHEscape(r.coach_feedback)}</div>`:''}${staff&&r.status==='pending'?`<textarea id="tech-reply-${r.id}" rows="3" placeholder="Corrección concreta: observación, causa y ejercicio sugerido" style="width:100%;box-sizing:border-box;margin-top:12px"></textarea><button class="zen-coach-action primary" onclick="zenReplyTech('${r.id}')">Enviar revisión</button>`:''}</div>`).join('')||'<p style="color:var(--text2)">Sin solicitudes todavía.</p>';
+}
+async function zenSubmitTech(){const movement=document.getElementById('tech-movement').value.trim(),url=document.getElementById('tech-url').value.trim(),question=document.getElementById('tech-question').value.trim(),msg=document.getElementById('tech-msg');if(!movement||!/^https:\/\//i.test(url)){msg.textContent='Indica movimiento y enlace HTTPS al video.';return;}msg.textContent='Enviando…';const {error}=await sb.from('ch_technique_requests').insert({athlete_id:currentUser.id,program:currentProfile?.program||'hubmind',movement,video_url:url,question});if(error){msg.textContent=error.message;return;}msg.textContent='✓ Solicitud enviada';document.getElementById('tech-movement').value='';document.getElementById('tech-url').value='';document.getElementById('tech-question').value='';await zenLoadTech();}
+async function zenReplyTech(id){if(!zenCHStaffRole)return;const txt=document.getElementById('tech-reply-'+id)?.value.trim();if(!txt||txt.length<15){alert('Escribe una revisión técnica concreta (mínimo 15 caracteres).');return;}const {error}=await sb.from('ch_technique_requests').update({coach_feedback:txt,reviewer_id:currentUser.id,status:'reviewed',updated_at:new Date().toISOString()}).eq('id',id).eq('status','pending');if(error){alert(error.message);return;}await zenLoadTech();}
 </script>
 </body>
 </html>
