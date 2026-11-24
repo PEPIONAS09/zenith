@@ -4089,6 +4089,7 @@ function renderAthList(){
       </div>
       <div class="ath-info"><div class="ath-name">${a.full_name||'Sin nombre'}${newScores[a.id]?` <span class="ath-newdot" title="${newScores[a.id]} score(s) nuevo(s)"></span>`:''}</div><div class="ath-sub">${a.goal||''}</div></div>
       <span class="prog-badge pb-${pm.slug}">${pm.label}</span>
+      ${currentUser?.id === '6005d37d-659f-4a32-9767-f1ad809297e5' ? `<button type="button" onclick="confirmDeleteAthlete('${a.id}',event)" style="background:none;border:0;color:#ff4444;padding:8px;cursor:pointer" aria-label="Eliminar atleta">Eliminar</button>` : ''}
       <span class="ath-arr">›</span>
     </div>`;
   }).join('');
@@ -5469,32 +5470,35 @@ async function moveAthBlock(blockId, dir, e){
 }
 
 
-async function confirmDeleteAthlete(athId, athName, e){
-  e.stopPropagation();
-  if(!confirm('¿Eliminar a ' + athName + '? Esta acción no se puede deshacer.')) return;
-  
-  // Delete profile first (cascades related data)
-  await sb.from('profiles').delete().eq('id', athId);
-  
-  // Delete from Auth via Edge Function
+async function confirmDeleteAthlete(athId, e){
+  e?.stopPropagation();
+  if(currentUser?.id !== '6005d37d-659f-4a32-9767-f1ad809297e5') return;
+  const athlete = athletes.find(a => a.id === athId);
+  if(!athlete || athlete.role !== 'athlete') return;
+  if(!confirm('¿Eliminar definitivamente a ' + (athlete.full_name || 'este atleta') + '? Se perderán sus datos asociados. Esta acción no se puede deshacer.')) return;
+  if(prompt('Escribe ELIMINAR para confirmar') !== 'ELIMINAR') return;
+  const btn = e?.currentTarget;
+  if(btn) btn.disabled = true;
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/delete-athlete-v2`, {
+    const {data: sessionData, error: sessionError} = await sb.auth.getSession();
+    if(sessionError || !sessionData.session) throw new Error('Inicia sesión nuevamente.');
+    const response = await fetch(SUPABASE_URL + '/functions/v1/delete-athlete-v2', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_KEY}` },
-      body: JSON.stringify({ athlete_id: athId })
+      headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+sessionData.session.access_token},
+      body: JSON.stringify({athlete_id:athId})
     });
+    const result = await response.json();
+    if(!response.ok || result.success !== true) throw new Error(result.error || 'No se pudo eliminar al atleta.');
+    athletes = athletes.filter(a => a.id !== athId);
+    if(dsCurrentAthlete?.id === athId) dsCurrentAthlete = null;
+    renderAthList();
+    if(isDesktop()) renderDsAthleteList();
+    showToast('Atleta eliminado');
   } catch(err) {
-    console.log('Auth delete skipped:', err.message);
+    alert(err.message || 'No se pudo eliminar al atleta.');
+  } finally {
+    if(btn) btn.disabled = false;
   }
-  
-  athletes = athletes.filter(a => a.id !== athId);
-  renderAthList();
-  if(isDesktop()) renderDsAthletes();
-  if(dsCurrentAthlete?.id === athId){
-    dsCurrentAthlete = null;
-    document.getElementById('ds-right-content').innerHTML = '<div style="padding:16px"><div class="ds-right-title">ZENITH</div><div style="font-family:var(--font-m);font-size:10px;color:var(--text3)">Selecciona un atleta para ver sus PRs</div></div>';
-  }
-  showToast('✓ Atleta eliminado');
 }
 
 async function confirmDeleteAthBlock(blockId, blockName, e){
@@ -6408,7 +6412,7 @@ function renderDsAthleteList(){
           <div class="ds-ath-prog">${a.program||'compete'}</div>
         </div>
       </div>
-      ${isMainCoach ? `<button onclick="event.stopPropagation();confirmDeleteAthlete('${a.id}','${a.full_name.replace(/'/g,'')}',event)" style="background:none;border:none;color:#ff4444;cursor:pointer;padding:4px 6px;font-size:13px;opacity:0.5;flex-shrink:0" title="Eliminar">✕</button>` : ''}
+      ${isMainCoach ? `<button onclick="event.stopPropagation();confirmDeleteAthlete('${a.id}',event)" style="background:none;border:none;color:#ff4444;cursor:pointer;padding:4px 6px;font-size:13px;opacity:0.5;flex-shrink:0" title="Eliminar">✕</button>` : ''}
     </div>`;
       }).join('')}
     </div>`;
