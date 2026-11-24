@@ -3107,7 +3107,7 @@ async function loadBlocks(programSlug, weekNum){
   const week = weekNum ?? currentWeekNumber ?? 1;
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', programSlug)
-    .eq('week_number', week)
+    .eq('week_number', week).is('archived_at',null)
     .order('day_of_week').order('order_index');
 
   // Overrides del propio usuario: pueden esconder un bloque o moverlo de día
@@ -3285,7 +3285,7 @@ async function loadComplianceMatrix(programSlug){
   const [pRes,bRes,cRes,sRes] = await Promise.all([
     sb.from('profiles').select('id,full_name,program').eq('role','athlete').eq('program',programSlug).order('full_name'),
     sb.from('blocks').select('id,name,day_of_week,order_index,counts_for_compliance,rating_test_key')
-      .eq('program_slug',programSlug).eq('week_number',week)
+      .eq('program_slug',programSlug).eq('week_number',week).is('archived_at',null)
       .order('day_of_week').order('order_index'),
     sb.from('training_completions').select('athlete_id,block_id'),
     sb.from('scores').select('athlete_id,block_id')
@@ -4322,7 +4322,7 @@ async function saveBlock(){
     const {data: ult} = await sb.from('blocks')
       .select('order_index')
       .eq('program_slug', data.program_slug)
-      .eq('week_number', data.week_number)
+      .eq('week_number', data.week_number).is('archived_at',null)
       .eq('day_of_week', data.day_of_week)
       .order('order_index', {ascending:false})
       .limit(1);
@@ -5267,7 +5267,7 @@ async function loadAthWeekBlocks(a){
   const week = zenithCalendar[prog]?.enabled ? baseWeek + athWeekOffset : Math.max(1, baseWeek + athWeekOffset);
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', prog)
-    .eq('week_number', week)
+    .eq('week_number', week).is('archived_at',null)
     .order('day_of_week').order('order_index');
   athWeekBlocks = {};
   if(data) data.forEach(b=>{ if(!athWeekBlocks[b.day_of_week]) athWeekBlocks[b.day_of_week]=[]; athWeekBlocks[b.day_of_week].push(b); });
@@ -6224,7 +6224,7 @@ async function loadDsWeek(){
 
   const {data} = await sb.from('blocks').select('*')
     .eq('program_slug', dsCurrentProg)
-    .eq('week_number', weekNum)
+    .eq('week_number', weekNum).is('archived_at',null)
     .order('day_of_week').order('order_index');
 
   // Group by day
@@ -6437,7 +6437,7 @@ async function selectDsAthlete(athId){
   const weekNum = Math.max(1, baseWeek + dsWeekOffset);
   const {data: blocks} = await sb.from('blocks').select('*')
     .eq('program_slug', prog)
-    .eq('week_number', weekNum)
+    .eq('week_number', weekNum).is('archived_at',null)
     .order('day_of_week').order('order_index');
 
   dsAthleteBlocks = {};
@@ -6669,7 +6669,7 @@ async function renderDsAthletePage(a){
 
   // Load blocks
   const {data: blocks} = await sb.from('blocks').select('*')
-    .eq('program_slug', prog).eq('week_number', weekNum)
+    .eq('program_slug', prog).eq('week_number', weekNum).is('archived_at',null)
     .order('day_of_week').order('order_index');
   dsAthleteBlocks = {};
   if(blocks) blocks.forEach(b => {
@@ -7620,7 +7620,7 @@ async function executeCopyWeek(){
   const {data: srcBlocks, error: srcError} = await sb.from('blocks')
     .select('*')
     .eq('program_slug', prog)
-    .eq('week_number', srcWeek);
+    .eq('week_number', srcWeek).is('archived_at',null);
 
   if(srcError || !srcBlocks?.length){
     msg.textContent = 'No hay bloques en la semana origen';
@@ -9015,7 +9015,7 @@ async function zenCoachProgramming(){
   const d=document.getElementById('zen-coach-tab-content'),slug=zenCoachProgram;
   const week=Math.max(1,(programWeeks[slug]||1)+zenCoachWeekOffset);
   d.innerHTML='<p style="color:var(--text3);line-height:1.5">Los cambios realizados aquí modifican el programa maestro compartido por todos sus atletas. Las personalizaciones individuales se mantienen aparte.</p><div style="display:flex;align-items:center;gap:12px;margin:16px 0;flex-wrap:wrap"><button class="zen-coach-action" onclick="zenCoachChangeWeek(-1)">← Anterior</button><strong style="color:var(--text)">Semana '+week+'</strong><button class="zen-coach-action" onclick="zenCoachChangeWeek(1)">Siguiente →</button><button class="zen-coach-action" onclick="zenCoachChangeWeek(0)">Hoy</button></div><div id="zen-coach-program-blocks" style="color:var(--text3)">Cargando programación…</div>';
-  const {data,error}=await sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).order('day_of_week').order('order_index');
+  const {data,error}=await sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).is('archived_at',null).order('day_of_week').order('order_index');
   if(zenCoachProgram!==slug||zenCoachTab!=='program')return;
   const target=document.getElementById('zen-coach-program-blocks');if(!target)return;
   if(error){target.textContent='No se pudo cargar: '+error.message;return;}
@@ -9029,7 +9029,7 @@ function zenCoachChangeWeek(dir){zenCoachWeekOffset=dir===0?0:zenCoachWeekOffset
 function zenCoachEditBlock(id){
   // Existing editor reads from allBlocks / athWeekBlocks; preload the selected master week.
   const slug=zenCoachProgram,week=Math.max(1,(programWeeks[slug]||1)+zenCoachWeekOffset);
-  sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).then(({data,error})=>{
+  sb.from('blocks').select('*').eq('program_slug',slug).eq('week_number',week).is('archived_at',null).then(({data,error})=>{
     if(error){alert(error.message);return;}
     allBlocks={...allBlocks,zenCoachMaster:data||[]};
     const b=(data||[]).find(x=>x.id===id);if(!b)return;
